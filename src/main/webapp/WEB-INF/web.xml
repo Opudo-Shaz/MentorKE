@@ -4,21 +4,13 @@
 
 <web-app>
   <display-name>Archetype Created Web Application</display-name>
-  <servlet>
-    <servlet-name>Index</servlet-name>
-    <servlet-class>app.Index</servlet-class>
-  </servlet>
-  <servlet>
-    <servlet-name>AboutUsPage</servlet-name>
-    <servlet-class>app.AboutUsPage</servlet-class>
-  </servlet>
-  <servlet-mapping>
-    <servlet-name>Index</servlet-name>
-    <url-pattern>/</url-pattern>
-  </servlet-mapping>
+  <context-param>
+    <param-name>app.admin.username</param-name>
+    <param-value>admin</param-value>
+  </context-param>
+  <context-param>
+    <param-name>app.admin.password</param-name>
+    <param-value>12345</param-value>
+  </context-param>
 
-    <servlet-mapping>
-        <servlet-name>AboutUsPage</servlet-name>
-        <url-pattern>/about</url-pattern>
-    </servlet-mapping>
 </web-app>

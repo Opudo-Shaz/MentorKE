@@ -1,37 +1,26 @@
-package app.utility.validation;
-
+package app.dbconnection;
 import jakarta.inject.Qualifier;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-
 @Qualifier
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.TYPE, ElementType.METHOD, ElementType.PARAMETER})
-public @interface ValidatorQualifier {
-
-    // Specifies which validator implementation to inject
-
-    ValidationChoice value();
-
-
-    enum ValidationChoice {
-        MENTOR("Mentor validation rules"),
-        MENTEE("Mentee validation rules"),
-        USER("User validation rules"),
-        REGISTRATION("Registration validation rules");
-
+public @interface DatabaseQualifier {
+    DatabaseType value();
+    enum DatabaseType {
+        PRIMARY("Primary database connection"),
+        READ_REPLICA("Read-only replica connection"),
+        CACHE("Cache database connection"),
+        BACKUP("Backup database connection");
         private final String description;
-
-        ValidationChoice(String description) {
+        DatabaseType(String description) {
             this.description = description;
         }
-
         public String getDescription() {
             return description;
         }
     }
 }
-

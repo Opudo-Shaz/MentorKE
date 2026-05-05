@@ -1,4 +1,4 @@
-package app;
+package app.filter;
 
 import jakarta.servlet.annotation.WebFilter;
 import jakarta.servlet.Filter;
@@ -13,7 +13,7 @@ import java.io.IOException;
 
 @WebFilter(
     filterName = "LoggingFilter",
-    urlPatterns = {"/*"}  // Apply to all requests
+    urlPatterns = {"/*"}
 )
 public class LoggingFilter implements Filter {
 

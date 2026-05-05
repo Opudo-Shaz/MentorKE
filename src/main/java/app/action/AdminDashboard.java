@@ -1,32 +1,64 @@
-package app;
+package app.action;
 
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
-import java.io.IOException;
+import app.dao.UserDAO;
+import app.dao.MentorDAO;
+import app.dao.MenteeDAO;
+import jakarta.inject.Inject;
+import jakarta.servlet.*;
+import jakarta.servlet.http.*;
 import jakarta.servlet.annotation.WebServlet;
+
+import java.io.IOException;
+import java.util.List;
 
 @WebServlet(name = "AdminDashboard", urlPatterns = {"/admin"})
 public class AdminDashboard extends HttpServlet {
 
+    @Inject
+    private UserDAO userDAO;
+
+    @Inject
+    private MentorDAO mentorDAO;
+
+    @Inject
+    private MenteeDAO menteeDAO;
+
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
 
-        HttpSession session = request.getSession(false);
-        if (session == null || !Boolean.TRUE.equals(session.getAttribute("isLoggedIn"))) {
-            response.sendRedirect("login");
-            return;
+        String view = request.getParameter("view");
+        if (view == null || view.isEmpty()) {
+            view = "users";
         }
 
-        String role = String.valueOf(session.getAttribute("role"));
-        if (!"admin".equalsIgnoreCase(role)) {
-            response.sendRedirect("login");
-            return;
+        request.setAttribute("view", view);
+
+        try {
+
+            if ("users".equalsIgnoreCase(view)) {
+                List<?> users = userDAO.getAllUsers();
+                request.setAttribute("users", users);
+            }
+
+            else if ("mentors".equalsIgnoreCase(view)) {
+                request.setAttribute("mentors", mentorDAO.getAllMentors());
+            }
+
+            else if ("mentees".equalsIgnoreCase(view)) {
+                request.setAttribute("mentees", menteeDAO.getAllMentees());
+            }
+
+            else {
+                request.setAttribute("error", "Unknown view: " + view);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            request.setAttribute("error", "Failed to load data");
         }
 
-        // Forward to JSP
-        request.getRequestDispatcher("/admin-dashboard.jsp").forward(request, response);
+        request.getRequestDispatcher("/admin-dashboard.jsp")
+                .forward(request, response);
     }
 }

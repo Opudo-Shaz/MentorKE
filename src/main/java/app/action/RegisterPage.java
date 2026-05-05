@@ -1,19 +1,23 @@
-package app;
+package app.action;
 
-import app.dao.UserDAO;
-import app.model.User;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.ServletException;
 import java.io.IOException;
 import jakarta.servlet.annotation.WebServlet;
+import jakarta.inject.Inject;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import app.dao.UserDAO;
+import app.model.User;
 
 @WebServlet(name = "Register", urlPatterns = {"/register"})
 public class RegisterPage extends HttpServlet {
+
+    @Inject
+    private UserDAO userDAO;
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
@@ -48,17 +52,7 @@ public class RegisterPage extends HttpServlet {
             return;
         }
 
-        // Initialize UserDAO
-        UserDAO userDAO;
-        try {
-            userDAO = new UserDAO();
-        } catch (SQLException e) {
-            System.err.println("[RegisterPage] Error initializing UserDAO: " + e.getMessage());
-            request.setAttribute("errorMessage", "Database connection error");
-            request.getRequestDispatcher("/register-error.jsp").forward(request, response);
-            return;
-        }
-
+        // UserDAO is now injected via CDI
         try {
             // Check if username already exists
             if (userDAO.getUserByUsername(username) != null) {

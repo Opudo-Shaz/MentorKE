@@ -1,4 +1,4 @@
-package app;
+package app.filter;
 
 import jakarta.servlet.annotation.WebFilter;
 import jakarta.servlet.Filter;

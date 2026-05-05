@@ -1,4 +1,4 @@
-package app;
+package app.listener;
 
 import jakarta.servlet.http.HttpSessionAttributeListener;
 import jakarta.servlet.http.HttpSessionBindingEvent;

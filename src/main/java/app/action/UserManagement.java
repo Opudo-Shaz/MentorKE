@@ -1,24 +1,40 @@
-package app;
+package app.action;
 
-import app.dao.UserDAO;
+import app.bean.UserBean;
 import app.model.User;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import jakarta.inject.Inject;
 import java.io.IOException;
-import jakarta.servlet.annotation.WebServlet;
 import java.sql.SQLException;
 
+import jakarta.servlet.annotation.WebServlet;
+
+/**
+ * UserManagement Servlet - Handles HTTP requests only
+ *
+ * Responsibilities (HTTP layer only):
+ * - Extract request parameters
+ * - Verify admin session
+ * - Delegate business logic to UserBean
+ * - Handle redirects with appropriate success/error messages
+ *
+ * All validation and business logic is in UserBean
+ */
 @WebServlet(name = "UserManagement",
         urlPatterns = {"/user-management"})
 public class UserManagement extends HttpServlet {
 
+    @Inject
+    private UserBean userBean;
+
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        // Verify admin session
-        System.out.println("\n[UserManagement] === doPost called ===");
+        System.out.println("\n[UserManagement] === HTTP POST called ===");
 
+        // STEP 1: Verify admin session
         HttpSession session = request.getSession(false);
         if (session == null || !Boolean.TRUE.equals(session.getAttribute("isLoggedIn"))) {
             System.out.println("[UserManagement] Session invalid or not logged in");
@@ -33,113 +49,95 @@ public class UserManagement extends HttpServlet {
             return;
         }
 
-        UserDAO userDAO;
-        userDAO = new UserDAO();
-
-        System.out.println("[UserManagement] UserDAO initialized: " + "YES");
-
+        // STEP 2: Extract action parameter
         String action = request.getParameter("action");
         System.out.println("[UserManagement] Action requested: " + action);
 
+        // STEP 3: Route to bean based on action
         try {
+            String redirectParam = null;
+
             if ("add".equalsIgnoreCase(action)) {
-                handleAddUser(request, response, userDAO);
+                redirectParam = handleAddUser(request);
             } else if ("update".equalsIgnoreCase(action)) {
-                handleUpdateUser(request, response, userDAO);
+                redirectParam = handleUpdateUser(request);
             } else if ("delete".equalsIgnoreCase(action)) {
-                handleDeleteUser(request, response, userDAO);
+                redirectParam = handleDeleteUser(request);
             } else {
                 System.out.println("[UserManagement] Unknown action, redirecting to admin");
-                response.sendRedirect("admin");
+                response.sendRedirect("admin?view=users");
+                return;
             }
-        } catch (SQLException e) {
-            System.err.println("[UserManagement] Database error: " + e.getMessage());
-            response.sendRedirect("admin?error=database_error");
+
+            // STEP 4: Redirect with result
+            response.sendRedirect("admin?view=users&" + redirectParam);
+
+        } catch (IllegalArgumentException e) {
+            System.err.println("[UserManagement] Validation error: " + e.getMessage());
+            response.sendRedirect("admin?view=users&error=validation_failed");
+        } catch (Exception e) {
+            System.err.println("[UserManagement] Error: " + e.getMessage());
+            response.sendRedirect("admin?view=users&error=operation_failed");
         }
     }
 
-    private void handleAddUser(HttpServletRequest request, HttpServletResponse response, UserDAO userDAO) throws IOException, SQLException {
+    /**
+     * Handle add user request - only extracts parameters and delegates to bean
+     */
+    private String handleAddUser(HttpServletRequest request) throws Exception {
+        System.out.println("[UserManagement] handleAddUser - extracting parameters");
+
         String username = safe(request.getParameter("username"));
         String password = safe(request.getParameter("password"));
         String role = safe(request.getParameter("role"));
         String email = safe(request.getParameter("email"));
         String status = safe(request.getParameter("status"));
 
-        System.out.println("[UserManagement] handleAddUser called");
-        System.out.println("[UserManagement] username=" + username + ", role=" + role + ", email=" + email);
+        // Create user object
+        User newUser = new User(null, username, password, role, email, status);
 
-        if (username.isEmpty() || password.isEmpty() || role.isEmpty() || email.isEmpty()) {
-            System.out.println("[UserManagement] Validation failed - missing fields");
-            response.sendRedirect("admin?error=missing_fields");
-            return;
-        }
-
-        // Check if username already exists
-        if (userDAO.getUserByUsername(username) != null) {
-            System.out.println("[UserManagement] Username already exists");
-            response.sendRedirect("admin?error=user_exists");
-            return;
-        }
-
-        User newUser = new User(null, username, password, role, email, status.isEmpty() ? "Active" : status);
-        userDAO.addUser(newUser);
-        System.out.println("[UserManagement] User added successfully, total users: " + userDAO.getTotalUsers());
-        response.sendRedirect("admin?success=user_added");
+        // Delegate to bean (validation & business logic)
+        userBean.registerUser(newUser);
+        return "success=user_added";
     }
 
-    private void handleUpdateUser(HttpServletRequest request, HttpServletResponse response, UserDAO userDAO) throws IOException, SQLException {
-        String userId = safe(request.getParameter("userId"));
+    /**
+     * Handle update user request - only extracts parameters and delegates to bean
+     */
+    private String handleUpdateUser(HttpServletRequest request) throws Exception {
+        System.out.println("[UserManagement] handleUpdateUser - extracting parameters");
+
+        String userId = safe(request.getParameter("id"));
         String username = safe(request.getParameter("username"));
         String password = safe(request.getParameter("password"));
         String role = safe(request.getParameter("role"));
         String email = safe(request.getParameter("email"));
         String status = safe(request.getParameter("status"));
 
-        System.out.println("[UserManagement] handleUpdateUser called for ID: " + userId);
+        // Create user object
+        User user = new User(userId, username, password, role, email, status);
 
-        if (userId.isEmpty() || username.isEmpty() || role.isEmpty() || email.isEmpty()) {
-            System.out.println("[UserManagement] Validation failed - missing fields");
-            response.sendRedirect("admin?error=missing_fields");
-            return;
-        }
-
-        User existingUser = userDAO.getUser(userId);
-        if (existingUser == null) {
-            System.out.println("[UserManagement] User not found with ID: " + userId);
-            response.sendRedirect("admin?error=user_not_found");
-            return;
-        }
-
-        User updatedUser = new User(userId, username, password.isEmpty() ? existingUser.getPassword() : password,
-                                    role, email, status.isEmpty() ? "Active" : status);
-        userDAO.updateUser(userId, updatedUser);
-        System.out.println("[UserManagement] User updated successfully");
-        response.sendRedirect("admin?success=user_updated");
+        // Delegate to bean (validation & business logic)
+        userBean.updateUser(userId, user);
+        return "success=user_updated";
     }
 
-    private void handleDeleteUser(HttpServletRequest request, HttpServletResponse response, UserDAO userDAO) throws IOException, SQLException {
+    /**
+     * Handle delete user request - only extracts parameters and delegates to bean
+     */
+    private String handleDeleteUser(HttpServletRequest request) throws Exception {
+        System.out.println("[UserManagement] handleDeleteUser - extracting parameters");
+
         String userId = safe(request.getParameter("userId"));
 
-        System.out.println("[UserManagement] handleDeleteUser called for ID: " + userId);
-
-        if (userId.isEmpty()) {
-            System.out.println("[UserManagement] Validation failed - missing user ID");
-            response.sendRedirect("admin?error=user_id_required");
-            return;
-        }
-
-        User user = userDAO.getUser(userId);
-        if (user == null) {
-            System.out.println("[UserManagement] User not found with ID: " + userId);
-            response.sendRedirect("admin?error=user_not_found");
-            return;
-        }
-
-        userDAO.deleteUser(userId);
-        System.out.println("[UserManagement] User deleted successfully");
-        response.sendRedirect("admin?success=user_deleted");
+        // Delegate to bean (validation & business logic)
+        userBean.deleteUser(userId);
+        return "success=user_deleted";
     }
 
+    /**
+     * Utility to safely extract string parameters
+     */
     private String safe(String value) {
         return value == null ? "" : value.trim();
     }
