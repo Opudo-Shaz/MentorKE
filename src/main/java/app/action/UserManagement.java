@@ -74,10 +74,11 @@ public class UserManagement extends HttpServlet {
 
         } catch (IllegalArgumentException e) {
             System.err.println("[UserManagement] Validation error: " + e.getMessage());
-            response.sendRedirect("admin?view=users&error=validation_failed");
+            String errorMsg = e.getMessage().replace("User validation failed: ", "");
+            response.sendRedirect("admin?view=users&error=" + java.net.URLEncoder.encode(errorMsg, "UTF-8"));
         } catch (Exception e) {
             System.err.println("[UserManagement] Error: " + e.getMessage());
-            response.sendRedirect("admin?view=users&error=operation_failed");
+            response.sendRedirect("admin?view=users&error=" + java.net.URLEncoder.encode(e.getMessage(), "UTF-8"));
         }
     }
 

@@ -73,11 +73,12 @@ public class MenteeManagement extends HttpServlet {
 
         } catch (IllegalArgumentException e) {
             System.err.println("[MenteeManagement] Validation error: " + e.getMessage());
-            response.sendRedirect("admin?view=mentees&error=validation_failed");
+            String errorMsg = e.getMessage().replace("Mentee validation failed: ", "");
+            response.sendRedirect("admin?view=mentees&error=" + java.net.URLEncoder.encode(errorMsg, "UTF-8"));
         } catch (Exception e) {
             System.err.println("[MenteeManagement] Error: " + e.getMessage());
             e.printStackTrace();
-            response.sendRedirect("admin?view=mentees&error=operation_failed");
+            response.sendRedirect("admin?view=mentees&error=" + java.net.URLEncoder.encode(e.getMessage(), "UTF-8"));
         }
     }
 

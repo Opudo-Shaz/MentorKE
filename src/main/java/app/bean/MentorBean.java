@@ -216,6 +216,17 @@ public class MentorBean {
             "Mentor added by admin: " + user.getUsername() + ", Specialization: " + mentor.getSpecialization()
         ));
 
+        // Step 5: Fire email event to notify user they're now a mentor
+        System.out.println("[MentorBean] Firing email for newly assigned mentor...");
+        userRegisteredEvent.fire(
+            new UserRegisteredEvent(
+                user.getEmail(),
+                user.getUsername(),
+                "MENTOR",
+                mentor.getSpecialization()
+            )
+        );
+
         System.out.println("[MentorBean] === Mentor Addition Completed Successfully ===");
     }
 

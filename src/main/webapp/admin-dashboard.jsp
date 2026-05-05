@@ -159,12 +159,8 @@
             <div class='success'>✓ Mentee updated successfully!</div>
         <% } else if ("mentee_deleted".equals(successMsg)) { %>
             <div class='success'>✓ Mentee deleted successfully!</div>
-        <% } else if ("missing_fields".equals(errorMsg)) { %>
-            <div class='error'>✗ Error: All fields are required</div>
-        <% } else if ("user_exists".equals(errorMsg)) { %>
-            <div class='error'>✗ Error: Username already exists</div>
-        <% } else if ("not_found".equals(errorMsg)) { %>
-            <div class='error'>✗ Error: Record not found</div>
+        <% } else if (errorMsg != null && !errorMsg.isEmpty()) { %>
+            <div class='error'>✗ Error: <strong><%= errorMsg %></strong></div>
         <% } %>
 
         <%-- Get the current view --%>

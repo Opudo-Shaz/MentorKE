@@ -73,11 +73,12 @@ public class MentorManagement extends HttpServlet {
 
         } catch (IllegalArgumentException e) {
             System.err.println("[MentorManagement] Validation error: " + e.getMessage());
-            response.sendRedirect("admin?view=mentors&error=validation_failed");
+            String errorMsg = e.getMessage().replace("Mentor validation failed: ", "");
+            response.sendRedirect("admin?view=mentors&error=" + java.net.URLEncoder.encode(errorMsg, "UTF-8"));
         } catch (Exception e) {
             System.err.println("[MentorManagement] Error: " + e.getMessage());
             e.printStackTrace();
-            response.sendRedirect("admin?view=mentors&error=operation_failed");
+            response.sendRedirect("admin?view=mentors&error=" + java.net.URLEncoder.encode(e.getMessage(), "UTF-8"));
         }
     }
 

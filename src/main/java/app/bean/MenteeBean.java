@@ -214,6 +214,16 @@ public class MenteeBean {
             "Mentee added by admin: " + user.getUsername() + ", Field: " + mentee.getFieldOfStudy()
         ));
 
+        // Step 5: Fire email event to notify user they're now a mentee
+        System.out.println("[MenteeBean] Firing email for newly assigned mentee...");
+        userRegisteredEvent.fire(
+            new UserRegisteredEvent(
+                user.getEmail(),
+                user.getUsername(),
+                "MENTEE"
+            )
+        );
+
         System.out.println("[MenteeBean] === Mentee Addition Completed Successfully ===");
     }
 
