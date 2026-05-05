@@ -1,5 +1,7 @@
 package app.dbconnection;
 
+import app.model.*;
+import app.framework.DbTable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -7,6 +9,8 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashSet;
+import java.util.Set;
 
 @ApplicationScoped
 public class DatabaseInitializer {
@@ -25,6 +29,15 @@ public class DatabaseInitializer {
         }
 
         createDatabaseIfNotExists();
+
+        // Generate tables from entity classes
+        Set<Class<?>> entityClasses = new HashSet<>();
+        entityClasses.add(User.class);
+        entityClasses.add(Mentor.class);
+        entityClasses.add(Mentee.class);
+        entityClasses.add(AuditTrail.class);
+        
+        TableGenerator.generateTables(dataSourceHelper.getDataSource(), entityClasses);
 
         System.out.println("[DatabaseInitializer] Database initialization completed successfully");
     }

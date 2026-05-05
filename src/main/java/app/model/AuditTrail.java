@@ -25,7 +25,7 @@ public class AuditTrail implements Serializable {
     @DbColumn(name = "user_id", type = "VARCHAR(100)")
     private String userId;
 
-    @DbColumn(name = "details", type = "LONGTEXT")
+    @DbColumn(name = "details", type = "TEXT")
     private String details;
 
     @DbColumn(name = "timestamp", type = "TIMESTAMP", defaultValue = "CURRENT_TIMESTAMP")
