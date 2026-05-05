@@ -14,8 +14,8 @@ import java.io.IOException;
 
 @WebFilter(
     filterName = "AuthenticationFilter",
-    urlPatterns = {"/admin", "/mentor-dashboard",
-            "/mentee-dashboard", "/user-management"}
+    urlPatterns = {"/admin", "/mentor-dashboard", "/mentee-dashboard",
+            "/user-management", "/mentor-management", "/mentee-management"}
 )
 public class AuthenticationFilter implements Filter {
 
@@ -49,7 +49,8 @@ public class AuthenticationFilter implements Filter {
         System.out.println("[AuthenticationFilter] User authenticated: " + username + " (role: " + userRole + ")");
 
         // Check role-based access
-        if (requestPath.contains("/admin") || requestPath.contains("/user-management")) {
+        if (requestPath.contains("/admin") || requestPath.contains("/user-management") || 
+            requestPath.contains("/mentor-management") || requestPath.contains("/mentee-management")) {
             if (!"admin".equalsIgnoreCase(userRole)) {
                 System.out.println("[AuthenticationFilter] Admin access denied for user: " + username);
                 httpResponse.sendRedirect(httpRequest.getContextPath() + "/login");

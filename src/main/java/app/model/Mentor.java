@@ -3,20 +3,48 @@ package app.model;
 import java.io.Serial;
 import java.io.Serializable;
 
+import app.framework.DbTable;
+import app.framework.DbColumn;
+
+
+
+
+@DbTable(name = "mentors")
 public class Mentor implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
+    @DbColumn(name = "id", type = "SERIAL", primaryKey = true, autoIncrement = true)
     private String id;
+
+    @DbColumn(name = "user_id", type = "VARCHAR(50)", notNull = true)
     private String userId;
+
+    @DbColumn(name = "specialization", type = "VARCHAR(100)")
     private String specialization;
+
+    @DbColumn(name = "expertise", type = "TEXT")
     private String expertise;
+
+    @DbColumn(name = "years_of_experience", type = "INTEGER")
     private Integer yearsOfExperience;
+
+    @DbColumn(name = "bio", type = "TEXT")
     private String bio;
+
+    @DbColumn(name = "qualifications", type = "TEXT")
     private String qualifications;
+
+    @DbColumn(name = "phone_number", type = "VARCHAR(20)")
     private String phoneNumber;
+
+    @DbColumn(name = "status", type = "VARCHAR(50)", defaultValue = "'Active'")
     private String status;
+
+    @DbColumn(name = "created_at", type = "TIMESTAMP", defaultValue = "CURRENT_TIMESTAMP")
     private long createdAt;
+
+    @DbColumn(name = "updated_at", type = "TIMESTAMP", defaultValue = "CURRENT_TIMESTAMP")
     private long updatedAt;
 
     public Mentor(String id, String userId, String specialization, String expertise,
@@ -33,6 +61,10 @@ public class Mentor implements Serializable {
         this.status = status;
         this.createdAt = System.currentTimeMillis();
         this.updatedAt = System.currentTimeMillis();
+    }
+
+    public Mentor() {
+
     }
 
     // Getters and Setters

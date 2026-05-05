@@ -2,20 +2,43 @@ package app.model;
 
 import java.io.Serial;
 import java.io.Serializable;
+import app.framework.DbTable;
+import app.framework.DbColumn;
 
+
+@DbTable(name = "mentees")
 public class Mentee implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
+    @DbColumn(name = "id", type = "SERIAL", primaryKey = true, autoIncrement = true)
     private String id;
+
+    @DbColumn(name = "user_id", type = "VARCHAR(50)", notNull = true)
     private String userId;
+
+    @DbColumn(name = "education_level", type = "VARCHAR(100)")
     private String educationLevel;
+
+    @DbColumn(name = "field_of_study", type = "VARCHAR(100)")
     private String fieldOfStudy;
+
+    @DbColumn(name = "learning_goals", type = "TEXT")
     private String learningGoals;
+
+    @DbColumn(name = "phone_number", type = "VARCHAR(20)")
     private String phoneNumber;
+
+    @DbColumn(name = "mentor_id", type = "VARCHAR(50)")
     private String mentorId;
+
+    @DbColumn(name = "status", type = "VARCHAR(50)", defaultValue = "'Active'")
     private String status;
+
+    @DbColumn(name = "created_at", type = "TIMESTAMP", defaultValue = "CURRENT_TIMESTAMP")
     private long createdAt;
+
+    @DbColumn(name = "updated_at", type = "TIMESTAMP", defaultValue = "CURRENT_TIMESTAMP")
     private long updatedAt;
 
     public Mentee(String id, String userId, String educationLevel, String fieldOfStudy,

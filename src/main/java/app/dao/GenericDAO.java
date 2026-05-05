@@ -4,25 +4,12 @@ import app.dbconnection.DataSourceHelper;
 import app.framework.DbColumn;
 import app.framework.DbTable;
 import jakarta.enterprise.context.Dependent;
-import jakarta.inject.Inject;
-
 import java.lang.reflect.Field;
 import java.sql.*;
 import java.util.*;
 
-/**
- * GenericDAO - Base Data Access Object for all entities
- *
- * Provides generic CRUD operations for any entity class annotated with @DbTable
- * Handles reflection-based field mapping and SQL generation
- *
- * Usage:
- *  UserDAO extends GenericDAO<User, String> {
- *      public UserDAO(DataSourceHelper ds) {
- *          super(User.class, ds);
- *      }
- *  }
- */
+
+
 @Dependent
 public class GenericDAO<T, ID> {
 
@@ -33,7 +20,7 @@ public class GenericDAO<T, ID> {
 
     protected DataSourceHelper dataSourceHelper;
 
-    @Inject
+
     public GenericDAO(Class<T> entityClass, DataSourceHelper dataSourceHelper) {
         this.entityClass = entityClass;
         this.dataSourceHelper = dataSourceHelper;
@@ -98,7 +85,10 @@ public class GenericDAO<T, ID> {
             String sql = "SELECT * FROM " + tableName + " WHERE " + idColumnName + " = ?";
 
             PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setObject(1, id);
+            
+            // Convert ID to appropriate type for database query
+            Object idValue = convertIdValue(id, idField.getAnnotation(DbColumn.class).type());
+            ps.setObject(1, idValue);
 
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
@@ -150,8 +140,9 @@ public class GenericDAO<T, ID> {
                 ps.setObject(index++, field.get(entity));
             }
 
-            // Set the WHERE clause ID
-            ps.setObject(index, idValue);
+            // Set the WHERE clause ID - convert to appropriate type
+            Object convertedIdValue = convertIdValue((ID) idValue, idField.getAnnotation(DbColumn.class).type());
+            ps.setObject(index, convertedIdValue);
 
             ps.executeUpdate();
             System.out.println("[" + entityClass.getSimpleName() + "DAO] Entity updated successfully");
@@ -171,7 +162,10 @@ public class GenericDAO<T, ID> {
             String sql = "DELETE FROM " + tableName + " WHERE " + idColumnName + " = ?";
 
             PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setObject(1, id);
+            
+            // Convert ID to appropriate type for database query
+            Object idValue = convertIdValue(id, idField.getAnnotation(DbColumn.class).type());
+            ps.setObject(1, idValue);
 
             ps.executeUpdate();
             System.out.println("[" + entityClass.getSimpleName() + "DAO] Entity deleted successfully");
@@ -252,10 +246,114 @@ public class GenericDAO<T, ID> {
         for (Field field : columns) {
             DbColumn col = field.getAnnotation(DbColumn.class);
             Object value = rs.getObject(col.name());
+            
+            // Convert value to the correct field type
+            if (value != null) {
+                Class<?> fieldType = field.getType();
+                if (fieldType == String.class && !(value instanceof String)) {
+                    // Convert to String
+                    value = String.valueOf(value);
+                } else if (fieldType == Integer.class && !(value instanceof Integer)) {
+                    // Convert to Integer
+                    if (value instanceof Number) {
+                        value = ((Number) value).intValue();
+                    } else {
+                        value = Integer.parseInt(String.valueOf(value));
+                    }
+                } else if (fieldType == int.class && !(value instanceof Integer)) {
+                    // Convert to int (primitive)
+                    if (value instanceof Number) {
+                        value = ((Number) value).intValue();
+                    } else {
+                        value = Integer.parseInt(String.valueOf(value));
+                    }
+                } else if (fieldType == Long.class && !(value instanceof Long)) {
+                    // Convert to Long
+                    if (value instanceof Number) {
+                        value = ((Number) value).longValue();
+                    } else if (value instanceof java.sql.Timestamp) {
+                        value = ((java.sql.Timestamp) value).getTime();
+                    } else if (value instanceof java.util.Date) {
+                        value = ((java.util.Date) value).getTime();
+                    } else {
+                        value = Long.parseLong(String.valueOf(value));
+                    }
+                } else if (fieldType == long.class && !(value instanceof Long)) {
+                    // Convert to long (primitive)
+                    if (value instanceof Number) {
+                        value = ((Number) value).longValue();
+                    } else if (value instanceof java.sql.Timestamp) {
+                        value = ((java.sql.Timestamp) value).getTime();
+                    } else if (value instanceof java.util.Date) {
+                        value = ((java.util.Date) value).getTime();
+                    } else {
+                        value = Long.parseLong(String.valueOf(value));
+                    }
+                } else if (fieldType == Double.class && !(value instanceof Double)) {
+                    // Convert to Double
+                    if (value instanceof Number) {
+                        value = ((Number) value).doubleValue();
+                    } else {
+                        value = Double.parseDouble(String.valueOf(value));
+                    }
+                } else if (fieldType == double.class && !(value instanceof Double)) {
+                    // Convert to double (primitive)
+                    if (value instanceof Number) {
+                        value = ((Number) value).doubleValue();
+                    } else {
+                        value = Double.parseDouble(String.valueOf(value));
+                    }
+                } else if (fieldType == Boolean.class && !(value instanceof Boolean)) {
+                    // Convert to Boolean
+                    if (value instanceof Number) {
+                        value = ((Number) value).intValue() != 0;
+                    } else {
+                        value = Boolean.parseBoolean(String.valueOf(value));
+                    }
+                } else if (fieldType == boolean.class && !(value instanceof Boolean)) {
+                    // Convert to boolean (primitive)
+                    if (value instanceof Number) {
+                        value = ((Number) value).intValue() != 0;
+                    } else {
+                        value = Boolean.parseBoolean(String.valueOf(value));
+                    }
+                }
+            }
+            
             field.set(instance, value);
         }
 
         return instance;
+    }
+
+    /**
+     * Helper method to convert ID value to the appropriate database type
+     */
+    private Object convertIdValue(ID id, String columnType) {
+        if (id == null) {
+            return null;
+        }
+
+        String idStr = String.valueOf(id);
+        
+        // Check column type and convert accordingly
+        if (columnType.toUpperCase().contains("SERIAL") || columnType.toUpperCase().contains("INTEGER")) {
+            try {
+                return Integer.parseInt(idStr);
+            } catch (NumberFormatException e) {
+                return id;
+            }
+        } else if (columnType.toUpperCase().contains("BIGINT") || columnType.toUpperCase().contains("LONG")) {
+            try {
+                return Long.parseLong(idStr);
+            } catch (NumberFormatException e) {
+                return id;
+            }
+        } else if (columnType.toUpperCase().contains("VARCHAR") || columnType.toUpperCase().contains("TEXT")) {
+            return idStr;
+        }
+        
+        return id;
     }
 
     // Getters

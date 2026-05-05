@@ -174,6 +174,52 @@ public class MentorBean {
      }
 
     /**
+     * CREATE - Add mentor (admin function, no user registration)
+     */
+    public void addMentorAdmin(Mentor mentor) throws SQLException {
+        System.out.println("[MentorBean] === Admin Adding Mentor ===");
+        System.out.println("[MentorBean] User ID: " + mentor.getUserId() +
+                         ", Specialization: " + mentor.getSpecialization());
+
+        // Step 1: Check if user exists
+        System.out.println("[MentorBean] Checking if user exists...");
+        if (mentor.getUserId() == null || mentor.getUserId().isEmpty()) {
+            throw new IllegalArgumentException("User ID is required");
+        }
+        User user = userDAO.getUser(mentor.getUserId());
+        if (user == null) {
+            System.err.println("[MentorBean] User not found!");
+            throw new IllegalArgumentException("User with ID '" + mentor.getUserId() + "' not found");
+        }
+        System.out.println("[MentorBean] User found ✓");
+
+        // Step 2: Validate mentor data
+        System.out.println("[MentorBean] Validating mentor data...");
+        ValidationResult validationResult = mentorValidator.validate(mentor);
+        if (!validationResult.isValid()) {
+            System.err.println("[MentorBean] Validation failed!");
+            throw new IllegalArgumentException("Mentor validation failed: " + validationResult.getErrorMessages());
+        }
+        System.out.println("[MentorBean] Validation passed ✓");
+
+        // Step 3: Add mentor to database
+        System.out.println("[MentorBean] Adding mentor to database...");
+        mentorDAO.addMentor(mentor);
+        System.out.println("[MentorBean] Mentor added successfully, ID: " + mentor.getId());
+
+        // Step 4: Fire CRUD event for audit trail
+        crudEventFirer.fire(new CRUDEvent(
+            "Mentor",
+            mentor.getId(),
+            "CREATE",
+            "ADMIN",
+            "Mentor added by admin: " + user.getUsername() + ", Specialization: " + mentor.getSpecialization()
+        ));
+
+        System.out.println("[MentorBean] === Mentor Addition Completed Successfully ===");
+    }
+
+    /**
      * DELETE - Delete mentor
      */
     public void deleteMentor(String mentorId) throws SQLException {

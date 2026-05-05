@@ -11,13 +11,23 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import app.dao.UserDAO;
+import app.dao.MentorDAO;
+import app.dao.MenteeDAO;
 import app.model.User;
+import app.model.Mentor;
+import app.model.Mentee;
 
 @WebServlet(name = "Register", urlPatterns = {"/register"})
 public class RegisterPage extends HttpServlet {
 
     @Inject
     private UserDAO userDAO;
+
+    @Inject
+    private MentorDAO mentorDAO;
+
+    @Inject
+    private MenteeDAO menteeDAO;
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
@@ -69,8 +79,46 @@ public class RegisterPage extends HttpServlet {
 
             // Add user to database
             userDAO.addUser(newUser);
+            String userId = newUser.getId();
 
-            System.out.println("[RegisterPage] User registered successfully: " + username);
+            System.out.println("[RegisterPage] User registered successfully: " + username + " with ID: " + userId);
+
+            // Save role-specific data
+            try {
+                if ("mentor".equalsIgnoreCase(role)) {
+                    Mentor mentor = new Mentor();
+                    mentor.setUserId(userId);
+                    mentor.setSpecialization(request.getParameter("specialization"));
+                    mentor.setExpertise(request.getParameter("expertise"));
+                    String yearsExp = request.getParameter("yearsOfExperience");
+                    if (yearsExp != null && !yearsExp.isEmpty()) {
+                        mentor.setYearsOfExperience(Integer.parseInt(yearsExp));
+                    }
+                    mentor.setBio(request.getParameter("bio"));
+                    mentor.setQualifications(request.getParameter("qualifications"));
+                    mentor.setPhoneNumber(request.getParameter("phoneNumber"));
+                    mentor.setStatus("Active");
+                    
+                    mentorDAO.addMentor(mentor);
+                    System.out.println("[RegisterPage] Mentor profile created for user: " + userId);
+                } else if ("mentee".equalsIgnoreCase(role)) {
+                    Mentee mentee = new Mentee();
+                    mentee.setUserId(userId);
+                    mentee.setEducationLevel(request.getParameter("educationLevel"));
+                    mentee.setFieldOfStudy(request.getParameter("fieldOfStudy"));
+                    mentee.setLearningGoals(request.getParameter("learningGoals"));
+                    mentee.setPhoneNumber(request.getParameter("phoneNumber"));
+                    mentee.setStatus("Active");
+                    
+                    menteeDAO.addMentee(mentee);
+                    System.out.println("[RegisterPage] Mentee profile created for user: " + userId);
+                }
+            } catch (SQLException e) {
+                System.err.println("[RegisterPage] Error creating role-specific profile: " + e.getMessage());
+                e.printStackTrace();
+                // Note: User is already created, but role-specific data failed
+                request.setAttribute("warningMessage", "User created but failed to create profile details: " + e.getMessage());
+            }
 
             // Success - forward to success page
             request.setAttribute("username", username);

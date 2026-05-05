@@ -172,6 +172,52 @@ public class MenteeBean {
     }
 
     /**
+     * CREATE - Add mentee (admin function, no user registration)
+     */
+    public void addMenteeAdmin(Mentee mentee) throws SQLException {
+        System.out.println("[MenteeBean] === Admin Adding Mentee ===");
+        System.out.println("[MenteeBean] User ID: " + mentee.getUserId() +
+                         ", Field of Study: " + mentee.getFieldOfStudy());
+
+        // Step 1: Check if user exists
+        System.out.println("[MenteeBean] Checking if user exists...");
+        if (mentee.getUserId() == null || mentee.getUserId().isEmpty()) {
+            throw new IllegalArgumentException("User ID is required");
+        }
+        User user = userDAO.getUser(mentee.getUserId());
+        if (user == null) {
+            System.err.println("[MenteeBean] User not found!");
+            throw new IllegalArgumentException("User with ID '" + mentee.getUserId() + "' not found");
+        }
+        System.out.println("[MenteeBean] User found ✓");
+
+        // Step 2: Validate mentee data
+        System.out.println("[MenteeBean] Validating mentee data...");
+        ValidationResult validationResult = menteeValidator.validate(mentee);
+        if (!validationResult.isValid()) {
+            System.err.println("[MenteeBean] Validation failed!");
+            throw new IllegalArgumentException("Mentee validation failed: " + validationResult.getErrorMessages());
+        }
+        System.out.println("[MenteeBean] Validation passed ✓");
+
+        // Step 3: Add mentee to database
+        System.out.println("[MenteeBean] Adding mentee to database...");
+        menteeDAO.addMentee(mentee);
+        System.out.println("[MenteeBean] Mentee added successfully, ID: " + mentee.getId());
+
+        // Step 4: Fire CRUD event for audit trail
+        crudEventFirer.fire(new CRUDEvent(
+            "Mentee",
+            mentee.getId(),
+            "CREATE",
+            "ADMIN",
+            "Mentee added by admin: " + user.getUsername() + ", Field: " + mentee.getFieldOfStudy()
+        ));
+
+        System.out.println("[MenteeBean] === Mentee Addition Completed Successfully ===");
+    }
+
+    /**
      * DELETE - Delete mentee
      */
     public void deleteMentee(String menteeId) throws SQLException {

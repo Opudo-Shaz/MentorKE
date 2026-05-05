@@ -32,30 +32,38 @@ public class AdminDashboard extends HttpServlet {
             view = "users";
         }
 
+        System.out.println("\n[AdminDashboard] === doGet called with view: " + view + " ===");
         request.setAttribute("view", view);
 
         try {
 
             if ("users".equalsIgnoreCase(view)) {
                 List<?> users = userDAO.getAllUsers();
+                System.out.println("[AdminDashboard] Retrieved " + (users != null ? users.size() : "null") + " users");
                 request.setAttribute("users", users);
             }
 
             else if ("mentors".equalsIgnoreCase(view)) {
-                request.setAttribute("mentors", mentorDAO.getAllMentors());
+                List<?> mentors = mentorDAO.getAllMentors();
+                System.out.println("[AdminDashboard] Retrieved " + (mentors != null ? mentors.size() : "null") + " mentors");
+                request.setAttribute("mentors", mentors);
             }
 
             else if ("mentees".equalsIgnoreCase(view)) {
-                request.setAttribute("mentees", menteeDAO.getAllMentees());
+                List<?> mentees = menteeDAO.getAllMentees();
+                System.out.println("[AdminDashboard] Retrieved " + (mentees != null ? mentees.size() : "null") + " mentees");
+                request.setAttribute("mentees", mentees);
             }
 
             else {
+                System.out.println("[AdminDashboard] Unknown view: " + view);
                 request.setAttribute("error", "Unknown view: " + view);
             }
 
         } catch (Exception e) {
+            System.err.println("[AdminDashboard] ERROR: " + e.getMessage());
             e.printStackTrace();
-            request.setAttribute("error", "Failed to load data");
+            request.setAttribute("error", "Failed to load data: " + e.getMessage());
         }
 
         request.getRequestDispatcher("/admin-dashboard.jsp")
