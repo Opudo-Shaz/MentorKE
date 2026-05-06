@@ -3,7 +3,9 @@ package app.dao;
 import app.dbconnection.DataSourceHelper;
 import app.framework.DbColumn;
 import app.framework.DbTable;
+import app.utility.logging.AppLogger;
 import jakarta.enterprise.context.Dependent;
+import org.slf4j.Logger;
 import java.lang.reflect.Field;
 import java.sql.*;
 import java.util.*;
@@ -12,6 +14,8 @@ import java.util.*;
 
 @Dependent
 public class GenericDAO<T, ID> {
+
+    private static final Logger logger = AppLogger.getLogger(GenericDAO.class);
 
     private final Class<T> entityClass;
     private final String tableName;
@@ -68,7 +72,7 @@ public class GenericDAO<T, ID> {
             }
 
             ps.executeUpdate();
-            System.out.println("[" + entityClass.getSimpleName() + "DAO] Entity saved successfully");
+            logger.info("[{}DAO] Entity saved successfully", entityClass.getSimpleName());
 
         } catch (IllegalAccessException e) {
             throw new SQLException("Error accessing field values", e);
@@ -145,7 +149,7 @@ public class GenericDAO<T, ID> {
             ps.setObject(index, convertedIdValue);
 
             ps.executeUpdate();
-            System.out.println("[" + entityClass.getSimpleName() + "DAO] Entity updated successfully");
+            logger.info("[{}DAO] Entity updated successfully", entityClass.getSimpleName());
 
         } catch (IllegalAccessException e) {
             throw new SQLException("Error accessing field values", e);
@@ -168,7 +172,7 @@ public class GenericDAO<T, ID> {
             ps.setObject(1, idValue);
 
             ps.executeUpdate();
-            System.out.println("[" + entityClass.getSimpleName() + "DAO] Entity deleted successfully");
+            logger.info("[{}DAO] Entity deleted successfully", entityClass.getSimpleName());
 
         } catch (Exception e) {
             throw new SQLException("Error deleting entity", e);

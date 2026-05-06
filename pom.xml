@@ -92,6 +92,27 @@
       <version>0.10.2</version>
     </dependency>
 
+    <!-- SLF4J API -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>2.0.11</version>
+    </dependency>
+
+    <!-- Logback Implementation -->
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>1.5.0</version>
+    </dependency>
+
+    <!-- Logback Core -->
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-core</artifactId>
+      <version>1.5.0</version>
+    </dependency>
+
   </dependencies>
 
   <build>

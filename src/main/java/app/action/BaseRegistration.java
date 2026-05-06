@@ -1,6 +1,8 @@
 package app.action;
 import app.model.User;
 import app.dao.UserDAO;
+import app.utility.logging.AppLogger;
+import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,6 +10,7 @@ import java.sql.SQLException;
 
 
 public abstract class BaseRegistration<T extends User> {
+    protected static final Logger logger = AppLogger.getLogger(BaseRegistration.class);
     protected String username;
     protected String password;
     protected String email;
@@ -24,34 +27,34 @@ public abstract class BaseRegistration<T extends User> {
     }
 
     public boolean register() {
-        System.out.println("[BaseRegistration] Starting registration for role: " + role);
+        logger.info("Starting registration for role: {}", role);
         errors.clear();
         // Common validation
         validateCommon();
         if (!errors.isEmpty()) {
-            System.out.println("[BaseRegistration] Common validation failed: " + errors);
+            logger.warn("Common validation failed: {}", errors);
             return false;
         }
         // Role-specific validation
         validateRoleSpecific();
         if (!errors.isEmpty()) {
-            System.out.println("[BaseRegistration] Role-specific validation failed: " + errors);
+            logger.warn("Role-specific validation failed: {}", errors);
             return false;
         }
         // Create and persist user to database
         try {
             T user = createUser();
             userDAO.addUser(user);
-            System.out.println("[BaseRegistration] User registered successfully: " + username + " (" + role + ")");
+            logger.info("User registered successfully: {} ({})", username, role);
             return true;
         } catch (SQLException e) {
-            System.err.println("[BaseRegistration] Error persisting user to database: " + e.getMessage());
+            logger.error("Error persisting user to database: {}", e.getMessage());
             errors.add("Database error: " + e.getMessage());
             return false;
         }
     }
     protected void validateCommon() {
-        System.out.println("[BaseRegistration] Running common validation...");
+        logger.debug("Running common validation...");
         if (username == null || username.trim().isEmpty()) {
             errors.add("Username is required");
         } else if (username.length() < 3) {

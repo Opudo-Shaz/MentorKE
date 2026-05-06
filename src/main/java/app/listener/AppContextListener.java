@@ -2,20 +2,24 @@ package app.listener;
 
 import app.dbconnection.DatabaseInitializer;
 import app.dbconnection.DataSourceHelper;
+import app.utility.logging.AppLogger;
 import jakarta.enterprise.inject.spi.CDI;
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
 import jakarta.servlet.annotation.WebListener;
+import org.slf4j.Logger;
 
 @WebListener
 public class AppContextListener implements ServletContextListener {
 
+    private static final Logger logger = AppLogger.getLogger(AppContextListener.class);
+
     @Override
     public void contextInitialized(ServletContextEvent sce) {
 
-        System.out.println("\n========================================");
-        System.out.println("[AppContextListener] Application Starting");
-        System.out.println("========================================\n");
+        logger.info("\n========================================");
+        logger.info("[AppContextListener] Application Starting");
+        logger.info("========================================\n");
 
         try {
             DatabaseInitializer initializer =
@@ -23,12 +27,11 @@ public class AppContextListener implements ServletContextListener {
 
             initializer.initializeDatabase();
 
-            System.out.println("[AppContextListener] Database initialized successfully");
-            System.out.println("[AppContextListener] Application ready\n");
+            logger.info("[AppContextListener] Database initialized successfully");
+            logger.info("[AppContextListener] Application ready\n");
 
         } catch (Exception e) {
-            System.err.println("[AppContextListener] CRITICAL ERROR initializing DB");
-            e.printStackTrace();
+            logger.error("[AppContextListener] CRITICAL ERROR initializing DB", e);
             throw new RuntimeException(e);
         }
     }
@@ -36,9 +39,9 @@ public class AppContextListener implements ServletContextListener {
     @Override
     public void contextDestroyed(ServletContextEvent sce) {
 
-        System.out.println("\n========================================");
-        System.out.println("[AppContextListener] Application Stopping");
-        System.out.println("========================================\n");
+        logger.info("\n========================================");
+        logger.info("[AppContextListener] Application Stopping");
+        logger.info("========================================\n");
 
         try {
             DataSourceHelper helper =
@@ -46,10 +49,10 @@ public class AppContextListener implements ServletContextListener {
 
             helper.close();
 
-            System.out.println("[AppContextListener] DataSource closed");
+            logger.info("[AppContextListener] DataSource closed");
 
         } catch (Exception e) {
-            System.err.println("[AppContextListener] Error closing DataSource: " + e.getMessage());
+            logger.error("[AppContextListener] Error closing DataSource: " + e.getMessage(), e);
         }
     }
 }

@@ -7,10 +7,14 @@ import app.utility.validation.ValidatorQualifier;
 import app.utility.validation.Validator;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
+import app.utility.logging.AppLogger;
+import org.slf4j.Logger;
 
 
 @RequestScoped
 public class MentorRegistration extends BaseRegistration<User> {
+
+    private static final Logger logger = AppLogger.getLogger(MentorRegistration.class);
 
     @Inject
     @ValidatorQualifier(ValidatorQualifier.ValidationChoice.MENTOR)
@@ -28,12 +32,12 @@ public class MentorRegistration extends BaseRegistration<User> {
 
     @Override
     protected void validateRoleSpecific() {
-        System.out.println("[MentorRegistration] Running mentor-specific validation...");
+        logger.debug("Running mentor-specific validation...");
         // Mentors need strong passwords for security
         if (password.length() < 8) {
             errors.add("Mentor password must be at least 8 characters for security");
         }
-        System.out.println("[MentorRegistration] Mentor validation complete");
+        logger.debug("Mentor validation complete");
     }
 
     @Override

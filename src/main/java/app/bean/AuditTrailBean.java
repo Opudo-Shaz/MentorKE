@@ -3,14 +3,14 @@ package app.bean;
 import app.bean.event.CRUDEvent;
 import app.dao.AuditTrailDAO;
 import app.model.AuditTrail;
-
 import jakarta.ejb.Singleton;
 import jakarta.ejb.Lock;
 import jakarta.ejb.LockType;
-
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import app.utility.logging.AppLogger;
+import org.slf4j.Logger;
 
 import java.sql.SQLException;
 
@@ -18,6 +18,8 @@ import java.sql.SQLException;
 @Lock(LockType.WRITE)
 @Named("auditTrailBean")
 public class AuditTrailBean {
+
+    private static final Logger logger = AppLogger.getLogger(AuditTrailBean.class);
 
     private AuditTrailDAO auditTrailDAO;
 
@@ -34,10 +36,8 @@ public class AuditTrailBean {
      * Observes CRUD events fired from other beans
      */
     public void observeCRUDEvent(@Observes CRUDEvent event) {
-        System.out.println("[AuditTrailBean] === CRUD Event Observed ===");
-        System.out.println("[AuditTrailBean] Entity: " + event.getEntityType() +
-                ", Operation: " + event.getOperation() +
-                ", Entity ID: " + event.getEntityId());
+        logger.info("=== CRUD Event Observed ===");
+        logger.info("Entity: {}, Operation: {}, Entity ID: {}", event.getEntityType(), event.getOperation(), event.getEntityId());
 
         try {
             AuditTrail audit = new AuditTrail(
@@ -50,10 +50,10 @@ public class AuditTrailBean {
 
             auditTrailDAO.addAuditTrail(audit);
 
-            System.out.println("[AuditTrailBean] Audit recorded. ID: " + audit.getId());
+            logger.info("Audit recorded. ID: {}", audit.getId());
 
         } catch (SQLException e) {
-            System.err.println("[AuditTrailBean] Error saving audit trail: " + e.getMessage());
+            logger.error("Error saving audit trail: {}", e.getMessage());
             e.printStackTrace();
         }
     }

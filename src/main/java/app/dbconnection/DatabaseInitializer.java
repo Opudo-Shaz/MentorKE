@@ -4,6 +4,8 @@ import app.model.*;
 import app.framework.DbTable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import app.utility.logging.AppLogger;
+import org.slf4j.Logger;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -15,12 +17,14 @@ import java.util.Set;
 @ApplicationScoped
 public class DatabaseInitializer {
 
+    private static final Logger logger = AppLogger.getLogger(DatabaseInitializer.class);
+
     @Inject
     private DataSourceHelper dataSourceHelper;
 
     public void initializeDatabase() throws SQLException {
 
-        System.out.println("[DatabaseInitializer] Starting database initialization...");
+        logger.info("Starting database initialization...");
 
         try {
             Class.forName("org.postgresql.Driver");
@@ -39,7 +43,7 @@ public class DatabaseInitializer {
         
         TableGenerator.generateTables(dataSourceHelper.getDataSource(), entityClasses);
 
-        System.out.println("[DatabaseInitializer] Database initialization completed successfully");
+        logger.info("Database initialization completed successfully");
     }
 
     private void createDatabaseIfNotExists() throws SQLException {
@@ -60,7 +64,7 @@ public class DatabaseInitializer {
             var result = stmt.executeQuery(checkDbQuery);
 
             if (result.next()) {
-                System.out.println("[DatabaseInitializer] Database already exists");
+                logger.debug("Database already exists");
                 return;
             }
 
@@ -69,7 +73,7 @@ public class DatabaseInitializer {
 
             stmt.executeUpdate(createDbQuery);
 
-            System.out.println("[DatabaseInitializer] Database created successfully");
+            logger.info("Database created successfully");
         }
     }
 }

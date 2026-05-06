@@ -1,5 +1,6 @@
 package app.filter;
 
+import app.utility.logging.AppLogger;
 import jakarta.servlet.annotation.WebFilter;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
@@ -9,6 +10,7 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
 import java.io.IOException;
 
 @WebFilter(
@@ -17,9 +19,11 @@ import java.io.IOException;
 )
 public class LoggingFilter implements Filter {
 
+    private static final Logger logger = AppLogger.getLogger(LoggingFilter.class);
+
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
-        System.out.println("[LoggingFilter] Filter initialized");
+        logger.debug("[LoggingFilter] Filter initialized");
     }
 
     @Override
@@ -36,7 +40,7 @@ public class LoggingFilter implements Filter {
         String remoteIP = httpRequest.getRemoteAddr();
 
         String fullPath = queryString != null ? path + "?" + queryString : path;
-        System.out.println("[LoggingFilter] [REQUEST] " + method + " " + fullPath + " from " + remoteIP);
+        logger.debug("[LoggingFilter] [REQUEST] {} {} from {}", method, fullPath, remoteIP);
 
         try {
             // Continue with the request
@@ -45,13 +49,13 @@ public class LoggingFilter implements Filter {
             long endTime = System.currentTimeMillis();
             long duration = endTime - startTime;
             int statusCode = httpResponse.getStatus();
-            System.out.println("[LoggingFilter] [RESPONSE] " + method + " " + path + " - Status: " + statusCode + " - Duration: " + duration + "ms");
+            logger.info("[LoggingFilter] [RESPONSE] {} {} - Status: {} - Duration: {}ms", method, path, statusCode, duration);
         }
     }
 
     @Override
     public void destroy() {
-        System.out.println("[LoggingFilter] Filter destroyed");
+        logger.debug("[LoggingFilter] Filter destroyed");
     }
 }
 

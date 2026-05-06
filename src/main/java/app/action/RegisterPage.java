@@ -16,9 +16,13 @@ import app.dao.MenteeDAO;
 import app.model.User;
 import app.model.Mentor;
 import app.model.Mentee;
+import app.utility.logging.AppLogger;
+import org.slf4j.Logger;
 
 @WebServlet(name = "Register", urlPatterns = {"/register"})
 public class RegisterPage extends HttpServlet {
+
+    private static final Logger logger = AppLogger.getLogger(RegisterPage.class);
 
     @Inject
     private UserDAO userDAO;
@@ -41,7 +45,7 @@ public class RegisterPage extends HttpServlet {
     }
 
     private void handlePost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
-        System.out.println("[RegisterPage] Processing registration form submission");
+        logger.info("Processing registration form submission");
 
         // === DYNAMICALLY EXTRACT FORM PARAMETERS USING REFLECTION ===
         Map<String, String> formData = extractFormDataUsingReflection(request);
@@ -56,7 +60,7 @@ public class RegisterPage extends HttpServlet {
             password == null || password.trim().isEmpty() ||
             email == null || email.trim().isEmpty() ||
             role == null || role.trim().isEmpty()) {
-            System.out.println("[RegisterPage] Validation failed - missing fields");
+            logger.warn("Validation failed - missing fields");
             request.setAttribute("errorMessage", "All fields are required");
             request.getRequestDispatcher("/register-error.jsp").forward(request, response);
             return;
@@ -66,7 +70,7 @@ public class RegisterPage extends HttpServlet {
         try {
             // Check if username already exists
             if (userDAO.getUserByUsername(username) != null) {
-                System.out.println("[RegisterPage] Username already exists: " + username);
+                logger.warn("Username already exists: {}", username);
                 request.setAttribute("errorMessage", "Username already exists. Please choose a different username.");
                 request.getRequestDispatcher("/register-error.jsp").forward(request, response);
                 return;
@@ -75,13 +79,13 @@ public class RegisterPage extends HttpServlet {
             // Create new user
             User newUser = new User(null, username, password, role, email, "Active");
 
-            System.out.println("[RegisterPage] Creating user: username=" + username + ", role=" + role + ", email=" + email);
+            logger.info("Creating user: username={}, role={}, email={}", username, role, email);
 
             // Add user to database
             userDAO.addUser(newUser);
             String userId = newUser.getId();
 
-            System.out.println("[RegisterPage] User registered successfully: " + username + " with ID: " + userId);
+            logger.info("User registered successfully: {} with ID: {}", username, userId);
 
             // Save role-specific data
             try {
@@ -100,7 +104,7 @@ public class RegisterPage extends HttpServlet {
                     mentor.setStatus("Active");
                     
                     mentorDAO.addMentor(mentor);
-                    System.out.println("[RegisterPage] Mentor profile created for user: " + userId);
+                    logger.info("Mentor profile created for user: {}", userId);
                 } else if ("mentee".equalsIgnoreCase(role)) {
                     Mentee mentee = new Mentee();
                     mentee.setUserId(userId);
@@ -111,11 +115,10 @@ public class RegisterPage extends HttpServlet {
                     mentee.setStatus("Active");
                     
                     menteeDAO.addMentee(mentee);
-                    System.out.println("[RegisterPage] Mentee profile created for user: " + userId);
+                    logger.info("Mentee profile created for user: {}", userId);
                 }
             } catch (SQLException e) {
-                System.err.println("[RegisterPage] Error creating role-specific profile: " + e.getMessage());
-                e.printStackTrace();
+                logger.error("Error creating role-specific profile: {}", e.getMessage());
                 // Note: User is already created, but role-specific data failed
                 request.setAttribute("warningMessage", "User created but failed to create profile details: " + e.getMessage());
             }
@@ -126,7 +129,7 @@ public class RegisterPage extends HttpServlet {
             request.getRequestDispatcher("/register-success.jsp").forward(request, response);
 
         } catch (SQLException e) {
-            System.err.println("[RegisterPage] Database error during registration: " + e.getMessage());
+            logger.error("Database error during registration: {}", e.getMessage());
             request.setAttribute("errorMessage", "Error registering user: " + e.getMessage());
             request.getRequestDispatcher("/register-error.jsp").forward(request, response);
         }
@@ -140,7 +143,7 @@ public class RegisterPage extends HttpServlet {
      */
     private Map<String, String> extractFormDataUsingReflection(HttpServletRequest request) {
         Map<String, String> formData = new HashMap<>();
-        System.out.println("[RegisterPage] Extracting form data using Java Reflection");
+        logger.debug("Extracting form data using Java Reflection");
 
         try {
             // Get all declared fields from User class
@@ -162,14 +165,13 @@ public class RegisterPage extends HttpServlet {
 
                 if (paramValue != null) {
                     formData.put(fieldName, paramValue);
-                    System.out.println("[RegisterPage] Extracted parameter: " + fieldName + " = " + (fieldName.equals("password") ? "****" : paramValue));
+                    logger.debug("Extracted parameter: {} = {}", fieldName, fieldName.equals("password") ? "****" : paramValue);
                 } else {
-                    System.out.println("[RegisterPage] Parameter not found: " + fieldName);
+                    logger.debug("Parameter not found: {}", fieldName);
                 }
             }
         } catch (Exception e) {
-            System.err.println("[RegisterPage] Error extracting form data: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Error extracting form data: {}", e.getMessage());
         }
 
         return formData;

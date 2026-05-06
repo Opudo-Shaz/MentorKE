@@ -8,8 +8,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.inject.Inject;
 import java.io.IOException;
-
 import jakarta.servlet.annotation.WebServlet;
+import app.utility.logging.AppLogger;
+import org.slf4j.Logger;
 
 /**
  * MenteeManagement Servlet - Handles HTTP requests for Mentee CRUD operations
@@ -26,31 +27,33 @@ import jakarta.servlet.annotation.WebServlet;
         urlPatterns = {"/mentee-management"})
 public class MenteeManagement extends HttpServlet {
 
+    private static final Logger logger = AppLogger.getLogger(MenteeManagement.class);
+
     @Inject
     private MenteeBean menteeBean;
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        System.out.println("\n[MenteeManagement] === HTTP POST called ===");
+        logger.info("=== HTTP POST called ===");
 
         // STEP 1: Verify admin session
         HttpSession session = request.getSession(false);
         if (session == null || !Boolean.TRUE.equals(session.getAttribute("isLoggedIn"))) {
-            System.out.println("[MenteeManagement] Session invalid or not logged in");
+            logger.warn("Session invalid or not logged in");
             response.sendRedirect("login");
             return;
         }
 
         String role = String.valueOf(session.getAttribute("role"));
         if (!"admin".equalsIgnoreCase(role)) {
-            System.out.println("[MenteeManagement] User is not admin, role=" + role);
+            logger.warn("User is not admin, role={}", role);
             response.sendRedirect("login");
             return;
         }
 
         // STEP 2: Extract action parameter
         String action = request.getParameter("action");
-        System.out.println("[MenteeManagement] Action requested: " + action);
+        logger.info("Action requested: {}", action);
 
         // STEP 3: Route to bean based on action
         try {
@@ -63,7 +66,7 @@ public class MenteeManagement extends HttpServlet {
             } else if ("delete".equalsIgnoreCase(action)) {
                 redirectParam = handleDeleteMentee(request);
             } else {
-                System.out.println("[MenteeManagement] Unknown action, redirecting to admin");
+                logger.warn("Unknown action, redirecting to admin");
                 response.sendRedirect("admin?view=mentees");
                 return;
             }
@@ -72,12 +75,11 @@ public class MenteeManagement extends HttpServlet {
             response.sendRedirect("admin?view=mentees&" + redirectParam);
 
         } catch (IllegalArgumentException e) {
-            System.err.println("[MenteeManagement] Validation error: " + e.getMessage());
+            logger.error("Validation error: {}", e.getMessage());
             String errorMsg = e.getMessage().replace("Mentee validation failed: ", "");
             response.sendRedirect("admin?view=mentees&error=" + java.net.URLEncoder.encode(errorMsg, "UTF-8"));
         } catch (Exception e) {
-            System.err.println("[MenteeManagement] Error: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Error: {}", e.getMessage());
             response.sendRedirect("admin?view=mentees&error=" + java.net.URLEncoder.encode(e.getMessage(), "UTF-8"));
         }
     }
@@ -86,7 +88,7 @@ public class MenteeManagement extends HttpServlet {
      * Handle add mentee request - only extracts parameters and delegates to bean
      */
     private String handleAddMentee(HttpServletRequest request) throws Exception {
-        System.out.println("[MenteeManagement] handleAddMentee - extracting parameters");
+        logger.debug("handleAddMentee - extracting parameters");
 
         String userId = safe(request.getParameter("userId"));
         String educationLevel = safe(request.getParameter("educationLevel"));
@@ -117,7 +119,7 @@ public class MenteeManagement extends HttpServlet {
      * Handle update mentee request - only extracts parameters and delegates to bean
      */
     private String handleUpdateMentee(HttpServletRequest request) throws Exception {
-        System.out.println("[MenteeManagement] handleUpdateMentee - extracting parameters");
+        logger.debug("handleUpdateMentee - extracting parameters");
 
         String menteeId = safe(request.getParameter("id"));
         String educationLevel = safe(request.getParameter("educationLevel"));
@@ -147,7 +149,7 @@ public class MenteeManagement extends HttpServlet {
      * Handle delete mentee request - only extracts parameters and delegates to bean
      */
     private String handleDeleteMentee(HttpServletRequest request) throws Exception {
-        System.out.println("[MenteeManagement] handleDeleteMentee - extracting parameters");
+        logger.debug("handleDeleteMentee - extracting parameters");
 
         String menteeId = safe(request.getParameter("menteeId"));
 

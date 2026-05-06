@@ -1,6 +1,8 @@
 package app.dbconnection;
 import app.framework.DbColumn;
 import app.framework.DbTable;
+import app.utility.logging.AppLogger;
+import org.slf4j.Logger;
 import javax.sql.DataSource;
 import java.lang.reflect.Field;
 import java.sql.Connection;
@@ -11,8 +13,10 @@ import java.util.List;
 import java.util.Set;
 
 public class TableGenerator {
+    private static final Logger logger = AppLogger.getLogger(TableGenerator.class);
+
     public static void generateTables(DataSource ds, Set<Class<?>> entityClasses) {
-        System.out.println("[TableGenerator] Starting annotation-based table generation...");
+        logger.info("Starting annotation-based table generation...");
         for (Class<?> clazz : entityClasses) {
             if (!clazz.isAnnotationPresent(DbTable.class)) {
                 continue;
@@ -22,13 +26,12 @@ public class TableGenerator {
             try {
                 String sql = generateCreateTableSQL(clazz, tableName);
                 execute(ds, sql);
-                System.out.println("[TableGenerator] Table processed: " + tableName);
+                logger.info("Table processed: {}", tableName);
             } catch (Exception e) {
-                System.err.println("[TableGenerator] Error processing table " + tableName + ": " + e.getMessage());
-                e.printStackTrace();
+                logger.error("Error processing table {}: {}", tableName, e.getMessage());
             }
         }
-        System.out.println("[TableGenerator] Table generation completed successfully");
+        logger.info("Table generation completed successfully");
     }
     private static String generateCreateTableSQL(Class<?> clazz, String tableName) {
         List<String> columns = new ArrayList<>();
@@ -71,13 +74,12 @@ public class TableGenerator {
         try (Connection conn = ds.getConnection();
              Statement stmt = conn.createStatement()) {
             stmt.executeUpdate(sql);
-            System.out.println("[TableGenerator] Executed: " + sql);
+            logger.debug("Executed: {}", sql);
         } catch (SQLException e) {
             if (e.getMessage().contains("already exists")) {
-                System.out.println("[TableGenerator] Table already exists (skipping)");
+                logger.debug("Table already exists (skipping)");
             } else {
-                System.err.println("[TableGenerator] Error executing SQL: " + e.getMessage());
-                e.printStackTrace();
+                logger.error("Error executing SQL: {}", e.getMessage());
             }
         }
     }

@@ -13,6 +13,8 @@ import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.ejb.Stateless;
+import app.utility.logging.AppLogger;
+import org.slf4j.Logger;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -24,6 +26,8 @@ import java.util.List;
 @Stateless
 @Named("menteeBean")
 public class MenteeBean {
+
+    private static final Logger logger = AppLogger.getLogger(MenteeBean.class);
 
     private MenteeDAO menteeDAO;
     private UserDAO userDAO;
@@ -40,7 +44,7 @@ public class MenteeBean {
 
     // PUBLIC NO-ARG CONSTRUCTOR (required by CDI/EJB)
     public MenteeBean() {
-        System.out.println("[MenteeBean] CDI Bean initialized with default constructor");
+        logger.debug("CDI Bean initialized with default constructor");
     }
 
     // CONSTRUCTOR INJECTION (alternative)
@@ -48,39 +52,37 @@ public class MenteeBean {
     public MenteeBean(MenteeDAO menteeDAO, UserDAO userDAO) {
         this.menteeDAO = menteeDAO;
         this.userDAO = userDAO;
-        System.out.println("[MenteeBean] CDI Bean initialized with constructor injection");
+        logger.debug("CDI Bean initialized with constructor injection");
     }
 
     /**
      * CREATE - Register a new mentee
      */
     public void registerMentee(Mentee mentee, User user) throws SQLException {
-        System.out.println("[MenteeBean] === Starting Mentee Registration ===");
-        System.out.println("[MenteeBean] Username: " + user.getUsername() +
-                         ", Email: " + user.getEmail() +
-                         ", Field of Study: " + mentee.getFieldOfStudy());
+        logger.info("=== Starting Mentee Registration ===");
+        logger.info("Username: {}, Email: {}, Field of Study: {}", user.getUsername(), user.getEmail(), mentee.getFieldOfStudy());
 
         // Step 1: Validate mentee data
         ValidationResult validationResult = menteeValidator.validate(mentee);
         if (!validationResult.isValid()) {
-            System.err.println("[MenteeBean] Validation failed!");
+            logger.error("Validation failed!");
             throw new IllegalArgumentException("Mentee validation failed: " + validationResult.getErrorMessages());
         }
-        System.out.println("[MenteeBean] Validation passed ✓");
+        logger.debug("Validation passed ✓");
 
         // Step 2: Add user to database first
-        System.out.println("[MenteeBean] Adding user to database...");
+        logger.debug("Adding user to database...");
         userDAO.addUser(user);
-        System.out.println("[MenteeBean] User added successfully, ID: " + user.getId());
+        logger.info("User added successfully, ID: {}", user.getId());
 
         // Step 3: Set the user ID for mentee
         mentee.setUserId(user.getId());
         mentee.setStatus("Active");
 
         // Step 4: Add mentee to database
-        System.out.println("[MenteeBean] Adding mentee to database...");
+        logger.debug("Adding mentee to database...");
         menteeDAO.addMentee(mentee);
-        System.out.println("[MenteeBean] Mentee added successfully, ID: " + mentee.getId());
+        logger.info("Mentee added successfully, ID: {}", mentee.getId());
 
         // Step 5: Fire CRUD event for audit trail
         crudEventFirer.fire(new CRUDEvent(
@@ -92,7 +94,7 @@ public class MenteeBean {
         ));
 
         // Step 6: Fire email event for mentees
-        System.out.println("[MenteeBean] Firing email registration event for mentee...");
+        logger.debug("Firing email registration event for mentee...");
         userRegisteredEvent.fire(
             new UserRegisteredEvent(
                 user.getEmail(),
@@ -101,14 +103,14 @@ public class MenteeBean {
             )
         );
 
-        System.out.println("[MenteeBean] === Mentee Registration Completed Successfully ===");
+        logger.info("=== Mentee Registration Completed Successfully ===");
     }
 
     /**
      * READ - Get mentee by ID
      */
     public Mentee getMenteeById(String menteeId) throws SQLException {
-        System.out.println("[MenteeBean] Fetching mentee by ID: " + menteeId);
+        logger.debug("Fetching mentee by ID: {}", menteeId);
         return menteeDAO.getMentee(menteeId);
     }
 
@@ -116,7 +118,7 @@ public class MenteeBean {
      * READ - Get mentee by user ID
      */
     public Mentee getMenteeByUserId(String userId) throws SQLException {
-        System.out.println("[MenteeBean] Fetching mentee for user ID: " + userId);
+        logger.debug("Fetching mentee for user ID: {}", userId);
         return menteeDAO.getMenteeByUserId(userId);
     }
 
@@ -124,7 +126,7 @@ public class MenteeBean {
      * READ - Get all mentees
      */
     public List<Mentee> getAllMentees() throws SQLException {
-        System.out.println("[MenteeBean] Fetching all mentees");
+        logger.debug("Fetching all mentees");
         return menteeDAO.getAllMentees();
     }
 
@@ -132,32 +134,32 @@ public class MenteeBean {
      * UPDATE - Update existing mentee
      */
     public void updateMentee(String menteeId, Mentee mentee) throws SQLException {
-        System.out.println("[MenteeBean] === Updating mentee ===");
-        System.out.println("[MenteeBean] Mentee ID: " + menteeId);
+        logger.info("=== Updating mentee ===");
+        logger.info("Mentee ID: {}", menteeId);
 
         // Step 1: Check if mentee exists
-        System.out.println("[MenteeBean] Checking if mentee exists...");
+        logger.debug("Checking if mentee exists...");
         Mentee existingMentee = menteeDAO.getMentee(menteeId);
         if (existingMentee == null) {
-            System.err.println("[MenteeBean] Mentee not found!");
+            logger.error("Mentee not found!");
             throw new IllegalArgumentException("Mentee with ID '" + menteeId + "' not found");
         }
-        System.out.println("[MenteeBean] Mentee found ✓");
+        logger.debug("Mentee found ✓");
 
         // Step 2: Validate mentee data
-        System.out.println("[MenteeBean] Validating mentee data...");
+        logger.debug("Validating mentee data...");
         mentee.setId(menteeId);
         ValidationResult validationResult = menteeValidator.validate(mentee);
         if (!validationResult.isValid()) {
-            System.err.println("[MenteeBean] Validation failed!");
+            logger.error("Validation failed!");
             throw new IllegalArgumentException("Mentee validation failed: " + validationResult.getErrorMessages());
         }
-        System.out.println("[MenteeBean] Validation passed ✓");
+        logger.debug("Validation passed ✓");
 
         // Step 3: Update mentee in database
-        System.out.println("[MenteeBean] Updating mentee in database...");
+        logger.debug("Updating mentee in database...");
         menteeDAO.updateMentee(menteeId, mentee);
-        System.out.println("[MenteeBean] Mentee updated successfully");
+        logger.info("Mentee updated successfully");
 
         // Step 4: Fire CRUD event for audit trail
         crudEventFirer.fire(new CRUDEvent(
@@ -168,42 +170,41 @@ public class MenteeBean {
             "Mentee updated: Field=" + mentee.getFieldOfStudy()
         ));
 
-        System.out.println("[MenteeBean] === Mentee Update Completed Successfully ===");
+        logger.info("=== Mentee Update Completed Successfully ===");
     }
 
     /**
      * CREATE - Add mentee (admin function, no user registration)
      */
     public void addMenteeAdmin(Mentee mentee) throws SQLException {
-        System.out.println("[MenteeBean] === Admin Adding Mentee ===");
-        System.out.println("[MenteeBean] User ID: " + mentee.getUserId() +
-                         ", Field of Study: " + mentee.getFieldOfStudy());
+        logger.info("=== Admin Adding Mentee ===");
+        logger.info("User ID: {}, Field of Study: {}", mentee.getUserId(), mentee.getFieldOfStudy());
 
         // Step 1: Check if user exists
-        System.out.println("[MenteeBean] Checking if user exists...");
+        logger.debug("Checking if user exists...");
         if (mentee.getUserId() == null || mentee.getUserId().isEmpty()) {
             throw new IllegalArgumentException("User ID is required");
         }
         User user = userDAO.getUser(mentee.getUserId());
         if (user == null) {
-            System.err.println("[MenteeBean] User not found!");
+            logger.error("User not found!");
             throw new IllegalArgumentException("User with ID '" + mentee.getUserId() + "' not found");
         }
-        System.out.println("[MenteeBean] User found ✓");
+        logger.debug("User found ✓");
 
         // Step 2: Validate mentee data
-        System.out.println("[MenteeBean] Validating mentee data...");
+        logger.debug("Validating mentee data...");
         ValidationResult validationResult = menteeValidator.validate(mentee);
         if (!validationResult.isValid()) {
-            System.err.println("[MenteeBean] Validation failed!");
+            logger.error("Validation failed!");
             throw new IllegalArgumentException("Mentee validation failed: " + validationResult.getErrorMessages());
         }
-        System.out.println("[MenteeBean] Validation passed ✓");
+        logger.debug("Validation passed ✓");
 
         // Step 3: Add mentee to database
-        System.out.println("[MenteeBean] Adding mentee to database...");
+        logger.debug("Adding mentee to database...");
         menteeDAO.addMentee(mentee);
-        System.out.println("[MenteeBean] Mentee added successfully, ID: " + mentee.getId());
+        logger.info("Mentee added successfully, ID: {}", mentee.getId());
 
         // Step 4: Fire CRUD event for audit trail
         crudEventFirer.fire(new CRUDEvent(
@@ -215,7 +216,7 @@ public class MenteeBean {
         ));
 
         // Step 5: Fire email event to notify user they're now a mentee
-        System.out.println("[MenteeBean] Firing email for newly assigned mentee...");
+        logger.debug("Firing email for newly assigned mentee...");
         userRegisteredEvent.fire(
             new UserRegisteredEvent(
                 user.getEmail(),
@@ -224,29 +225,29 @@ public class MenteeBean {
             )
         );
 
-        System.out.println("[MenteeBean] === Mentee Addition Completed Successfully ===");
+        logger.info("=== Mentee Addition Completed Successfully ===");
     }
 
     /**
      * DELETE - Delete mentee
      */
     public void deleteMentee(String menteeId) throws SQLException {
-        System.out.println("[MenteeBean] === Deleting mentee ===");
-        System.out.println("[MenteeBean] Mentee ID: " + menteeId);
+        logger.info("=== Deleting mentee ===");
+        logger.info("Mentee ID: {}", menteeId);
 
         // Step 1: Check if mentee exists
-        System.out.println("[MenteeBean] Checking if mentee exists...");
+        logger.debug("Checking if mentee exists...");
         Mentee mentee = menteeDAO.getMentee(menteeId);
         if (mentee == null) {
-            System.err.println("[MenteeBean] Mentee not found!");
+            logger.error("Mentee not found!");
             throw new IllegalArgumentException("Mentee with ID '" + menteeId + "' not found");
         }
-        System.out.println("[MenteeBean] Mentee found ✓");
+        logger.debug("Mentee found ✓");
 
         // Step 2: Delete mentee from database
-        System.out.println("[MenteeBean] Deleting mentee from database...");
+        logger.debug("Deleting mentee from database...");
         menteeDAO.deleteMentee(menteeId);
-        System.out.println("[MenteeBean] Mentee deleted successfully");
+        logger.info("Mentee deleted successfully");
 
         // Step 3: Fire CRUD event for audit trail
         crudEventFirer.fire(new CRUDEvent(
@@ -257,7 +258,7 @@ public class MenteeBean {
             "Mentee deleted"
         ));
 
-        System.out.println("[MenteeBean] === Mentee Deletion Completed Successfully ===");
+        logger.info("=== Mentee Deletion Completed Successfully ===");
     }
 }
 

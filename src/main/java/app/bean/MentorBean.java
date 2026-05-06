@@ -13,6 +13,8 @@ import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.ejb.Stateless;
+import app.utility.logging.AppLogger;
+import org.slf4j.Logger;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -22,6 +24,8 @@ import java.util.List;
 @Stateless
 @Named("mentorBean")
 public class MentorBean {
+
+    private static final Logger logger = AppLogger.getLogger(MentorBean.class);
 
     private MentorDAO mentorDAO;
     private UserDAO userDAO;
@@ -38,7 +42,7 @@ public class MentorBean {
 
     // PUBLIC NO-ARG CONSTRUCTOR (required by CDI/EJB)
     public MentorBean() {
-        System.out.println("[MentorBean] CDI Bean initialized with default constructor");
+        logger.debug("CDI Bean initialized with default constructor");
     }
 
     // CONSTRUCTOR INJECTION (alternative)
@@ -46,36 +50,34 @@ public class MentorBean {
     public MentorBean(MentorDAO mentorDAO, UserDAO userDAO) {
         this.mentorDAO = mentorDAO;
         this.userDAO = userDAO;
-        System.out.println("[MentorBean] CDI Bean initialized with constructor injection");
+        logger.debug("CDI Bean initialized with constructor injection");
     }
 
     public void registerMentor(Mentor mentor, User user) throws SQLException {
-        System.out.println("[MentorBean] === Starting Mentor Registration ===");
-        System.out.println("[MentorBean] Username: " + user.getUsername() +
-                         ", Email: " + user.getEmail() +
-                         ", Specialization: " + mentor.getSpecialization());
+        logger.info("=== Starting Mentor Registration ===");
+        logger.info("Username: {}, Email: {}, Specialization: {}", user.getUsername(), user.getEmail(), mentor.getSpecialization());
 
         // Step 1: Validate mentor data
         ValidationResult validationResult = mentorValidator.validate(mentor);
         if (!validationResult.isValid()) {
-            System.err.println("[MentorBean] Validation failed!");
+            logger.error("Validation failed!");
             throw new IllegalArgumentException("Mentor validation failed: " + validationResult.getErrorMessages());
         }
-        System.out.println("[MentorBean] Validation passed ✓");
+        logger.debug("Validation passed ✓");
 
         // Step 2: Add user to database first
-        System.out.println("[MentorBean] Adding user to database...");
+        logger.debug("Adding user to database...");
         userDAO.addUser(user);
-        System.out.println("[MentorBean] User added successfully, ID: " + user.getId());
+        logger.info("User added successfully, ID: {}", user.getId());
 
         // Step 3: Set the user ID for mentor
         mentor.setUserId(user.getId());
         mentor.setStatus("Active");
 
         // Step 4: Add mentor to database
-        System.out.println("[MentorBean] Adding mentor to database...");
+        logger.debug("Adding mentor to database...");
         mentorDAO.addMentor(mentor);
-        System.out.println("[MentorBean] Mentor added successfully, ID: " + mentor.getId());
+        logger.info("Mentor added successfully, ID: {}", mentor.getId());
 
         // Step 5: Fire CRUD event for audit trail
         crudEventFirer.fire(new CRUDEvent(
@@ -87,7 +89,7 @@ public class MentorBean {
         ));
 
         // Step 6: Fire email event with specialization for mentors
-        System.out.println("[MentorBean] Firing email registration event for mentor...");
+        logger.debug("Firing email registration event for mentor...");
         userRegisteredEvent.fire(
             new UserRegisteredEvent(
                 user.getEmail(),
@@ -97,14 +99,14 @@ public class MentorBean {
             )
         );
 
-        System.out.println("[MentorBean] === Mentor Registration Completed Successfully ===");
+        logger.info("=== Mentor Registration Completed Successfully ===");
     }
 
     /**
      * READ - Get mentor by ID
      */
     public Mentor getMentorById(String mentorId) throws SQLException {
-        System.out.println("[MentorBean] Fetching mentor by ID: " + mentorId);
+        logger.debug("Fetching mentor by ID: {}", mentorId);
         return mentorDAO.getMentor(mentorId);
     }
 
@@ -112,7 +114,7 @@ public class MentorBean {
      * READ - Get mentor by user ID
      */
     public Mentor getMentorByUserId(String userId) throws SQLException {
-        System.out.println("[MentorBean] Fetching mentor for user ID: " + userId);
+        logger.debug("Fetching mentor for user ID: {}", userId);
         return mentorDAO.getMentorByUserId(userId);
     }
 
@@ -120,7 +122,7 @@ public class MentorBean {
      * READ - Get all mentors
      */
     public List<Mentor> getAllMentors() throws SQLException {
-        System.out.println("[MentorBean] Fetching all mentors");
+        logger.debug("Fetching all mentors");
         return mentorDAO.getAllMentors();
     }
 
@@ -128,38 +130,38 @@ public class MentorBean {
      * UPDATE - Update existing mentor
      */
      public void updateMentor(String mentorId, Mentor mentor) throws SQLException {
-         System.out.println("[MentorBean] === Updating mentor ===");
-         System.out.println("[MentorBean] Mentor ID: " + mentorId);
+         logger.info("=== Updating mentor ===");
+         logger.info("Mentor ID: {}", mentorId);
 
          // Step 1: Check if mentor exists
-         System.out.println("[MentorBean] Checking if mentor exists...");
+         logger.debug("Checking if mentor exists...");
          Mentor existingMentor = mentorDAO.getMentor(mentorId);
          if (existingMentor == null) {
-             System.err.println("[MentorBean] Mentor not found!");
+             logger.error("Mentor not found!");
              throw new IllegalArgumentException("Mentor with ID '" + mentorId + "' not found");
          }
-         System.out.println("[MentorBean] Mentor found ✓");
+         logger.debug("Mentor found ✓");
 
          // Step 1b: Validate that user still exists
          if (!userDAO.exists(existingMentor.getUserId())) {
-             System.err.println("[MentorBean] Associated user does not exist!");
+             logger.error("Associated user does not exist!");
              throw new IllegalArgumentException("Associated user no longer exists");
          }
 
          // Step 2: Validate mentor data
-         System.out.println("[MentorBean] Validating mentor data...");
+         logger.debug("Validating mentor data...");
          mentor.setId(mentorId);
          ValidationResult validationResult = mentorValidator.validate(mentor);
          if (!validationResult.isValid()) {
-             System.err.println("[MentorBean] Validation failed!");
+             logger.error("Validation failed!");
              throw new IllegalArgumentException("Mentor validation failed: " + validationResult.getErrorMessages());
          }
-         System.out.println("[MentorBean] Validation passed ✓");
+         logger.debug("Validation passed ✓");
 
          // Step 3: Update mentor in database
-         System.out.println("[MentorBean] Updating mentor in database...");
+         logger.debug("Updating mentor in database...");
          mentorDAO.updateMentor(mentorId, mentor);
-         System.out.println("[MentorBean] Mentor updated successfully");
+         logger.info("Mentor updated successfully");
 
          // Step 4: Fire CRUD event for audit trail
          crudEventFirer.fire(new CRUDEvent(
@@ -170,42 +172,41 @@ public class MentorBean {
              "Mentor updated: Specialization=" + mentor.getSpecialization()
          ));
 
-         System.out.println("[MentorBean] === Mentor Update Completed Successfully ===");
+         logger.info("=== Mentor Update Completed Successfully ===");
      }
 
     /**
      * CREATE - Add mentor (admin function, no user registration)
      */
     public void addMentorAdmin(Mentor mentor) throws SQLException {
-        System.out.println("[MentorBean] === Admin Adding Mentor ===");
-        System.out.println("[MentorBean] User ID: " + mentor.getUserId() +
-                         ", Specialization: " + mentor.getSpecialization());
+        logger.info("=== Admin Adding Mentor ===");
+        logger.info("User ID: {}, Specialization: {}", mentor.getUserId(), mentor.getSpecialization());
 
         // Step 1: Check if user exists
-        System.out.println("[MentorBean] Checking if user exists...");
+        logger.debug("Checking if user exists...");
         if (mentor.getUserId() == null || mentor.getUserId().isEmpty()) {
             throw new IllegalArgumentException("User ID is required");
         }
         User user = userDAO.getUser(mentor.getUserId());
         if (user == null) {
-            System.err.println("[MentorBean] User not found!");
+            logger.error("User not found!");
             throw new IllegalArgumentException("User with ID '" + mentor.getUserId() + "' not found");
         }
-        System.out.println("[MentorBean] User found ✓");
+        logger.debug("User found ✓");
 
         // Step 2: Validate mentor data
-        System.out.println("[MentorBean] Validating mentor data...");
+        logger.debug("Validating mentor data...");
         ValidationResult validationResult = mentorValidator.validate(mentor);
         if (!validationResult.isValid()) {
-            System.err.println("[MentorBean] Validation failed!");
+            logger.error("Validation failed!");
             throw new IllegalArgumentException("Mentor validation failed: " + validationResult.getErrorMessages());
         }
-        System.out.println("[MentorBean] Validation passed ✓");
+        logger.debug("Validation passed ✓");
 
         // Step 3: Add mentor to database
-        System.out.println("[MentorBean] Adding mentor to database...");
+        logger.debug("Adding mentor to database...");
         mentorDAO.addMentor(mentor);
-        System.out.println("[MentorBean] Mentor added successfully, ID: " + mentor.getId());
+        logger.info("Mentor added successfully, ID: {}", mentor.getId());
 
         // Step 4: Fire CRUD event for audit trail
         crudEventFirer.fire(new CRUDEvent(
@@ -217,7 +218,7 @@ public class MentorBean {
         ));
 
         // Step 5: Fire email event to notify user they're now a mentor
-        System.out.println("[MentorBean] Firing email for newly assigned mentor...");
+        logger.debug("Firing email for newly assigned mentor...");
         userRegisteredEvent.fire(
             new UserRegisteredEvent(
                 user.getEmail(),
@@ -227,29 +228,29 @@ public class MentorBean {
             )
         );
 
-        System.out.println("[MentorBean] === Mentor Addition Completed Successfully ===");
+        logger.info("=== Mentor Addition Completed Successfully ===");
     }
 
     /**
      * DELETE - Delete mentor
      */
     public void deleteMentor(String mentorId) throws SQLException {
-        System.out.println("[MentorBean] === Deleting mentor ===");
-        System.out.println("[MentorBean] Mentor ID: " + mentorId);
+        logger.info("=== Deleting mentor ===");
+        logger.info("Mentor ID: {}", mentorId);
 
         // Step 1: Check if mentor exists
-        System.out.println("[MentorBean] Checking if mentor exists...");
+        logger.debug("Checking if mentor exists...");
         Mentor mentor = mentorDAO.getMentor(mentorId);
         if (mentor == null) {
-            System.err.println("[MentorBean] Mentor not found!");
+            logger.error("Mentor not found!");
             throw new IllegalArgumentException("Mentor with ID '" + mentorId + "' not found");
         }
-        System.out.println("[MentorBean] Mentor found ✓");
+        logger.debug("Mentor found ✓");
 
         // Step 2: Delete mentor from database
-        System.out.println("[MentorBean] Deleting mentor from database...");
+        logger.debug("Deleting mentor from database...");
         mentorDAO.deleteMentor(mentorId);
-        System.out.println("[MentorBean] Mentor deleted successfully");
+        logger.info("Mentor deleted successfully");
 
         // Step 3: Fire CRUD event for audit trail
         crudEventFirer.fire(new CRUDEvent(
@@ -260,6 +261,6 @@ public class MentorBean {
             "Mentor deleted"
         ));
 
-        System.out.println("[MentorBean] === Mentor Deletion Completed Successfully ===");
+        logger.info("=== Mentor Deletion Completed Successfully ===");
     }
 }

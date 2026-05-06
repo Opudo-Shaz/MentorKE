@@ -3,18 +3,22 @@ package app.bean;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.mail.*;
 import jakarta.mail.internet.*;
+import app.utility.logging.AppLogger;
+import org.slf4j.Logger;
 
 import java.util.Properties;
 
 @ApplicationScoped
 public class EmailBean {
 
+    private static final Logger logger = AppLogger.getLogger(EmailBean.class);
+
     private final String username = "patikalostandfound@gmail.com";
     private final String password = "rtos djvp dque xtqr";
 
 
     public void sendEmail(String to, String subject, String body) {
-        System.out.println("Attempting to send email to: " + to);
+        logger.info("Attempting to send email to: {}", to);
 
         Properties props = new Properties();
         props.put("mail.smtp.auth", "true");
@@ -44,17 +48,17 @@ public class EmailBean {
             }
 
             Transport.send(message);
-            System.out.println("[EmailBean]  Email sent successfully to " + to);
+            logger.info("Email sent successfully to {}", to);
 
         } catch (AuthenticationFailedException e) {
-            System.err.println("[EmailBean]  Authentication failed!");
-            System.err.println("  Update credentials in EmailBean: username and password");
+            logger.error("Authentication failed!");
+            logger.error("Update credentials in EmailBean: username and password");
             e.printStackTrace();
         } catch (MessagingException e) {
-            System.err.println("[EmailBean]  Error sending email: " + e.getMessage());
+            logger.error("Error sending email: {}", e.getMessage());
             e.printStackTrace();
         } catch (Exception e) {
-            System.err.println("[EmailBean]  Unexpected error: " + e.getMessage());
+            logger.error("Unexpected error: {}", e.getMessage());
             e.printStackTrace();
         }
     }

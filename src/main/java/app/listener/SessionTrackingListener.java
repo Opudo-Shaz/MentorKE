@@ -1,12 +1,16 @@
 package app.listener;
 
+import app.utility.logging.AppLogger;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.HttpSessionEvent;
 import jakarta.servlet.http.HttpSessionListener;
 import jakarta.servlet.annotation.WebListener;
+import org.slf4j.Logger;
 
 @WebListener
 public class SessionTrackingListener implements HttpSessionListener {
+
+    private static final Logger logger = AppLogger.getLogger(SessionTrackingListener.class);
 
     @Override
     public void sessionCreated(HttpSessionEvent se) {
@@ -20,8 +24,8 @@ public class SessionTrackingListener implements HttpSessionListener {
         sessionCount++;
         context.setAttribute("sessionCount", sessionCount);
 
-        System.out.println("[SessionTrackingListener] Session created: " + se.getSession().getId());
-        System.out.println("[SessionTrackingListener] Active session count: " + sessionCount);
+        logger.info("[SessionTrackingListener] Session created: {}", se.getSession().getId());
+        logger.info("[SessionTrackingListener] Active session count: {}", sessionCount);
     }
 
     @Override
@@ -38,11 +42,11 @@ public class SessionTrackingListener implements HttpSessionListener {
         String username = (String) se.getSession().getAttribute("username");
         String role = (String) se.getSession().getAttribute("role");
 
-        System.out.println("[SessionTrackingListener] Session destroyed: " + se.getSession().getId());
+        logger.info("[SessionTrackingListener] Session destroyed: {}", se.getSession().getId());
         if (username != null) {
-            System.out.println("[SessionTrackingListener] Logged out user: " + username + " (role: " + role + ")");
+            logger.info("[SessionTrackingListener] Logged out user: {} (role: {})", username, role);
         }
-        System.out.println("[SessionTrackingListener] Active sessions now: " + (sessionCount != null ? sessionCount : 0));
+        logger.info("[SessionTrackingListener] Active sessions now: {}", (sessionCount != null ? sessionCount : 0));
     }
 }
 

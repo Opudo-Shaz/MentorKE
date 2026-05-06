@@ -3,10 +3,14 @@ package app.listener;
 import jakarta.servlet.http.HttpSessionAttributeListener;
 import jakarta.servlet.http.HttpSessionBindingEvent;
 import jakarta.servlet.annotation.WebListener;
+import app.utility.logging.AppLogger;
+import org.slf4j.Logger;
 
 
 @WebListener
 public class SessionAttributeTrackingListener implements HttpSessionAttributeListener {
+
+    private static final Logger logger = AppLogger.getLogger(SessionAttributeTrackingListener.class);
 
     @Override
     public void attributeAdded(HttpSessionBindingEvent se) {
@@ -15,16 +19,16 @@ public class SessionAttributeTrackingListener implements HttpSessionAttributeLis
 
         // Don't log sensitive info in full detail, but track keys
         if ("password".equalsIgnoreCase(attrName)) {
-            System.out.println("[SessionAttributeTrackingListener] Session attribute added: " + attrName + " (value: [REDACTED])");
+            logger.debug("Session attribute added: {} (value: [REDACTED])", attrName);
         } else {
-            System.out.println("[SessionAttributeTrackingListener] Session attribute added: " + attrName + " = " + attrValue);
+            logger.debug("Session attribute added: {} = {}", attrName, attrValue);
         }
     }
 
     @Override
     public void attributeRemoved(HttpSessionBindingEvent se) {
         String attrName = se.getName();
-        System.out.println("[SessionAttributeTrackingListener] Session attribute removed: " + attrName);
+        logger.debug("Session attribute removed: {}", attrName);
     }
 
     @Override
@@ -33,9 +37,9 @@ public class SessionAttributeTrackingListener implements HttpSessionAttributeLis
         Object oldValue = se.getValue();
 
         if ("password".equalsIgnoreCase(attrName)) {
-            System.out.println("[SessionAttributeTrackingListener] Session attribute replaced: " + attrName + " (old: [REDACTED])");
+            logger.debug("Session attribute replaced: {} (old: [REDACTED])", attrName);
         } else {
-            System.out.println("[SessionAttributeTrackingListener] Session attribute replaced: " + attrName + " (old: " + oldValue + ")");
+            logger.debug("Session attribute replaced: {} (old: {})", attrName, oldValue);
         }
     }
 }

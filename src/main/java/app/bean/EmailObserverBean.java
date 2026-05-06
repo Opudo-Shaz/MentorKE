@@ -6,17 +6,21 @@ import jakarta.ejb.Asynchronous;
 import jakarta.ejb.Stateless;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
+import app.utility.logging.AppLogger;
+import org.slf4j.Logger;
 import java.util.Map;
 
 @Stateless
 public class EmailObserverBean {
+
+    private static final Logger logger = AppLogger.getLogger(EmailObserverBean.class);
 
     @Inject
     private EmailBean emailBean;
 
     @Asynchronous
     public void onUserRegistered(@Observes UserRegisteredEvent event) {
-        System.out.println("[EmailObserverBean] User registered event received for: " + event.getName());
+        logger.info("User registered event received for: {}", event.getName());
 
         try {
             // Load appropriate template based on role
@@ -44,10 +48,10 @@ public class EmailObserverBean {
             String subject = "Welcome to MentorKE - " + event.getRole();
             emailBean.sendEmail(event.getEmail(), subject, html);
 
-            System.out.println("[EmailObserverBean] Email scheduled for: " + event.getName());
+            logger.info("Email scheduled for: {}", event.getName());
 
         } catch (Exception e) {
-            System.err.println("[EmailObserverBean] Error sending email: " + e.getMessage());
+            logger.error("Error sending email: {}", e.getMessage());
             e.printStackTrace();
         }
     }

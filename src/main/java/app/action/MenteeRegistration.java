@@ -7,11 +7,15 @@ import app.utility.validation.Validator;
 import app.utility.validation.ValidatorQualifier;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
+import app.utility.logging.AppLogger;
+import org.slf4j.Logger;
 
 import java.sql.SQLException;
 
 @Dependent
 public class MenteeRegistration extends BaseRegistration<User> {
+
+    private static final Logger logger = AppLogger.getLogger(MenteeRegistration.class);
 
     // FIELD INJECTION
     @Inject
@@ -33,13 +37,13 @@ public class MenteeRegistration extends BaseRegistration<User> {
     @Override
     protected void validateRoleSpecific() {
 
-        System.out.println("[MenteeRegistration] Running mentee validation...");
+        logger.debug("Running mentee validation...");
 
         if (password != null && password.length() < 6) {
             errors.add("Mentee password must be at least 6 characters");
         }
 
-        System.out.println("[MenteeRegistration] Validation complete");
+        logger.debug("Validation complete");
     }
 
     @Override
@@ -64,7 +68,7 @@ public class MenteeRegistration extends BaseRegistration<User> {
         var result = menteeValidator.validate(mentee);
 
         if (!result.isValid()) {
-            System.out.println(result.getErrorMessages());
+            logger.error("Validation failed: {}", result.getErrorMessages());
             return;
         }
 

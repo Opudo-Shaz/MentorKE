@@ -4,6 +4,8 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
+import app.utility.logging.AppLogger;
+import org.slf4j.Logger;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -11,6 +13,8 @@ import java.sql.SQLException;
 
 @ApplicationScoped
 public class DataSourceHelper {
+
+    private static final Logger logger = AppLogger.getLogger(DataSourceHelper.class);
 
     private HikariDataSource dataSource;
 
@@ -22,7 +26,7 @@ public class DataSourceHelper {
 
     public DataSourceHelper() {
         initializeDataSource();
-        System.out.println("[DataSourceHelper] CDI-managed datasource initialized");
+        logger.info("CDI-managed datasource initialized");
     }
 
     private void initializeDataSource() {
@@ -77,7 +81,7 @@ public class DataSourceHelper {
     public void close() {
         if (dataSource != null && !dataSource.isClosed()) {
             dataSource.close();
-            System.out.println("[DataSourceHelper] DataSource closed");
+            logger.info("DataSource closed");
         }
     }
 }
