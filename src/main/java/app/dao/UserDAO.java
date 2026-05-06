@@ -6,20 +6,8 @@ import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
 
-/**
- * UserDAO - Data Access Object for User entities
- *
- * Extends GenericDAO to inherit basic CRUD operations
- * Adds custom queries specific to User entity
- *
- * Uses @Dependent scope:
- * - DAO is stateless (no shared state)
- * - All operations are method-level
- * - Each injection point gets a new instance (lightweight)
- */
+
 @Dependent
 public class UserDAO extends GenericDAO<User, String> {
 

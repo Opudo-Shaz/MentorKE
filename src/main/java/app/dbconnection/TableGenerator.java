@@ -40,9 +40,12 @@ public class TableGenerator {
             DbColumn columnAnnotation = field.getAnnotation(DbColumn.class);
             StringBuilder columnDef = new StringBuilder();
             columnDef.append(columnAnnotation.name()).append(" ").append(columnAnnotation.type());
-            if (columnAnnotation.autoIncrement()) {
+            
+            // Don't add AUTO_INCREMENT for SERIAL types (PostgreSQL handles this automatically)
+            if (columnAnnotation.autoIncrement() && !columnAnnotation.type().toUpperCase().contains("SERIAL")) {
                 columnDef.append(" AUTO_INCREMENT");
             }
+            
             if (columnAnnotation.notNull()) {
                 columnDef.append(" NOT NULL");
             }

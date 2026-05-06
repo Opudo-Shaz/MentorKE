@@ -44,17 +44,17 @@ public class EmailBean {
             }
 
             Transport.send(message);
-            System.out.println("[EmailBean] ✓ Email sent successfully to " + to);
+            System.out.println("[EmailBean]  Email sent successfully to " + to);
 
         } catch (AuthenticationFailedException e) {
-            System.err.println("[EmailBean] ✗ Authentication failed!");
+            System.err.println("[EmailBean]  Authentication failed!");
             System.err.println("  Update credentials in EmailBean: username and password");
             e.printStackTrace();
         } catch (MessagingException e) {
-            System.err.println("[EmailBean] ✗ Error sending email: " + e.getMessage());
+            System.err.println("[EmailBean]  Error sending email: " + e.getMessage());
             e.printStackTrace();
         } catch (Exception e) {
-            System.err.println("[EmailBean] ✗ Unexpected error: " + e.getMessage());
+            System.err.println("[EmailBean]  Unexpected error: " + e.getMessage());
             e.printStackTrace();
         }
     }
