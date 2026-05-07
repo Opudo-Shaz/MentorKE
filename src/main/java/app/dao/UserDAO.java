@@ -6,6 +6,7 @@ import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import java.sql.*;
+import java.util.List;
 
 
 @Dependent
