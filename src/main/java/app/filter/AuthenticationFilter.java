@@ -1,87 +1,130 @@
 package app.filter;
 
 import app.utility.logging.AppLogger;
+import jakarta.servlet.*;
 import jakarta.servlet.annotation.WebFilter;
-import jakarta.servlet.Filter;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.FilterConfig;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
+
 import java.io.IOException;
+import java.util.Map;
 
 @WebFilter(
-    filterName = "AuthenticationFilter",
-    urlPatterns = {"/admin", "/mentor-dashboard", "/mentee-dashboard",
-            "/user-management", "/mentor-management", "/mentee-management"}
+        filterName = "AuthenticationFilter",
+        urlPatterns = {
+                "/admin",
+                "/mentor-dashboard",
+                "/mentee-dashboard",
+                "/user-management",
+                "/mentor-management",
+                "/mentee-management"
+        }
 )
 public class AuthenticationFilter implements Filter {
 
-    private static final Logger logger = AppLogger.getLogger(AuthenticationFilter.class);
+    private static final Logger logger =
+            AppLogger.getLogger(AuthenticationFilter.class);
+
+    private static final Map<String, String> ROLE_MAPPINGS = Map.of(
+            "/admin", "admin",
+            "/user-management", "admin",
+            "/mentor-management", "admin",
+            "/mentee-management", "admin",
+            "/mentor-dashboard", "mentor",
+            "/mentee-dashboard", "mentee"
+    );
 
     @Override
-    public void init(FilterConfig filterConfig) throws ServletException {
+    public void init(FilterConfig filterConfig) {
+
         logger.debug("[AuthenticationFilter] Filter initialized");
     }
 
     @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
-            throws IOException, ServletException {
+    public void doFilter(
+            ServletRequest request,
+            ServletResponse response,
+            FilterChain chain
+    ) throws IOException, ServletException {
 
-        HttpServletRequest httpRequest = (HttpServletRequest) request;
-        HttpServletResponse httpResponse = (HttpServletResponse) response;
-        String requestPath = httpRequest.getRequestURI();
+        HttpServletRequest httpRequest =
+                (HttpServletRequest) request;
 
-        logger.debug("[AuthenticationFilter] Checking authentication for: {}", requestPath);
+        HttpServletResponse httpResponse =
+                (HttpServletResponse) response;
 
-        // Get session (don't create if not exists)
+        String requestPath = httpRequest.getServletPath();
+
+        logger.debug(
+                "[AuthenticationFilter] Checking authentication for: {}",
+                requestPath
+        );
+
         HttpSession session = httpRequest.getSession(false);
 
-        // Check if user is logged in
-        if (session == null || !Boolean.TRUE.equals(session.getAttribute("isLoggedIn"))) {
-            logger.warn("[AuthenticationFilter] No valid session - redirecting to login");
-            httpResponse.sendRedirect(httpRequest.getContextPath() + "/login");
+        if (session == null ||
+                !Boolean.TRUE.equals(
+                        session.getAttribute("isLoggedIn"))
+        ) {
+
+            logger.warn(
+                    "[AuthenticationFilter] No valid session"
+            );
+
+            redirectToLogin(httpRequest, httpResponse);
+
             return;
         }
 
-        String userRole = (String) session.getAttribute("role");
-        String username = (String) session.getAttribute("username");
-        logger.info("[AuthenticationFilter] User authenticated: {} (role: {})", username, userRole);
+        String userRole =
+                String.valueOf(session.getAttribute("role"));
 
-        // Check role-based access
-        if (requestPath.contains("/admin") || requestPath.contains("/user-management") || 
-            requestPath.contains("/mentor-management") || requestPath.contains("/mentee-management")) {
-            if (!"admin".equalsIgnoreCase(userRole)) {
-                logger.warn("[AuthenticationFilter] Admin access denied for user: {}", username);
-                httpResponse.sendRedirect(httpRequest.getContextPath() + "/login");
-                return;
-            }
-        } else if (requestPath.contains("/mentor-dashboard")) {
-            if (!"mentor".equalsIgnoreCase(userRole)) {
-                logger.warn("[AuthenticationFilter] Mentor access denied for user: {}", username);
-                httpResponse.sendRedirect(httpRequest.getContextPath() + "/login");
-                return;
-            }
-        } else if (requestPath.contains("/mentee-dashboard")) {
-            if (!"mentee".equalsIgnoreCase(userRole)) {
-                logger.warn("[AuthenticationFilter] Mentee access denied for user: {}", username);
-                httpResponse.sendRedirect(httpRequest.getContextPath() + "/login");
-                return;
-            }
+        String username =
+                String.valueOf(session.getAttribute("username"));
+
+        logger.info(
+                "[AuthenticationFilter] User authenticated: {} ({})",
+                username,
+                userRole
+        );
+
+        String requiredRole = ROLE_MAPPINGS.get(requestPath);
+
+        if (requiredRole != null &&
+                !requiredRole.equalsIgnoreCase(userRole)) {
+
+            logger.warn(
+                    "[AuthenticationFilter] Access denied for user: {}",
+                    username
+            );
+
+            redirectToLogin(httpRequest, httpResponse);
+
+            return;
         }
 
-        logger.debug("[AuthenticationFilter] Access granted - proceeding with request");
-        // Allow request to proceed
+        logger.debug(
+                "[AuthenticationFilter] Access granted"
+        );
+
         chain.doFilter(request, response);
+    }
+
+    private void redirectToLogin(
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) throws IOException {
+
+        response.sendRedirect(
+                request.getContextPath() + "/login"
+        );
     }
 
     @Override
     public void destroy() {
+
         logger.debug("[AuthenticationFilter] Filter destroyed");
     }
 }
-

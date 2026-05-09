@@ -1,9 +1,9 @@
 package app.bean;
 
-import app.bean.event.CRUDEvent;
 import app.bean.event.UserRegisteredEvent;
 import app.dao.MenteeDAO;
 import app.dao.UserDAO;
+import app.model.AuditTrail;
 import app.model.Mentee;
 import app.model.User;
 import app.utility.validation.ValidationResult;
@@ -33,7 +33,8 @@ public class MenteeBean {
     private UserDAO userDAO;
 
     @Inject
-    private Event<CRUDEvent> crudEventFirer;
+    private Event<AuditTrail> auditTrailEvent;
+    //private Event<CRUDEvent> crudEventFi
 
     @Inject
     private Event<UserRegisteredEvent> userRegisteredEvent;
@@ -85,7 +86,7 @@ public class MenteeBean {
         logger.info("Mentee added successfully, ID: {}", mentee.getId());
 
         // Step 5: Fire CRUD event for audit trail
-        crudEventFirer.fire(new CRUDEvent(
+        auditTrailEvent.fire(new AuditTrail(
             "Mentee",
             mentee.getId(),
             "CREATE",
@@ -146,9 +147,40 @@ public class MenteeBean {
         }
         logger.debug("Mentee found ✓");
 
-        // Step 2: Validate mentee data
-        logger.debug("Validating mentee data...");
+        // Step 2: Normalize mentorId (convert empty/whitespace to null BEFORE preservation)
+        if (mentee.getMentorId() != null && mentee.getMentorId().trim().isEmpty()) {
+            logger.debug("Empty mentorId provided, treating as null");
+            mentee.setMentorId(null);
+        }
+
+        // Step 3: Preserve existing userId BEFORE validation (cannot be changed)
+        if (mentee.getUserId() == null || mentee.getUserId().isEmpty()) {
+            logger.debug("No new userId provided, keeping existing userId");
+            mentee.setUserId(existingMentee.getUserId());
+        }
+
+        // Step 4: Preserve existing educationLevel if not provided
+        if (mentee.getEducationLevel() == null || mentee.getEducationLevel().isEmpty()) {
+            logger.debug("No new educationLevel provided, keeping existing educationLevel");
+            mentee.setEducationLevel(existingMentee.getEducationLevel());
+        }
+
+        // Step 5: Preserve existing mentorId if not provided
+        if (mentee.getMentorId() == null) {
+            logger.debug("No new mentorId provided, keeping existing mentorId");
+            mentee.setMentorId(existingMentee.getMentorId());
+        }
+
+        // Step 6: Set ID (important for validator context)
         mentee.setId(menteeId);
+
+        // Step 7: Set default status if needed
+        if (mentee.getStatus() == null || mentee.getStatus().isEmpty()) {
+            mentee.setStatus("Active");
+        }
+
+        // Step 8: Validate AFTER fixing missing fields
+        logger.debug("Validating mentee data...");
         ValidationResult validationResult = menteeValidator.validate(mentee);
         if (!validationResult.isValid()) {
             logger.error("Validation failed!");
@@ -156,13 +188,13 @@ public class MenteeBean {
         }
         logger.debug("Validation passed ✓");
 
-        // Step 3: Update mentee in database
+        // Step 9: Update mentee in database
         logger.debug("Updating mentee in database...");
         menteeDAO.updateMentee(menteeId, mentee);
         logger.info("Mentee updated successfully");
 
-        // Step 4: Fire CRUD event for audit trail
-        crudEventFirer.fire(new CRUDEvent(
+        // Step 10: Fire CRUD event for audit trail
+        auditTrailEvent.fire(new AuditTrail(
             "Mentee",
             menteeId,
             "UPDATE",
@@ -207,7 +239,7 @@ public class MenteeBean {
         logger.info("Mentee added successfully, ID: {}", mentee.getId());
 
         // Step 4: Fire CRUD event for audit trail
-        crudEventFirer.fire(new CRUDEvent(
+        auditTrailEvent.fire(new AuditTrail(
             "Mentee",
             mentee.getId(),
             "CREATE",
@@ -249,8 +281,9 @@ public class MenteeBean {
         menteeDAO.deleteMentee(menteeId);
         logger.info("Mentee deleted successfully");
 
+
         // Step 3: Fire CRUD event for audit trail
-        crudEventFirer.fire(new CRUDEvent(
+        auditTrailEvent.fire(new AuditTrail(
             "Mentee",
             menteeId,
             "DELETE",

@@ -1,9 +1,9 @@
 package app.bean;
 
-import app.bean.event.CRUDEvent;
 import app.bean.event.UserRegisteredEvent;
 import app.dao.MentorDAO;
 import app.dao.UserDAO;
+import app.model.AuditTrail;
 import app.model.Mentor;
 import app.model.User;
 import app.utility.validation.ValidationResult;
@@ -27,11 +27,14 @@ public class MentorBean {
 
     private static final Logger logger = AppLogger.getLogger(MentorBean.class);
 
+    @Inject
     private MentorDAO mentorDAO;
+
+    @Inject
     private UserDAO userDAO;
 
     @Inject
-    private Event<CRUDEvent> crudEventFirer;
+    private Event<AuditTrail> auditTrailEvent;
 
     @Inject
     private Event<UserRegisteredEvent> userRegisteredEvent;
@@ -80,7 +83,7 @@ public class MentorBean {
         logger.info("Mentor added successfully, ID: {}", mentor.getId());
 
         // Step 5: Fire CRUD event for audit trail
-        crudEventFirer.fire(new CRUDEvent(
+        auditTrailEvent.fire(new AuditTrail(
             "Mentor",
             mentor.getId(),
             "CREATE",
@@ -142,15 +145,28 @@ public class MentorBean {
          }
          logger.debug("Mentor found ✓");
 
-         // Step 1b: Validate that user still exists
+         // Step 2: Validate that user still exists
          if (!userDAO.exists(existingMentor.getUserId())) {
              logger.error("Associated user does not exist!");
              throw new IllegalArgumentException("Associated user no longer exists");
          }
 
-         // Step 2: Validate mentor data
-         logger.debug("Validating mentor data...");
+         // Step 3: Preserve existing userId BEFORE validation (cannot be changed)
+         if (mentor.getUserId() == null || mentor.getUserId().isEmpty()) {
+             logger.debug("No new userId provided, keeping existing userId");
+             mentor.setUserId(existingMentor.getUserId());
+         }
+
+         // Step 4: Set ID (important for validator context)
          mentor.setId(mentorId);
+
+         // Step 5: Set default status if needed
+         if (mentor.getStatus() == null || mentor.getStatus().isEmpty()) {
+             mentor.setStatus("Active");
+         }
+
+         // Step 6: Validate AFTER fixing missing fields
+         logger.debug("Validating mentor data...");
          ValidationResult validationResult = mentorValidator.validate(mentor);
          if (!validationResult.isValid()) {
              logger.error("Validation failed!");
@@ -158,13 +174,13 @@ public class MentorBean {
          }
          logger.debug("Validation passed ✓");
 
-         // Step 3: Update mentor in database
+         // Step 7: Update mentor in database
          logger.debug("Updating mentor in database...");
          mentorDAO.updateMentor(mentorId, mentor);
          logger.info("Mentor updated successfully");
 
-         // Step 4: Fire CRUD event for audit trail
-         crudEventFirer.fire(new CRUDEvent(
+         // Step 8: Fire CRUD event for audit trail
+         auditTrailEvent.fire(new AuditTrail(
              "Mentor",
              mentorId,
              "UPDATE",
@@ -209,7 +225,7 @@ public class MentorBean {
         logger.info("Mentor added successfully, ID: {}", mentor.getId());
 
         // Step 4: Fire CRUD event for audit trail
-        crudEventFirer.fire(new CRUDEvent(
+        auditTrailEvent.fire(new AuditTrail(
             "Mentor",
             mentor.getId(),
             "CREATE",
@@ -253,7 +269,7 @@ public class MentorBean {
         logger.info("Mentor deleted successfully");
 
         // Step 3: Fire CRUD event for audit trail
-        crudEventFirer.fire(new CRUDEvent(
+        auditTrailEvent.fire(new AuditTrail(
             "Mentor",
             mentorId,
             "DELETE",

@@ -135,12 +135,7 @@ public class RegisterPage extends HttpServlet {
         }
     }
 
-    /**
-     * Uses Java Reflection to dynamically extract form parameters from HttpServletRequest
-     * Based on User class fields
-     * @param request The HTTP request containing form data
-     * @return Map of field names to form values
-     */
+
     private Map<String, String> extractFormDataUsingReflection(HttpServletRequest request) {
         Map<String, String> formData = new HashMap<>();
         logger.debug("Extracting form data using Java Reflection");

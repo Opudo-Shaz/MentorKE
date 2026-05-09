@@ -46,12 +46,15 @@ public class MenteeValidator implements Validator<Mentee> {
 
      // Validate user ID reference
     private void validateUserId(Mentee mentee, ValidationResult result) {
-        if (mentee.getUserId() == null || mentee.getUserId().trim().isEmpty()) {
+        String userId = mentee.getUserId();
+        
+        if (userId == null || userId.trim().isEmpty()) {
             result.addError("User ID is required for mentee profile");
+            return;  // Exit early to avoid NPE
         }
 
         try {
-            Integer.parseInt(mentee.getUserId());
+            Integer.parseInt(userId.trim());
         } catch (NumberFormatException e) {
             result.addError("User ID must be a valid integer");
         }
@@ -150,14 +153,19 @@ public class MenteeValidator implements Validator<Mentee> {
     private void validateMentorId(Mentee mentee, ValidationResult result) {
         String mentorId = mentee.getMentorId();
 
-        if (mentorId != null && !mentorId.trim().isEmpty()) {
-            try {
-                Integer.parseInt(mentorId);
-            } catch (NumberFormatException e) {
-                result.addError("Mentor ID must be a valid integer");
-            }
+        // Normalize: treat null and whitespace-only strings as null (mentor is optional on update)
+        if (mentorId == null || mentorId.trim().isEmpty()) {
+            mentee.setMentorId(null);  // Ensure it's null, not empty string
+            return;  // No error - mentorId is optional
         }
-        // mentorId can be null initially (mentor assignment happens later)
+
+        // At this point, mentorId is definitely not empty/whitespace
+        mentorId = mentorId.trim();
+        try {
+            Integer.parseInt(mentorId);
+        } catch (NumberFormatException e) {
+            result.addError("Mentor ID must be a valid integer");
+        }
     }
 
 

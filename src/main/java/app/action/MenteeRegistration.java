@@ -39,8 +39,8 @@ public class MenteeRegistration extends BaseRegistration<User> {
 
         logger.debug("Running mentee validation...");
 
-        if (password != null && password.length() < 6) {
-            errors.add("Mentee password must be at least 6 characters");
+        if (password != null && password.length() < 8) {
+            errors.add("Mentee password must be at least 8 characters");
         }
 
         logger.debug("Validation complete");

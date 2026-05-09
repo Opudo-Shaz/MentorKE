@@ -1,8 +1,8 @@
 package app.bean;
 
-import app.bean.event.CRUDEvent;
 import app.bean.event.UserRegisteredEvent;
 import app.dao.UserDAO;
+import app.model.AuditTrail;
 import app.model.User;
 import app.utility.logging.AppLogger;
 import app.utility.validation.ValidationResult;
@@ -24,10 +24,11 @@ public class UserBean {
 
     private static final Logger logger = AppLogger.getLogger(UserBean.class);
 
+    @Inject
     private UserDAO userDAO;
 
     @Inject
-    private Event<CRUDEvent> crudEventFirer;
+    private Event<AuditTrail> auditTrailEvent;
 
     @Inject
     private Event<UserRegisteredEvent> userRegisteredEvent;
@@ -36,17 +37,14 @@ public class UserBean {
     @ValidatorQualifier(ValidatorQualifier.ValidationChoice.USER)
     private Validator<User> userValidator;
 
-    // PUBLIC NO-ARG CONSTRUCTOR (required by CDI/EJB)
-    public UserBean() {
-        logger.debug("[UserBean] CDI Bean initialized with default constructor");
-    }
-
     // CONSTRUCTOR INJECTION (alternative)
     @Inject
     public UserBean(UserDAO userDAO) {
         this.userDAO = userDAO;
         logger.debug("[UserBean] CDI Bean initialized with constructor injection");
     }
+
+    public UserBean(){}
 
     /**
      * CREATE - Register a new user
@@ -80,7 +78,7 @@ public class UserBean {
         logger.info("[UserBean] User registered successfully, ID: {}", user.getId());
 
         // Step 4: Fire CRUD event for audit trail
-        crudEventFirer.fire(new CRUDEvent(
+        auditTrailEvent.fire(new AuditTrail(
             "User",
             user.getId(),
             "CREATE",
@@ -168,7 +166,7 @@ public class UserBean {
     logger.info("[UserBean] User updated successfully");
 
     // Step 7: Fire CRUD event
-    crudEventFirer.fire(new CRUDEvent(
+        auditTrailEvent.fire(new AuditTrail(
         "User",
         userId,
         "UPDATE",
@@ -201,7 +199,7 @@ public class UserBean {
         logger.info("[UserBean] User deleted successfully");
 
         // Step 3: Fire CRUD event for audit trail
-        crudEventFirer.fire(new CRUDEvent(
+        auditTrailEvent.fire(new AuditTrail(
             "User",
             userId,
             "DELETE",

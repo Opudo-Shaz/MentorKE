@@ -55,12 +55,15 @@ public class MentorValidator implements Validator<Mentor> {
     // Validate user ID reference
 
     private void validateUserId(Mentor mentor, ValidationResult result) {
-        if (mentor.getUserId() == null || mentor.getUserId().trim().isEmpty()) {
+        String userId = mentor.getUserId();
+        
+        if (userId == null || userId.trim().isEmpty()) {
             result.addError("User ID is required for mentor profile");
+            return;  // Exit early to avoid NPE
         }
 
         try {
-            Integer.parseInt(mentor.getUserId());
+            Integer.parseInt(userId.trim());
         } catch (NumberFormatException e) {
             result.addError("User ID must be a valid integer");
         }

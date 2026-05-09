@@ -38,8 +38,7 @@ public class AuditTrailDAO extends GenericDAO<AuditTrail, String> {
             stmt.setString(3, audit.getOperation());
             stmt.setString(4, audit.getUserId());
             stmt.setString(5, audit.getDetails());
-            stmt.setLong(6, audit.getTimestamp());
-
+            stmt.setTimestamp(6, new java.sql.Timestamp(audit.getTimestamp()));
             int result = stmt.executeUpdate();
 
             if (result > 0) {
@@ -50,6 +49,7 @@ public class AuditTrailDAO extends GenericDAO<AuditTrail, String> {
                 }
             }
         } catch (Exception e) {
+            e.printStackTrace();
             throw new SQLException("Error adding audit trail", e);
         }
     }

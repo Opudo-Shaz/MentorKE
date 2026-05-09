@@ -13,17 +13,7 @@ import jakarta.servlet.annotation.WebServlet;
 import app.utility.logging.AppLogger;
 import org.slf4j.Logger;
 
-/**
- * UserManagement Servlet - Handles HTTP requests only
- *
- * Responsibilities (HTTP layer only):
- * - Extract request parameters
- * - Verify admin session
- * - Delegate business logic to UserBean
- * - Handle redirects with appropriate success/error messages
- *
- * All validation and business logic is in UserBean
- */
+
 @WebServlet(name = "UserManagement",
         urlPatterns = {"/user-management"})
 public class UserManagement extends HttpServlet {
