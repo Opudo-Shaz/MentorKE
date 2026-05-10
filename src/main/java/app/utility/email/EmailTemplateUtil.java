@@ -2,7 +2,21 @@ package app.utility.email;
 
 import java.util.Map;
 
+import jakarta.ejb.Singleton;
+
+
+
+@Singleton
 public class EmailTemplateUtil {
+
+    
+    private EmailTemplateUtil() {
+        /* This utility class should not be instantiated */
+    }
+
+
+
+
 
     public static String loadTemplate(String templateName) {
         return switch (templateName) {
