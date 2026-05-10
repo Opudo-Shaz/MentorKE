@@ -50,7 +50,7 @@ public class MenteeValidator implements Validator<Mentee> {
         
         if (userId == null || userId.trim().isEmpty()) {
             result.addError("User ID is required for mentee profile");
-            return;  // Exit early to avoid NPE
+            return;  
         }
 
         try {

@@ -25,7 +25,7 @@ public class UserValidator implements Validator<User> {
     private static final int MAX_EMAIL_LENGTH = 150;
     private static final String EMAIL_PATTERN = "^[A-Za-z0-9+_.-]+@(.+)$";
     private static final Pattern EMAIL_REGEX = Pattern.compile(EMAIL_PATTERN);
-    private static final String[] VALID_ROLES = {"admin", "mentor", "mentee"};
+    private static final String[] VALID_ROLES = { "admin", "mentor", "mentee" };
 
     @Override
     public ValidationResult validate(User user) {
@@ -71,7 +71,7 @@ public class UserValidator implements Validator<User> {
             result.addError("Username cannot exceed " + MAX_USERNAME_LENGTH + " characters");
         }
 
-        if (!username.matches("^[a-zA-Z0-9_.-]+$")) {
+        if (!username.matches("^[a-zA-Z0-9 _.-]+$")) {
             result.addError("Username can only contain letters, numbers, underscores, dots, and hyphens");
         }
     }
@@ -167,15 +167,14 @@ public class UserValidator implements Validator<User> {
         String status = user.getStatus();
 
         if (status == null || status.trim().isEmpty()) {
-            result.addError("Status is required");
+            // defaul status
+            user.setStatus("Active");
             return;
         }
 
-        status = status.trim().toLowerCase();
-
-        if (!status.equals("active") && !status.equals("inactive") && !status.equals("pending")) {
-            result.addError("Status must be one of: Active, Inactive, Pending");
+        String lower = status.trim().toLowerCase();
+        if (!lower.equals("active") && !lower.equals("inactive")) {
+            result.addError("Status must be Active or Inactive");
         }
     }
 }
-
