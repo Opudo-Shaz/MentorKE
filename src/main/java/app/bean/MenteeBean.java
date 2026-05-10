@@ -34,7 +34,7 @@ public class MenteeBean {
 
     @Inject
     private Event<AuditTrail> auditTrailEvent;
-    //private Event<CRUDEvent> crudEventFi
+    // private Event<CRUDEvent> crudEventFi
 
     @Inject
     private Event<UserRegisteredEvent> userRegisteredEvent;
@@ -61,7 +61,8 @@ public class MenteeBean {
      */
     public void registerMentee(Mentee mentee, User user) throws SQLException {
         logger.info("=== Starting Mentee Registration ===");
-        logger.info("Username: {}, Email: {}, Field of Study: {}", user.getUsername(), user.getEmail(), mentee.getFieldOfStudy());
+        logger.info("Username: {}, Email: {}, Field of Study: {}", user.getUsername(), user.getEmail(),
+                mentee.getFieldOfStudy());
 
         // Step 1: Validate mentee data
         ValidationResult validationResult = menteeValidator.validate(mentee);
@@ -87,22 +88,19 @@ public class MenteeBean {
 
         // Step 5: Fire CRUD event for audit trail
         auditTrailEvent.fire(new AuditTrail(
-            "Mentee",
-            mentee.getId(),
-            "CREATE",
-            user.getId(),
-            "Mentee registered: " + user.getUsername() + ", Field: " + mentee.getFieldOfStudy()
-        ));
+                "Mentee",
+                mentee.getId(),
+                "CREATE",
+                user.getId(),
+                "Mentee registered: " + user.getUsername() + ", Field: " + mentee.getFieldOfStudy()));
 
         // Step 6: Fire email event for mentees
         logger.debug("Firing email registration event for mentee...");
         userRegisteredEvent.fire(
-            new UserRegisteredEvent(
-                user.getEmail(),
-                user.getUsername(),
-                "MENTEE"
-            )
-        );
+                new UserRegisteredEvent(
+                        user.getEmail(),
+                        user.getUsername(),
+                        "MENTEE"));
 
         logger.info("=== Mentee Registration Completed Successfully ===");
     }
@@ -132,6 +130,17 @@ public class MenteeBean {
     }
 
     /**
+     * READ - Get mentees assigned to a mentor
+     */
+    public List<Mentee> getMenteesByMentorId(String mentorId)
+            throws SQLException {
+
+        logger.debug("Fetching mentees for mentor ID: {}", mentorId);
+
+        return menteeDAO.getMenteesByMentorId(mentorId);
+    }
+
+    /**
      * UPDATE - Update existing mentee
      */
     public void updateMentee(String menteeId, Mentee mentee) throws SQLException {
@@ -147,7 +156,8 @@ public class MenteeBean {
         }
         logger.debug("Mentee found ✓");
 
-        // Step 2: Normalize mentorId (convert empty/whitespace to null BEFORE preservation)
+        // Step 2: Normalize mentorId (convert empty/whitespace to null BEFORE
+        // preservation)
         if (mentee.getMentorId() != null && mentee.getMentorId().trim().isEmpty()) {
             logger.debug("Empty mentorId provided, treating as null");
             mentee.setMentorId(null);
@@ -195,12 +205,11 @@ public class MenteeBean {
 
         // Step 10: Fire CRUD event for audit trail
         auditTrailEvent.fire(new AuditTrail(
-            "Mentee",
-            menteeId,
-            "UPDATE",
-            existingMentee.getUserId(),
-            "Mentee updated: Field=" + mentee.getFieldOfStudy()
-        ));
+                "Mentee",
+                menteeId,
+                "UPDATE",
+                existingMentee.getUserId(),
+                "Mentee updated: Field=" + mentee.getFieldOfStudy()));
 
         logger.info("=== Mentee Update Completed Successfully ===");
     }
@@ -240,22 +249,19 @@ public class MenteeBean {
 
         // Step 4: Fire CRUD event for audit trail
         auditTrailEvent.fire(new AuditTrail(
-            "Mentee",
-            mentee.getId(),
-            "CREATE",
-            "ADMIN",
-            "Mentee added by admin: " + user.getUsername() + ", Field: " + mentee.getFieldOfStudy()
-        ));
+                "Mentee",
+                mentee.getId(),
+                "CREATE",
+                "ADMIN",
+                "Mentee added by admin: " + user.getUsername() + ", Field: " + mentee.getFieldOfStudy()));
 
         // Step 5: Fire email event to notify user they're now a mentee
         logger.debug("Firing email for newly assigned mentee...");
         userRegisteredEvent.fire(
-            new UserRegisteredEvent(
-                user.getEmail(),
-                user.getUsername(),
-                "MENTEE"
-            )
-        );
+                new UserRegisteredEvent(
+                        user.getEmail(),
+                        user.getUsername(),
+                        "MENTEE"));
 
         logger.info("=== Mentee Addition Completed Successfully ===");
     }
@@ -281,17 +287,14 @@ public class MenteeBean {
         menteeDAO.deleteMentee(menteeId);
         logger.info("Mentee deleted successfully");
 
-
         // Step 3: Fire CRUD event for audit trail
         auditTrailEvent.fire(new AuditTrail(
-            "Mentee",
-            menteeId,
-            "DELETE",
-            mentee.getUserId(),
-            "Mentee deleted"
-        ));
+                "Mentee",
+                menteeId,
+                "DELETE",
+                mentee.getUserId(),
+                "Mentee deleted"));
 
         logger.info("=== Mentee Deletion Completed Successfully ===");
     }
 }
-

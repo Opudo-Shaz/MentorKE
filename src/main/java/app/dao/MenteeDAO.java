@@ -33,13 +33,13 @@ public class MenteeDAO extends GenericDAO<Mentee, String> {
      */
     public void addMentee(Mentee mentee) throws SQLException {
         String sql = """
-            INSERT INTO mentees
-            (user_id, education_level, field_of_study, learning_goals, phone_number, mentor_id, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        """;
+                    INSERT INTO mentees
+                    (user_id, education_level, field_of_study, learning_goals, phone_number, mentor_id, status)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                """;
 
         try (Connection conn = dataSourceHelper.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             stmt.setInt(1, Integer.parseInt(mentee.getUserId()));
             stmt.setString(2, mentee.getEducationLevel());
@@ -83,7 +83,7 @@ public class MenteeDAO extends GenericDAO<Mentee, String> {
         String sql = "SELECT * FROM mentees WHERE user_id = ?";
 
         try (Connection conn = dataSourceHelper.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, Integer.parseInt(userId));
 
@@ -114,8 +114,8 @@ public class MenteeDAO extends GenericDAO<Mentee, String> {
         String sql = "SELECT * FROM mentees WHERE status = 'Active' ORDER BY id ASC";
 
         try (Connection conn = dataSourceHelper.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+                Statement stmt = conn.createStatement();
+                ResultSet rs = stmt.executeQuery(sql)) {
 
             while (rs.next()) {
                 list.add(mapResultSet(rs));
@@ -133,15 +133,15 @@ public class MenteeDAO extends GenericDAO<Mentee, String> {
     public List<Mentee> getMenteesWithoutMentor() throws SQLException {
         List<Mentee> list = new ArrayList<>();
         String sql = """
-            SELECT * FROM mentees
-            WHERE mentor_id IS NULL
-            AND status = 'Active'
-            ORDER BY id ASC
-        """;
+                    SELECT * FROM mentees
+                    WHERE mentor_id IS NULL
+                    AND status = 'Active'
+                    ORDER BY id ASC
+                """;
 
         try (Connection conn = dataSourceHelper.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+                Statement stmt = conn.createStatement();
+                ResultSet rs = stmt.executeQuery(sql)) {
 
             while (rs.next()) {
                 list.add(mapResultSet(rs));
@@ -153,23 +153,49 @@ public class MenteeDAO extends GenericDAO<Mentee, String> {
         return list;
     }
 
+    public List<Mentee> getMenteesByMentorId(String mentorId)
+            throws SQLException {
+
+        List<Mentee> mentees = new ArrayList<>();
+
+        String sql = "SELECT * FROM mentees WHERE mentor_id = ?";
+
+        try (
+                Connection conn = dataSourceHelper.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, mentorId);
+
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+
+                Mentee mentee = mapResultSetToMentee(rs);
+
+                mentees.add(mentee);
+            }
+        }
+
+        return mentees;
+    }
+
     /**
      * UPDATE - Update mentee
      */
     public void updateMentee(String id, Mentee mentee) throws SQLException {
         String sql = """
-            UPDATE mentees
-            SET education_level = ?,
-                field_of_study = ?,
-                learning_goals = ?,
-                phone_number = ?,
-                mentor_id = ?,
-                status = ?
-            WHERE id = ?
-        """;
+                    UPDATE mentees
+                    SET education_level = ?,
+                        field_of_study = ?,
+                        learning_goals = ?,
+                        phone_number = ?,
+                        mentor_id = ?,
+                        status = ?
+                    WHERE id = ?
+                """;
 
         try (Connection conn = dataSourceHelper.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, mentee.getEducationLevel());
             stmt.setString(2, mentee.getFieldOfStudy());
@@ -203,5 +229,34 @@ public class MenteeDAO extends GenericDAO<Mentee, String> {
      */
     public int getTotalMentees() throws SQLException {
         return count();
+    }
+
+    private Mentee mapResultSetToMentee(ResultSet rs)
+            throws SQLException {
+
+        Mentee mentee = new Mentee();
+
+        mentee.setId(rs.getString("id"));
+        mentee.setUserId(rs.getString("user_id"));
+        mentee.setEducationLevel(rs.getString("education_level"));
+        mentee.setFieldOfStudy(rs.getString("field_of_study"));
+        mentee.setLearningGoals(rs.getString("learning_goals"));
+        mentee.setPhoneNumber(rs.getString("phone_number"));
+        mentee.setMentorId(rs.getString("mentor_id"));
+        mentee.setStatus(rs.getString("status"));
+
+        // timestamps
+        mentee.setCreatedAt(
+                rs.getTimestamp("created_at").getTime());
+
+        mentee.setUpdatedAt(
+                rs.getTimestamp("updated_at").getTime());
+
+        return mentee;
+    }
+
+    @Override
+    protected Mentee mapResultSet(ResultSet rs) throws SQLException {
+        return mapResultSetToMentee(rs);
     }
 }

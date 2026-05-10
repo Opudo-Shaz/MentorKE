@@ -10,9 +10,18 @@ import java.io.IOException;
 import app.model.Mentee;
 import app.model.Mentor;
 import jakarta.servlet.annotation.WebServlet;
+import app.bean.MenteeBean;
+import app.bean.MentorBean;
+import jakarta.inject.Inject;
 
 @WebServlet(name = "MenteeDashboard", urlPatterns = { "/mentee-dashboard" })
 public class MenteeDashboard extends HttpServlet {
+
+    @Inject
+    private MenteeBean menteeBean;
+
+    @Inject 
+    private MentorBean mentorBean;
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
