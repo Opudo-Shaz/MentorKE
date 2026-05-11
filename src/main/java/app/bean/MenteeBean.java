@@ -64,22 +64,23 @@ public class MenteeBean {
         logger.info("Username: {}, Email: {}, Field of Study: {}", user.getUsername(), user.getEmail(),
                 mentee.getFieldOfStudy());
 
-        // Step 1: Validate mentee data
+        // Step 1: Add user to database first
+        logger.debug("Adding user to database...");
+        userDAO.addUser(user);
+        logger.info("User added successfully, ID: {}", user.getId());
+
+        // Step 2: Set the user ID and status for mentee
+        mentee.setUserId(user.getId());
+        mentee.setStatus("Active");
+
+        // Step 3: NOW validate mentee data (after required fields are set)
+        logger.debug("Validating mentee data...");
         ValidationResult validationResult = menteeValidator.validate(mentee);
         if (!validationResult.isValid()) {
             logger.error("Validation failed!");
             throw new IllegalArgumentException("Mentee validation failed: " + validationResult.getErrorMessages());
         }
         logger.debug("Validation passed ✓");
-
-        // Step 2: Add user to database first
-        logger.debug("Adding user to database...");
-        userDAO.addUser(user);
-        logger.info("User added successfully, ID: {}", user.getId());
-
-        // Step 3: Set the user ID for mentee
-        mentee.setUserId(user.getId());
-        mentee.setStatus("Active");
 
         // Step 4: Add mentee to database
         logger.debug("Adding mentee to database...");

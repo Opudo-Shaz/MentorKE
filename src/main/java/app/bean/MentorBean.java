@@ -60,22 +60,23 @@ public class MentorBean {
         logger.info("=== Starting Mentor Registration ===");
         logger.info("Username: {}, Email: {}, Specialization: {}", user.getUsername(), user.getEmail(), mentor.getSpecialization());
 
-        // Step 1: Validate mentor data
+        // Step 1: Add user to database first
+        logger.debug("Adding user to database...");
+        userDAO.addUser(user);
+        logger.info("User added successfully, ID: {}", user.getId());
+
+        // Step 2: Set the user ID and status for mentor
+        mentor.setUserId(user.getId());
+        mentor.setStatus("Active");
+
+        // Step 3: NOW validate mentor data (after required fields are set)
+        logger.debug("Validating mentor data...");
         ValidationResult validationResult = mentorValidator.validate(mentor);
         if (!validationResult.isValid()) {
             logger.error("Validation failed!");
             throw new IllegalArgumentException("Mentor validation failed: " + validationResult.getErrorMessages());
         }
         logger.debug("Validation passed ✓");
-
-        // Step 2: Add user to database first
-        logger.debug("Adding user to database...");
-        userDAO.addUser(user);
-        logger.info("User added successfully, ID: {}", user.getId());
-
-        // Step 3: Set the user ID for mentor
-        mentor.setUserId(user.getId());
-        mentor.setStatus("Active");
 
         // Step 4: Add mentor to database
         logger.debug("Adding mentor to database...");

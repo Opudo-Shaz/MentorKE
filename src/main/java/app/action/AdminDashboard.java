@@ -1,8 +1,11 @@
 package app.action;
 
-import app.dao.UserDAO;
-import app.dao.MentorDAO;
-import app.dao.MenteeDAO;
+import app.bean.UserBean;
+import app.bean.MentorBean;
+import app.bean.MenteeBean;
+import app.model.User;
+import app.model.Mentor;
+import app.model.Mentee;
 import jakarta.inject.Inject;
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
@@ -18,13 +21,13 @@ public class AdminDashboard extends HttpServlet {
     private static final Logger logger = AppLogger.getLogger(AdminDashboard.class);
 
     @Inject
-    private UserDAO userDAO;
+    private UserBean userBean;
 
     @Inject
-    private MentorDAO mentorDAO;
+    private MentorBean mentorBean;
 
     @Inject
-    private MenteeDAO menteeDAO;
+    private MenteeBean menteeBean;
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -41,19 +44,19 @@ public class AdminDashboard extends HttpServlet {
         try {
 
             if ("users".equalsIgnoreCase(view)) {
-                List<?> users = userDAO.getAllUsers();
+                List<User> users = userBean.getAllUsers();
                 logger.debug("Retrieved {} users", users != null ? users.size() : "null");
                 request.setAttribute("users", users);
             }
 
             else if ("mentors".equalsIgnoreCase(view)) {
-                List<?> mentors = mentorDAO.getAllMentors();
+                List<Mentor> mentors = mentorBean.getAllMentors();
                 logger.debug("Retrieved {} mentors", mentors != null ? mentors.size() : "null");
                 request.setAttribute("mentors", mentors);
             }
 
             else if ("mentees".equalsIgnoreCase(view)) {
-                List<?> mentees = menteeDAO.getAllMentees();
+                List<Mentee> mentees = menteeBean.getAllMentees();
                 logger.debug("Retrieved {} mentees", mentees != null ? mentees.size() : "null");
                 request.setAttribute("mentees", mentees);
             }

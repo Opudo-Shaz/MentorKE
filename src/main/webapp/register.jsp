@@ -367,12 +367,11 @@
                     <!-- Hidden role field synced with visual selector -->
                     <input type="hidden" name="role" id="hiddenRole" value="mentee">
 
-                    <%-- DYNAMIC FIELDS VIA REFLECTION --%>
+                    <%-- COMMON USER FIELDS VIA REFLECTION --%>
                     <%
                         List<String> generatedFields = new ArrayList<>();
                         try {
                             Field[] fields = app.model.User.class.getDeclaredFields();
-                            boolean first = true;
                     %>
                     <div class="fields-grid">
                     <%
@@ -427,6 +426,70 @@
                         }
                     %>
 
+                    <!-- ===== ROLE-SPECIFIC FIELDS ===== -->
+                    
+                    <!-- Mentee Fields -->
+                    <div id="menteeFields" style="display: block;">
+                        <div style="font-size:12px; font-weight:600; color:var(--gray-600); margin-top:20px; margin-bottom:12px;">Profile Details (Mentee)</div>
+                        <div class="fields-grid">
+                            <div class="form-group full">
+                                <label for="educationLevel">Education Level *</label>
+                                <select name="educationLevel" id="educationLevel" required>
+                                    <option value="">Select education level</option>
+                                    <option value="High School">High School</option>
+                                    <option value="Bachelor">Bachelor's Degree</option>
+                                    <option value="Master">Master's Degree</option>
+                                    <option value="PhD">PhD</option>
+                                    <option value="Certification">Professional Certification</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group full">
+                                <label for="fieldOfStudy">Field of Study *</label>
+                                <input type="text" name="fieldOfStudy" id="fieldOfStudy" placeholder="e.g., Software Engineering, Business" required>
+                            </div>
+                            <div class="form-group full">
+                                <label for="learningGoals">Learning Goals *</label>
+                                <input type="text" name="learningGoals" id="learningGoals" placeholder="What do you want to achieve?" required>
+                            </div>
+                            <div class="form-group full">
+                                <label for="phoneNumberMentee">Phone Number</label>
+                                <input type="tel" name="phoneNumber" id="phoneNumberMentee" placeholder="+254...">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mentor Fields -->
+                    <div id="mentorFields" style="display: none;">
+                        <div style="font-size:12px; font-weight:600; color:var(--gray-600); margin-top:20px; margin-bottom:12px;">Profile Details (Mentor)</div>
+                        <div class="fields-grid">
+                            <div class="form-group full">
+                                <label for="specialization">Specialization *</label>
+                                <input type="text" name="specialization" id="specialization" placeholder="e.g., Full-Stack Web Development">
+                            </div>
+                            <div class="form-group full">
+                                <label for="expertise">Expertise *</label>
+                                <input type="text" name="expertise" id="expertise" placeholder="Your key skills" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="yearsOfExperience">Years of Experience *</label>
+                                <input type="number" name="yearsOfExperience" id="yearsOfExperience" placeholder="e.g., 5" min="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="bio">Bio *</label>
+                                <input type="text" name="bio" id="bio" placeholder="Brief bio" required>
+                            </div>
+                            <div class="form-group full">
+                                <label for="qualifications">Qualifications *</label>
+                                <input type="text" name="qualifications" id="qualifications" placeholder="Your certifications and credentials" required>
+                            </div>
+                            <div class="form-group full">
+                                <label for="phoneNumberMentor">Phone Number</label>
+                                <input type="tel" name="phoneNumber" id="phoneNumberMentor" placeholder="+254...">
+                            </div>
+                        </div>
+                    </div>
+
                     <button type="submit" class="btn-submit">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                         Create account
@@ -435,7 +498,7 @@
                 </form>
 
                 <div class="reflection-note">
-                    ⚡ Form fields dynamically generated via Java Reflection (<%= generatedFields != null ? generatedFields.size() : 0 %> fields from User class)
+                    ⚡ Form fields auto-generated with role-specific sections. Base fields from User class, role-specific fields managed by service layer.
                 </div>
 
                 <div class="divider">or</div>
@@ -455,11 +518,49 @@
     </footer>
 
     <script>
-        // Sync visual role selector with hidden form field
+        // Sync visual role selector with hidden form field and toggle role-specific fields
         document.querySelectorAll('input[name="role_display"]').forEach(function(radio) {
             radio.addEventListener('change', function() {
-                document.getElementById('hiddenRole').value = this.value;
+                var selectedRole = this.value;
+                document.getElementById('hiddenRole').value = selectedRole;
+                
+                // Toggle role-specific form sections
+                if (selectedRole === 'mentee') {
+                    document.getElementById('menteeFields').style.display = 'block';
+                    document.getElementById('mentorFields').style.display = 'none';
+                    // Make mentee fields required
+                    document.getElementById('educationLevel').required = true;
+                    document.getElementById('fieldOfStudy').required = true;
+                    document.getElementById('learningGoals').required = true;
+                    // Make mentor fields not required
+                    document.getElementById('specialization').required = false;
+                    document.getElementById('expertise').required = false;
+                    document.getElementById('yearsOfExperience').required = false;
+                    document.getElementById('bio').required = false;
+                    document.getElementById('qualifications').required = false;
+                } else if (selectedRole === 'mentor') {
+                    document.getElementById('menteeFields').style.display = 'none';
+                    document.getElementById('mentorFields').style.display = 'block';
+                    // Make mentee fields not required
+                    document.getElementById('educationLevel').required = false;
+                    document.getElementById('fieldOfStudy').required = false;
+                    document.getElementById('learningGoals').required = false;
+                    // Make mentor fields required
+                    document.getElementById('specialization').required = true;
+                    document.getElementById('expertise').required = true;
+                    document.getElementById('yearsOfExperience').required = true;
+                    document.getElementById('bio').required = true;
+                    document.getElementById('qualifications').required = true;
+                }
             });
+        });
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            var selectedRole = document.querySelector('input[name="role_display"]:checked');
+            if (selectedRole) {
+                selectedRole.dispatchEvent(new Event('change'));
+            }
         });
     </script>
 

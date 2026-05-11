@@ -1,6 +1,6 @@
 package app.action;
 
-import app.dao.UserDAO;
+import app.bean.UserBean;
 import app.model.User;
 import jakarta.inject.Inject;
 import jakarta.servlet.ServletException;
@@ -15,7 +15,7 @@ import jakarta.servlet.annotation.WebServlet;
 public class Login extends HttpServlet {
 
     @Inject
-    private UserDAO userDAO;
+    private UserBean userBean;
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
@@ -75,9 +75,9 @@ public class Login extends HttpServlet {
                 return;
             }
 
-            // Step 3: Mentor / Mentee — look up in DB
+            // Step 3: Mentor / Mentee — look up in DB using UserBean
             if ("mentor".equals(role) || "mentee".equals(role)) {
-                User user = userDAO.getUserByUsername(username);
+                User user = userBean.getUserByUsername(username);
 
                 // Check user exists
                 if (user == null) {
