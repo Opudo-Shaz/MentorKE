@@ -9,247 +9,102 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-
 @Dependent
 public class MenteeDAO extends GenericDAO<Mentee, String> {
-
-    private final DataSourceHelper dataSourceHelper;
 
     @Inject
     public MenteeDAO(DataSourceHelper dataSourceHelper) {
         super(Mentee.class, dataSourceHelper);
-        this.dataSourceHelper = dataSourceHelper;
     }
 
-    /**
-     * CREATE - Add a new mentee
-     */
+    // ✅ Use inherited save() instead of custom addMentee()
     public void addMentee(Mentee mentee) throws SQLException {
-        String sql = """
-                    INSERT INTO mentees
-                    (user_id, education_level, field_of_study, learning_goals, phone_number, mentor_id, status)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                """;
-
-        try (Connection conn = dataSourceHelper.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-
-            stmt.setInt(1, Integer.parseInt(mentee.getUserId()));
-            stmt.setString(2, mentee.getEducationLevel());
-            stmt.setString(3, mentee.getFieldOfStudy());
-            stmt.setString(4, mentee.getLearningGoals());
-            stmt.setString(5, mentee.getPhoneNumber());
-
-            if (mentee.getMentorId() != null) {
-                stmt.setInt(6, Integer.parseInt(mentee.getMentorId()));
-            } else {
-                stmt.setNull(6, Types.INTEGER);
-            }
-
-            stmt.setString(7, mentee.getStatus() != null ? mentee.getStatus() : "Active");
-
-            int result = stmt.executeUpdate();
-
-            if (result > 0) {
-                try (ResultSet keys = stmt.getGeneratedKeys()) {
-                    if (keys.next()) {
-                        mentee.setId(String.valueOf(keys.getInt(1)));
-                    }
-                }
-            }
-        } catch (Exception e) {
-            throw new SQLException("Error adding mentee", e);
-        }
+        save(mentee);
     }
 
-    /**
-     * READ - Get mentee by ID
-     */
+    // ✅ Use inherited findById()
     public Mentee getMentee(String id) throws SQLException {
         return findById(id);
     }
 
-    /**
-     * READ - Get mentee by user ID
-     */
-    public Mentee getMenteeByUserId(String userId) throws SQLException {
-        String sql = "SELECT * FROM mentees WHERE user_id = ?";
-
-        try (Connection conn = dataSourceHelper.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setInt(1, Integer.parseInt(userId));
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return mapResultSet(rs);
-                }
-            }
-        } catch (Exception e) {
-            throw new SQLException("Error finding mentee by user ID", e);
-        }
-
-        return null;
-    }
-
-    /**
-     * READ - Get all mentees
-     */
+    // ✅ Use inherited findAll()
     public List<Mentee> getAllMentees() throws SQLException {
         return findAll();
     }
 
-    /**
-     * READ - Get active mentees
-     */
-    public List<Mentee> getActiveMentees() throws SQLException {
-        List<Mentee> list = new ArrayList<>();
-        String sql = "SELECT * FROM mentees WHERE status = 'Active' ORDER BY id ASC";
-
-        try (Connection conn = dataSourceHelper.getConnection();
-                Statement stmt = conn.createStatement();
-                ResultSet rs = stmt.executeQuery(sql)) {
-
-            while (rs.next()) {
-                list.add(mapResultSet(rs));
-            }
-        } catch (Exception e) {
-            throw new SQLException("Error getting active mentees", e);
-        }
-
-        return list;
-    }
-
-    /**
-     * READ - Get mentees without mentor
-     */
-    public List<Mentee> getMenteesWithoutMentor() throws SQLException {
-        List<Mentee> list = new ArrayList<>();
-        String sql = """
-                    SELECT * FROM mentees
-                    WHERE mentor_id IS NULL
-                    AND status = 'Active'
-                    ORDER BY id ASC
-                """;
-
-        try (Connection conn = dataSourceHelper.getConnection();
-                Statement stmt = conn.createStatement();
-                ResultSet rs = stmt.executeQuery(sql)) {
-
-            while (rs.next()) {
-                list.add(mapResultSet(rs));
-            }
-        } catch (Exception e) {
-            throw new SQLException("Error getting mentees without mentor", e);
-        }
-
-        return list;
-    }
-
-    public List<Mentee> getMenteesByMentorId(String mentorId)
-            throws SQLException {
-
-        List<Mentee> mentees = new ArrayList<>();
-
-        String sql = "SELECT * FROM mentees WHERE mentor_id = ?";
-
-        try (
-                Connection conn = dataSourceHelper.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setString(1, mentorId);
-
-            ResultSet rs = stmt.executeQuery();
-
-            while (rs.next()) {
-
-                Mentee mentee = mapResultSetToMentee(rs);
-
-                mentees.add(mentee);
-            }
-        }
-
-        return mentees;
-    }
-
-    /**
-     * UPDATE - Update mentee
-     */
+    // ✅ Use inherited update()
     public void updateMentee(String id, Mentee mentee) throws SQLException {
-        String sql = """
-                    UPDATE mentees
-                    SET education_level = ?,
-                        field_of_study = ?,
-                        learning_goals = ?,
-                        phone_number = ?,
-                        mentor_id = ?,
-                        status = ?
-                    WHERE id = ?
-                """;
-
-        try (Connection conn = dataSourceHelper.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setString(1, mentee.getEducationLevel());
-            stmt.setString(2, mentee.getFieldOfStudy());
-            stmt.setString(3, mentee.getLearningGoals());
-            stmt.setString(4, mentee.getPhoneNumber());
-
-            if (mentee.getMentorId() != null) {
-                stmt.setInt(5, Integer.parseInt(mentee.getMentorId()));
-            } else {
-                stmt.setNull(5, Types.INTEGER);
-            }
-
-            stmt.setString(6, mentee.getStatus());
-            stmt.setInt(7, Integer.parseInt(id));
-
-            stmt.executeUpdate();
-        } catch (Exception e) {
-            throw new SQLException("Error updating mentee", e);
-        }
+        mentee.setId(id);
+        update(mentee);
     }
 
-    /**
-     * DELETE - Delete mentee
-     */
+    // ✅ Use inherited delete()
     public void deleteMentee(String id) throws SQLException {
         delete(id);
     }
 
-    /**
-     * COUNT - Total mentees
-     */
+    // ✅ Use inherited count()
     public int getTotalMentees() throws SQLException {
         return count();
     }
 
-    private Mentee mapResultSetToMentee(ResultSet rs)
-            throws SQLException {
-
-        Mentee mentee = new Mentee();
-
-        mentee.setId(rs.getString("id"));
-        mentee.setUserId(rs.getString("user_id"));
-        mentee.setEducationLevel(rs.getString("education_level"));
-        mentee.setFieldOfStudy(rs.getString("field_of_study"));
-        mentee.setLearningGoals(rs.getString("learning_goals"));
-        mentee.setPhoneNumber(rs.getString("phone_number"));
-        mentee.setMentorId(rs.getString("mentor_id"));
-        mentee.setStatus(rs.getString("status"));
-
-        // timestamps
-        mentee.setCreatedAt(
-                rs.getTimestamp("created_at").getTime());
-
-        mentee.setUpdatedAt(
-                rs.getTimestamp("updated_at").getTime());
-
-        return mentee;
+    // ⚠️ Keep these — they use custom WHERE clauses GenericDAO can't handle
+    public Mentee getMenteeByUserId(String userId) throws SQLException {
+        String sql = "SELECT * FROM mentees WHERE user_id = ?";
+        try (Connection conn = dataSourceHelper.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, Integer.parseInt(userId));
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) return mapResultSet(rs);
+            }
+        } catch (Exception e) {
+            throw new SQLException("Error finding mentee by user ID", e);
+        }
+        return null;
     }
 
-    @Override
-    protected Mentee mapResultSet(ResultSet rs) throws SQLException {
-        return mapResultSetToMentee(rs);
+    public List<Mentee> getActiveMentees() throws SQLException {
+        List<Mentee> list = new ArrayList<>();
+        String sql = "SELECT * FROM mentees WHERE status = 'Active' ORDER BY id ASC";
+        try (Connection conn = dataSourceHelper.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) list.add(mapResultSet(rs));
+        } catch (Exception e) {
+            throw new SQLException("Error getting active mentees", e);
+        }
+        return list;
+    }
+
+    public List<Mentee> getMenteesWithoutMentor() throws SQLException {
+        List<Mentee> list = new ArrayList<>();
+        String sql = """
+            SELECT * FROM mentees
+            WHERE mentor_id IS NULL AND status = 'Active'
+            ORDER BY id ASC
+        """;
+        try (Connection conn = dataSourceHelper.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) list.add(mapResultSet(rs));
+        } catch (Exception e) {
+            throw new SQLException("Error getting mentees without mentor", e);
+        }
+        return list;
+    }
+
+    public List<Mentee> getMenteesByMentorId(String mentorId) throws SQLException {
+        List<Mentee> mentees = new ArrayList<>();
+        String sql = "SELECT * FROM mentees WHERE mentor_id = ?";
+        try (Connection conn = dataSourceHelper.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, mentorId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) mentees.add(mapResultSet(rs));
+            }
+        } catch (Exception e) {
+            throw new SQLException("Error getting mentees by mentor ID", e);
+        }
+        return mentees;
     }
 }

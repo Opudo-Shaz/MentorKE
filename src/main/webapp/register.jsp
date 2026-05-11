@@ -380,7 +380,7 @@
                                 Class<?> fieldType = field.getType();
 
                                 if (Modifier.isStatic(field.getModifiers())) continue;
-                                if (fieldName.equals("createdAt") || fieldName.equals("id") || fieldName.equals("role")) continue;
+                                if (fieldName.equals("createdAt") || fieldName.equals("updatedAt") || fieldName.equals("id") || fieldName.equals("role")) continue;
 
                                 generatedFields.add(fieldName);
 
@@ -436,11 +436,14 @@
                                 <label for="educationLevel">Education Level *</label>
                                 <select name="educationLevel" id="educationLevel" required>
                                     <option value="">Select education level</option>
+                                    <option value="Primary">Primary</option>
+                                    <option value="Secondary">Secondary</option>
                                     <option value="High School">High School</option>
-                                    <option value="Bachelor">Bachelor's Degree</option>
-                                    <option value="Master">Master's Degree</option>
+                                    <option value="Certificate">Certificate</option>
+                                    <option value="Diploma">Diploma</option>
+                                    <option value="Undergraduate">Undergraduate</option>
+                                    <option value="Postgraduate">Postgraduate</option>
                                     <option value="PhD">PhD</option>
-                                    <option value="Certification">Professional Certification</option>
                                     <option value="Other">Other</option>
                                 </select>
                             </div>

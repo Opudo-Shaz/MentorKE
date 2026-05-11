@@ -899,10 +899,15 @@
                                 <label for="addEducationLevel">Education level</label>
                                 <select id="addEducationLevel" name="educationLevel" required>
                                     <option value="">Select level</option>
+                                    <option value="Primary">Primary</option>
+                                    <option value="Secondary">Secondary</option>
                                     <option value="High School">High School</option>
+                                    <option value="Certificate">Certificate</option>
+                                    <option value="Diploma">Diploma</option>
                                     <option value="Undergraduate">Undergraduate</option>
-                                    <option value="Master">Master</option>
+                                    <option value="Postgraduate">Postgraduate</option>
                                     <option value="PhD">PhD</option>
+                                    <option value="Other">Other</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -1089,10 +1094,15 @@
                         <div class="form-group">
                             <label for="editEducationLevel">Education level</label>
                             <select name="educationLevel" id="editEducationLevel">
+                                <option value="Primary">Primary</option>
+                                <option value="Secondary">Secondary</option>
                                 <option value="High School">High School</option>
+                                <option value="Certificate">Certificate</option>
+                                <option value="Diploma">Diploma</option>
                                 <option value="Undergraduate">Undergraduate</option>
-                                <option value="Master">Master</option>
+                                <option value="Postgraduate">Postgraduate</option>
                                 <option value="PhD">PhD</option>
+                                <option value="Other">Other</option>
                             </select>
                         </div>
                         <div class="form-group">
