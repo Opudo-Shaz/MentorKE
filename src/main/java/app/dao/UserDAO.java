@@ -16,38 +16,38 @@ public class UserDAO extends GenericDAO<User, String> {
         super(User.class, dataSourceHelper);
     }
 
-    // ✅ Delegates to inherited save()
+    // Add user
     public void addUser(User user) throws SQLException {
         save(user);
     }
 
-    // ✅ Delegates to inherited findById()
+    // Find user by id
     public User getUser(String id) throws SQLException {
         return findById(id);
     }
 
-    // ✅ Delegates to inherited update()
+    // Update user
     public void updateUser(String id, User user) throws SQLException {
         user.setId(id);
         update(user);
     }
 
-    // ✅ Delegates to inherited delete()
+    // Delete user
     public void deleteUser(String id) throws SQLException {
         delete(id);
     }
 
-    // ✅ Delegates to inherited findAll()
+    // Find all users
     public List<User> getAllUsers() throws SQLException {
         return findAll();
     }
 
-    // ✅ Delegates to inherited count()
+    // Get total number of users
     public int getTotalUsers() throws SQLException {
         return count();
     }
 
-    // ⚠️ Keep — custom WHERE clause
+    //  custom WHERE clause
     public User getUserByUsername(String username) throws SQLException {
         String sql = "SELECT * FROM users WHERE username = ?";
         try (Connection conn = dataSourceHelper.getConnection();
@@ -62,7 +62,7 @@ public class UserDAO extends GenericDAO<User, String> {
         return null;
     }
 
-    // ⚠️ Keep — custom SELECT 1 existence check
+    // custom SELECT 1 existence check
     public boolean exists(String id) throws SQLException {
         String sql = "SELECT 1 FROM users WHERE id = ?";
         try (Connection conn = dataSourceHelper.getConnection();

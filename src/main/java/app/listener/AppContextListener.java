@@ -2,7 +2,7 @@ package app.listener;
 
 import app.dbconnection.DatabaseInitializer;
 import app.utility.logging.AppLogger;
-import jakarta.enterprise.inject.spi.CDI;
+import jakarta.inject.Inject;
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
 import jakarta.servlet.annotation.WebListener;
@@ -14,6 +14,9 @@ public class AppContextListener implements ServletContextListener {
     private static final Logger logger =
             AppLogger.getLogger(AppContextListener.class);
 
+    @Inject
+    private DatabaseInitializer databaseInitializer;
+
     @Override
     public void contextInitialized(ServletContextEvent sce) {
 
@@ -23,12 +26,7 @@ public class AppContextListener implements ServletContextListener {
 
         try {
 
-            DatabaseInitializer initializer =
-                    CDI.current()
-                            .select(DatabaseInitializer.class)
-                            .get();
-
-            initializer.initializeDatabase();
+            databaseInitializer.initializeDatabase();
 
             logger.info("[AppContextListener] Database initialized successfully");
             logger.info("[AppContextListener] Application ready\n");

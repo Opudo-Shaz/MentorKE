@@ -17,33 +17,33 @@ public class MentorDAO extends GenericDAO<Mentor, String> {
         super(Mentor.class, dataSourceHelper);
     }
 
-    // ✅ Delegates to inherited save()
+    // Add mentor
     public void addMentor(Mentor mentor) throws SQLException {
         save(mentor);
     }
 
-    // ✅ Delegates to inherited findById()
+    // Find mentor by id
     public Mentor getMentor(String id) throws SQLException {
         return findById(id);
     }
 
-    // ✅ Delegates to inherited findAll()
+    // Find all mentors
     public List<Mentor> getAllMentors() throws SQLException {
         return findAll();
     }
 
-    // ✅ Delegates to inherited update()
+    // Update mentor
     public void updateMentor(String id, Mentor mentor) throws SQLException {
         mentor.setId(id);
         update(mentor);
     }
-
-    // ✅ Delegates to inherited delete()
+    
+    // Delete mentor
     public void deleteMentor(String id) throws SQLException {
         delete(id);
     }
 
-    // ✅ Delegates to inherited count()
+    // Get total number of mentors
     public int getTotalMentors() throws SQLException {
         return count();
     }
@@ -63,7 +63,7 @@ public class MentorDAO extends GenericDAO<Mentor, String> {
         return null;
     }
 
-    // ⚠️ Keep — custom WHERE clause
+    // custom WHERE clause
     public List<Mentor> getActiveMentors() throws SQLException {
         List<Mentor> mentors = new ArrayList<>();
         String sql = "SELECT * FROM mentors WHERE status = 'Active' ORDER BY specialization ASC";

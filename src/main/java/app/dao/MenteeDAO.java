@@ -17,38 +17,38 @@ public class MenteeDAO extends GenericDAO<Mentee, String> {
         super(Mentee.class, dataSourceHelper);
     }
 
-    // ✅ Use inherited save() instead of custom addMentee()
+    // Add mentee
     public void addMentee(Mentee mentee) throws SQLException {
         save(mentee);
     }
 
-    // ✅ Use inherited findById()
+    // Find mentee by id
     public Mentee getMentee(String id) throws SQLException {
         return findById(id);
     }
 
-    // ✅ Use inherited findAll()
+    // Find all mentees
     public List<Mentee> getAllMentees() throws SQLException {
         return findAll();
     }
 
-    // ✅ Use inherited update()
+    // update mentee
     public void updateMentee(String id, Mentee mentee) throws SQLException {
         mentee.setId(id);
         update(mentee);
     }
 
-    // ✅ Use inherited delete()
+    // delete mentee
     public void deleteMentee(String id) throws SQLException {
         delete(id);
     }
 
-    // ✅ Use inherited count()
+    // Get total number of mentees
     public int getTotalMentees() throws SQLException {
         return count();
     }
 
-    // ⚠️ Keep these — they use custom WHERE clauses GenericDAO can't handle
+    // use custom WHERE clauses GenericDAO can't handle
     public Mentee getMenteeByUserId(String userId) throws SQLException {
         String sql = "SELECT * FROM mentees WHERE user_id = ?";
         try (Connection conn = dataSourceHelper.getConnection();

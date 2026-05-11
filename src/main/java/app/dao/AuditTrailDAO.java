@@ -17,17 +17,17 @@ public class AuditTrailDAO extends GenericDAO<AuditTrail, String> {
         super(AuditTrail.class, dataSourceHelper);
     }
 
-    // ✅ Delegates to inherited save()
+    // method save() audit trail
     public void addAuditTrail(AuditTrail audit) throws SQLException {
         save(audit);
     }
 
-    // ✅ Delegates to inherited findById()
+    // get by id
     public AuditTrail getAuditTrail(String id) throws SQLException {
         return findById(id);
     }
 
-    // ✅ Delegates to inherited count()
+    // return audit trail count
     public int getTotalAuditTrails() throws SQLException {
         return count();
     }
@@ -46,7 +46,7 @@ public class AuditTrailDAO extends GenericDAO<AuditTrail, String> {
         return audits;
     }
 
-    // Keep — custom WHERE clause
+    // custom WHERE clause
     public List<AuditTrail> getAuditTrailsByEntityType(String entityType) throws SQLException {
         List<AuditTrail> audits = new ArrayList<>();
         String sql = "SELECT * FROM audit_trail WHERE entity_type = ? ORDER BY timestamp DESC";
@@ -62,7 +62,7 @@ public class AuditTrailDAO extends GenericDAO<AuditTrail, String> {
         return audits;
     }
 
-    //  Keep — custom WHERE clause
+    //  custom WHERE clause
     public List<AuditTrail> getAuditTrailsByEntityId(String entityId) throws SQLException {
         List<AuditTrail> audits = new ArrayList<>();
         String sql = "SELECT * FROM audit_trail WHERE entity_id = ? ORDER BY timestamp DESC";
