@@ -12,17 +12,8 @@ import jakarta.servlet.annotation.WebServlet;
 import app.utility.logging.AppLogger;
 import org.slf4j.Logger;
 
-/**
- * MenteeManagement Servlet - Handles HTTP requests for Mentee CRUD operations
- *
- * Responsibilities (HTTP layer only):
- * - Extract request parameters
- * - Verify admin session
- * - Delegate business logic to MenteeBean
- * - Handle redirects with appropriate success/error messages
- *
- * All validation and business logic is in MenteeBean
- */
+ 
+
 @WebServlet(name = "MenteeManagement",
         urlPatterns = {"/mentee-management"})
 public class MenteeManagement extends HttpServlet {

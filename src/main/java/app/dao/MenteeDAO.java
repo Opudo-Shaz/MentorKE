@@ -9,14 +9,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * MenteeDAO - Data Access Object for Mentee entities
- *
- * Extends GenericDAO to inherit basic CRUD operations
- * Adds custom queries specific to Mentee entity
- *
- * Uses @Dependent scope for stateless operations
- */
+
 @Dependent
 public class MenteeDAO extends GenericDAO<Mentee, String> {
 
