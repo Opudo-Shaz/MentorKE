@@ -30,6 +30,9 @@ public class DatabaseInitializer {
         entityClasses.add(Mentor.class);
         entityClasses.add(Mentee.class);
         entityClasses.add(AuditTrail.class);
+        entityClasses.add(app.model.Session.class);
+        entityClasses.add(app.model.MatchRequest.class);
+        entityClasses.add(app.model.Message.class);
 
         TableGenerator.generateTables(
                 dataSourceHelper.getDataSource(),
