@@ -80,7 +80,7 @@ public class UserBean {
         // Step 4: Fire CRUD event for audit trail
         auditTrailEvent.fire(new AuditTrail(
             "User",
-            user.getId(),
+            String.valueOf(user.getId()),
             "CREATE",
             "SYSTEM",
             "User registered: " + user.getUsername()
@@ -144,7 +144,7 @@ public class UserBean {
     }
 
     // Step 3: Set ID (important for validator context)
-    user.setId(userId);
+    user.setId(Long.parseLong(userId));
 
     // Step 4: Set default status if needed
     if (user.getStatus() == null || user.getStatus().isEmpty()) {

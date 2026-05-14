@@ -104,7 +104,7 @@ public class UserManagement extends BaseAction {
         String status = safe(request.getParameter("status"));
 
         // Create user object
-        User user = new User(userId, username, password, role, email, status);
+        User user = new User(Long.parseLong(userId), username, password, role, email, status);
 
         // Delegate to bean (validation & business logic)
         userBean.updateUser(userId, user);

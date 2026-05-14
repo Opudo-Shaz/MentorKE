@@ -99,7 +99,7 @@ public class SessionMatchingBean {
         Mentor bestMatch = findOptimalMentor(mentee);
 
         if (bestMatch != null) {
-            mentee.setMentorId(bestMatch.getId());
+            mentee.setMentorId(String.valueOf(bestMatch.getId()));
             menteeDAO.updateMentee(menteeId, mentee);
             logger.info("Mentee {} successfully matched with mentor {}", menteeId, bestMatch.getId());
             return bestMatch;

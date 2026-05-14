@@ -7,7 +7,7 @@ import jakarta.persistence.TypedQuery;
 import java.util.List;
 
 @Dependent
-public class MessageDAO extends GenericDAO<Message, String> {
+public class MessageDAO extends GenericDAO<Message, Long> {
 
     public MessageDAO() {
         super(Message.class);
@@ -20,7 +20,7 @@ public class MessageDAO extends GenericDAO<Message, String> {
 
     // Find message by id
     public Message getMessage(String id) {
-        return findById(id);
+        return findById(Long.parseLong(id));
     }
 
     // Find all messages
@@ -30,13 +30,13 @@ public class MessageDAO extends GenericDAO<Message, String> {
 
     // Update message
     public void updateMessage(String id, Message message) {
-        message.setId(id);
+        message.setId(Long.parseLong(id));
         update(message);
     }
 
     // Delete message
     public void deleteMessage(String id) {
-        delete(id);
+        delete(Long.parseLong(id));
     }
 
     // Get total number of messages
@@ -75,7 +75,7 @@ public class MessageDAO extends GenericDAO<Message, String> {
 
     // Mark message as read
     public void markAsRead(String messageId) {
-        Message message = findById(messageId);
+        Message message = findById(Long.parseLong(messageId));
         if (message != null) {
             message.setIsRead(true);
             update(message);

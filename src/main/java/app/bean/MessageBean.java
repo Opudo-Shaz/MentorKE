@@ -13,10 +13,7 @@ import org.slf4j.Logger;
 import java.sql.SQLException;
 import java.util.List;
 
-/**
- * MessageBean - EJB Stateless bean for messaging between mentors and mentees
- * Handles sending, retrieving, and managing messages
- */
+
 @Stateless
 @Named("messageBean")
 public class MessageBean {

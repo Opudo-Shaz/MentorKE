@@ -16,7 +16,7 @@ public class Mentor implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private String id;
+    private Long id;
 
     @Column(name = "user_id", length = 50, nullable = false)
     private String userId;
@@ -50,7 +50,7 @@ public class Mentor implements Serializable {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    public Mentor(String id, String userId, String specialization, String expertise,
+    public Mentor(Long id, String userId, String specialization, String expertise,
                   Integer yearsOfExperience, String bio, String qualifications,
                   String phoneNumber, String status) {
         this.id = id;
@@ -67,11 +67,11 @@ public class Mentor implements Serializable {
     public Mentor() {
     }
 
-    public String getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(Long id) {
         this.id = id;
     }
 

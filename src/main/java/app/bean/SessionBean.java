@@ -70,7 +70,7 @@ public class SessionBean {
             logger.error("Error sending session notifications", e);
         }
 
-        return session.getId();
+        return String.valueOf(session.getId());
     }
 
     /**

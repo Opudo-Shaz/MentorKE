@@ -7,7 +7,7 @@ import jakarta.persistence.TypedQuery;
 import java.util.List;
 
 @Dependent
-public class UserDAO extends GenericDAO<User, String> {
+public class UserDAO extends GenericDAO<User, Long> {
 
     public UserDAO() {
         super(User.class);
@@ -20,18 +20,18 @@ public class UserDAO extends GenericDAO<User, String> {
 
     // Find user by id
     public User getUser(String id) {
-        return findById(id);
+        return findById(Long.parseLong(id));
     }
 
     // Update user
     public void updateUser(String id, User user) {
-        user.setId(id);
+        user.setId(Long.parseLong(id));
         update(user);
     }
 
     // Delete user
     public void deleteUser(String id) {
-        delete(id);
+        delete(Long.parseLong(id));
     }
 
     // Find all users
@@ -55,7 +55,7 @@ public class UserDAO extends GenericDAO<User, String> {
 
     // Check if user exists
     public boolean exists(String id) {
-        User user = findById(id);
+        User user = findById(Long.parseLong(id));
         return user != null;
     }
 }

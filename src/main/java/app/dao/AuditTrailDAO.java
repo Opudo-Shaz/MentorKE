@@ -7,7 +7,7 @@ import jakarta.persistence.TypedQuery;
 import java.util.List;
 
 @Dependent
-public class AuditTrailDAO extends GenericDAO<AuditTrail, String> {
+public class AuditTrailDAO extends GenericDAO<AuditTrail, Long> {
 
     public AuditTrailDAO() {
         super(AuditTrail.class);
@@ -20,7 +20,7 @@ public class AuditTrailDAO extends GenericDAO<AuditTrail, String> {
 
     // Get by id
     public AuditTrail getAuditTrail(String id) {
-        return findById(id);
+        return findById(Long.parseLong(id));
     }
 
     // Return audit trail count

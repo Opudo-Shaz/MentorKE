@@ -70,7 +70,7 @@ public class MenteeBean {
         logger.info("User added successfully, ID: {}", user.getId());
 
         // Step 2: Set the user ID and status for mentee
-        mentee.setUserId(user.getId());
+        mentee.setUserId(String.valueOf(user.getId()));
         mentee.setStatus("Active");
 
         // Step 3: NOW validate mentee data (after required fields are set)
@@ -89,11 +89,11 @@ public class MenteeBean {
 
         // Step 5: Fire CRUD event for audit trail
         auditTrailEvent.fire(new AuditTrail(
-                "Mentee",
-                String.valueOf(mentee.getId()),
-                "CREATE",
-                user.getId(),
-                "Mentee registered: " + user.getUsername() + ", Field: " + mentee.getFieldOfStudy()));
+            "Mentee",
+            String.valueOf(mentee.getId()),
+            "CREATE",
+            String.valueOf(user.getId()),
+            "Mentee registered: " + user.getUsername() + ", Field: " + mentee.getFieldOfStudy()));
 
         // Step 6: Fire email event for mentees
         logger.debug("Firing email registration event for mentee...");

@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Dependent
-public class SessionDAO extends GenericDAO<Session, String> {
+public class SessionDAO extends GenericDAO<Session, Long> {
 
     public SessionDAO() {
         super(Session.class);
@@ -21,7 +21,7 @@ public class SessionDAO extends GenericDAO<Session, String> {
 
     // Find session by id
     public Session getSession(String id) {
-        return findById(id);
+        return findById(Long.parseLong(id));
     }
 
     // Find all sessions
@@ -31,13 +31,13 @@ public class SessionDAO extends GenericDAO<Session, String> {
 
     // Update session
     public void updateSession(String id, Session session) {
-        session.setId(id);
+        session.setId(Long.parseLong(id));
         update(session);
     }
 
     // Delete session
     public void deleteSession(String id) {
-        delete(id);
+        delete(Long.parseLong(id));
     }
 
     // Get total number of sessions

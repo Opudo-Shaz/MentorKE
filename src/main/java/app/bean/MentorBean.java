@@ -66,7 +66,7 @@ public class MentorBean {
         logger.info("User added successfully, ID: {}", user.getId());
 
         // Step 2: Set the user ID and status for mentor
-        mentor.setUserId(user.getId());
+            mentor.setUserId(String.valueOf(user.getId()));
         mentor.setStatus("Active");
 
         // Step 3: NOW validate mentor data (after required fields are set)
@@ -86,9 +86,9 @@ public class MentorBean {
         // Step 5: Fire CRUD event for audit trail
         auditTrailEvent.fire(new AuditTrail(
             "Mentor",
-            mentor.getId(),
+            String.valueOf(mentor.getId()),
             "CREATE",
-            user.getId(),
+            String.valueOf(user.getId()),
             "Mentor registered: " + user.getUsername() + ", Specialization: " + mentor.getSpecialization()
         ));
 
@@ -159,7 +159,7 @@ public class MentorBean {
          }
 
          // Step 4: Set ID (important for validator context)
-         mentor.setId(mentorId);
+        mentor.setId(Long.parseLong(mentorId));
 
          // Step 5: Set default status if needed
          if (mentor.getStatus() == null || mentor.getStatus().isEmpty()) {
@@ -228,7 +228,7 @@ public class MentorBean {
         // Step 4: Fire CRUD event for audit trail
         auditTrailEvent.fire(new AuditTrail(
             "Mentor",
-            mentor.getId(),
+            String.valueOf(mentor.getId()),
             "CREATE",
             "ADMIN",
             "Mentor added by admin: " + user.getUsername() + ", Specialization: " + mentor.getSpecialization()

@@ -7,7 +7,7 @@ import jakarta.persistence.TypedQuery;
 import java.util.List;
 
 @Dependent
-public class MentorDAO extends GenericDAO<Mentor, String> {
+public class MentorDAO extends GenericDAO<Mentor, Long> {
 
     public MentorDAO() {
         super(Mentor.class);
@@ -20,7 +20,7 @@ public class MentorDAO extends GenericDAO<Mentor, String> {
 
     // Find mentor by id
     public Mentor getMentor(String id) {
-        return findById(id);
+        return findById(Long.parseLong(id));
     }
 
     // Find all mentors
@@ -30,13 +30,13 @@ public class MentorDAO extends GenericDAO<Mentor, String> {
 
     // Update mentor
     public void updateMentor(String id, Mentor mentor) {
-        mentor.setId(id);
+        mentor.setId(Long.parseLong(id));
         update(mentor);
     }
     
     // Delete mentor
     public void deleteMentor(String id) {
-        delete(id);
+        delete(Long.parseLong(id));
     }
 
     // Get total number of mentors

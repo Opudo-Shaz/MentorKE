@@ -47,7 +47,7 @@ public class MentorDashboard extends HttpServlet {
 
             // Load this mentor's mentees
             if (mentor != null) {
-                List<Mentee> mentees = menteeBean.getMenteesByMentorId(mentor.getId());
+                List<Mentee> mentees = menteeBean.getMenteesByMentorId(String.valueOf(mentor.getId()));
                 request.setAttribute("mentees", mentees);
             }
 
