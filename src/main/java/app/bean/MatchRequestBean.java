@@ -161,12 +161,12 @@ public class MatchRequestBean {
                     Mentor optimalMentor = sessionMatchingBean.findOptimalMentor(mentee);
                     
                     if (optimalMentor != null) {
-                        request.setMentorId(optimalMentor.getId());
+                        request.setMentorId(String.valueOf(optimalMentor.getId()));
                         request.setStatus("APPROVED");
                         matchRequestDAO.updateMatchRequest(request.getId(), request);
 
                         // Update mentee
-                        mentee.setMentorId(optimalMentor.getId());
+                        mentee.setMentorId(String.valueOf(optimalMentor.getId()));
                         menteeDAO.updateMentee(request.getMenteeId(), mentee);
 
                         logger.info("Auto-matched mentee {} with mentor {}", 

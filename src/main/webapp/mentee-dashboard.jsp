@@ -371,7 +371,7 @@
     String learningGoals  = (mentee != null && mentee.getLearningGoals()  != null) ? mentee.getLearningGoals()  : "No learning goals set yet.";
     String phoneNumber    = (mentee != null && mentee.getPhoneNumber()    != null) ? mentee.getPhoneNumber()    : "—";
     String menteeStatus   = (mentee != null && mentee.getStatus()         != null) ? mentee.getStatus()         : "Active";
-    String menteeId       = (mentee != null && mentee.getId()             != null) ? mentee.getId()             : "—";
+    String menteeId       = (mentee != null && mentee.getId()             != null) ? String.valueOf(mentee.getId()) : "—";
 
     String mentorName   = "—";
     String mentorSpec   = "—";

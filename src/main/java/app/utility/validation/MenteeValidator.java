@@ -77,17 +77,14 @@ public class MenteeValidator implements Validator<Mentee> {
      */
     private void validateUserId(Mentee mentee, ValidationResult result) {
 
-        String userId = safeTrim(mentee.getUserId());
+        Long userId = mentee.getUserId();
 
         if (userId == null) {
             result.addError("User ID is required");
             return;
         }
 
-        // User ID is a string reference to the users table
-        if (userId.length() > 50) {
-            result.addError("User ID exceeds maximum length");
-        }
+        // Numeric foreign key to users.id
     }
 
     /**

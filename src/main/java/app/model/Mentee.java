@@ -18,8 +18,8 @@ public class Mentee implements Serializable {
     @Column(name = "id")
     private Long id;
 
-    @Column(name = "user_id", length = 50, nullable = false)
-    private String userId;
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
 
     @Column(name = "education_level", length = 100)
     private String educationLevel;
@@ -47,7 +47,7 @@ public class Mentee implements Serializable {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    public Mentee(Long id, String userId, String educationLevel, String fieldOfStudy,
+    public Mentee(Long id, Long userId, String educationLevel, String fieldOfStudy,
                   String learningGoals, String phoneNumber, String mentorId, String status) {
         this.id = id;
         this.userId = userId;
@@ -70,11 +70,11 @@ public class Mentee implements Serializable {
         this.id = id;
     }
 
-    public String getUserId() {
+    public Long getUserId() {
         return userId;
     }
 
-    public void setUserId(String userId) {
+    public void setUserId(Long userId) {
         this.userId = userId;
     }
 

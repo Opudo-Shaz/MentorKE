@@ -91,7 +91,9 @@ public class MenteeManagement extends HttpServlet {
 
         // Create mentee object
         Mentee newMentee = new Mentee();
-        newMentee.setUserId(userId);
+        if (!userId.isEmpty()) {
+            newMentee.setUserId(Long.parseLong(userId));
+        }
         newMentee.setEducationLevel(educationLevel);
         newMentee.setFieldOfStudy(fieldOfStudy);
         newMentee.setLearningGoals(learningGoals);

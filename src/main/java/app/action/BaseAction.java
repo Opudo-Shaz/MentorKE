@@ -26,7 +26,8 @@ public abstract class BaseAction extends HttpServlet {
         if (session == null) {
             return null;
         }
-        return (String) session.getAttribute("userId");
+        Object userId = session.getAttribute("userId");
+        return userId != null ? String.valueOf(userId) : null;
     }
 
     /**

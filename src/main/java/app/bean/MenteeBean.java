@@ -34,7 +34,6 @@ public class MenteeBean {
 
     @Inject
     private Event<AuditTrail> auditTrailEvent;
-    // private Event<CRUDEvent> crudEventFi
 
     @Inject
     private Event<UserRegisteredEvent> userRegisteredEvent;
@@ -70,7 +69,7 @@ public class MenteeBean {
         logger.info("User added successfully, ID: {}", user.getId());
 
         // Step 2: Set the user ID and status for mentee
-        mentee.setUserId(String.valueOf(user.getId()));
+        mentee.setUserId(user.getId());
         mentee.setStatus("Active");
 
         // Step 3: NOW validate mentee data (after required fields are set)
@@ -165,7 +164,7 @@ public class MenteeBean {
         }
 
         // Step 3: Preserve existing userId BEFORE validation (cannot be changed)
-        if (mentee.getUserId() == null || mentee.getUserId().isEmpty()) {
+        if (mentee.getUserId() == null) {
             logger.debug("No new userId provided, keeping existing userId");
             mentee.setUserId(existingMentee.getUserId());
         }
@@ -209,7 +208,7 @@ public class MenteeBean {
                 "Mentee",
                 menteeId,
                 "UPDATE",
-                existingMentee.getUserId(),
+                String.valueOf(existingMentee.getUserId()),
                 "Mentee updated: Field=" + mentee.getFieldOfStudy()));
 
         logger.info("=== Mentee Update Completed Successfully ===");
@@ -224,10 +223,10 @@ public class MenteeBean {
 
         // Step 1: Check if user exists
         logger.debug("Checking if user exists...");
-        if (mentee.getUserId() == null || mentee.getUserId().isEmpty()) {
+        if (mentee.getUserId() == null) {
             throw new IllegalArgumentException("User ID is required");
         }
-        User user = userDAO.getUser(mentee.getUserId());
+        User user = userDAO.getUser(String.valueOf(mentee.getUserId()));
         if (user == null) {
             logger.error("User not found!");
             throw new IllegalArgumentException("User with ID '" + mentee.getUserId() + "' not found");
@@ -293,7 +292,7 @@ public class MenteeBean {
                 "Mentee",
                 menteeId,
                 "DELETE",
-                mentee.getUserId(),
+                String.valueOf(mentee.getUserId()),
                 "Mentee deleted"));
 
         logger.info("=== Mentee Deletion Completed Successfully ===");

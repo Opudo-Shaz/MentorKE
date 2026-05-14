@@ -119,7 +119,7 @@ public class EmailReminderBean {
 
             // Get user emails
             User mentorUser = userDAO.getUser(mentor.getUserId());
-            User menteeUser = userDAO.getUser(mentee.getUserId());
+            User menteeUser = userDAO.getUser(String.valueOf(mentee.getUserId()));
 
             if (mentorUser == null || menteeUser == null) {
                 logger.warn("User records not found for session: {}", session.getId());

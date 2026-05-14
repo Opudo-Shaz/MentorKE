@@ -329,7 +329,7 @@
     String qualifications  = (mentor != null && mentor.getQualifications()    != null) ? mentor.getQualifications()    : "No qualifications listed.";
     String phoneNumber     = (mentor != null && mentor.getPhoneNumber()       != null) ? mentor.getPhoneNumber()       : "—";
     String mentorStatus    = (mentor != null && mentor.getStatus()            != null) ? mentor.getStatus()            : "Active";
-    String mentorId        = (mentor != null && mentor.getId()                != null) ? mentor.getId()                : "—";
+    String mentorId        = (mentor != null && mentor.getId()                != null) ? String.valueOf(mentor.getId()) : "—";
     int    yearsExp        = (mentor != null) ? mentor.getYearsOfExperience() : 0;
 
     int menteeCount = (mentees != null) ? mentees.size() : 0;
