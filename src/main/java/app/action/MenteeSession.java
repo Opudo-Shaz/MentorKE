@@ -5,10 +5,8 @@ import app.model.Mentor;
 import app.model.MatchRequest;
 import jakarta.inject.Inject;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.annotation.WebServlet;
 import app.utility.logging.AppLogger;
 import org.slf4j.Logger;
@@ -16,13 +14,9 @@ import org.slf4j.Logger;
 import java.io.IOException;
 import java.util.List;
 
-/**
- * MenteeSession - Handles mentee interactions for browsing, requesting, and managing mentors
- * URL: /mentee-sessions
- * Actions: browse, request, cancel-request, view-mentor
- */
+
 @WebServlet(name = "MenteeSession", urlPatterns = {"/mentee-sessions"})
-public class MenteeSession extends HttpServlet {
+public class MenteeSession extends BaseAction {
 
     private static final Logger logger = AppLogger.getLogger(MenteeSession.class);
 
@@ -40,20 +34,18 @@ public class MenteeSession extends HttpServlet {
             throws ServletException, IOException {
         
         String action = request.getParameter("action");
-        HttpSession httpSession = request.getSession(false);
 
         // Check if user is logged in
-        if (httpSession == null || !Boolean.TRUE.equals(httpSession.getAttribute("isLoggedIn"))) {
-            response.sendRedirect("login");
+        if (!isLoggedIn(request)) {
+            redirect(response, "login");
             return;
         }
 
-        String userId = (String) httpSession.getAttribute("userId");
-        String role = (String) httpSession.getAttribute("role");
+        String userId = getUserId(request);
+        String role = getUserRole(request);
 
         // Verify user is a mentee
-        if (!"mentee".equalsIgnoreCase(role)) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Only mentees can access this page");
+        if (!requireRole(request, response, "mentee")) {
             return;
         }
 
@@ -71,8 +63,12 @@ public class MenteeSession extends HttpServlet {
             }
         } catch (Exception e) {
             logger.error("Error in MenteeSessionAction", e);
-            request.setAttribute("errorMessage", "An error occurred: " + e.getMessage());
-            request.getRequestDispatcher("/mentee-dashboard.jsp").forward(request, response);
+            setAttribute(request, "errorMessage", "An error occurred: " + e.getMessage());
+            try {
+                forward(request, response, "/mentee-dashboard.jsp");
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
         }
     }
 
@@ -81,18 +77,15 @@ public class MenteeSession extends HttpServlet {
             throws ServletException, IOException {
         
         String action = request.getParameter("action");
-        HttpSession httpSession = request.getSession(false);
 
-        if (httpSession == null || !Boolean.TRUE.equals(httpSession.getAttribute("isLoggedIn"))) {
-            response.sendRedirect("login");
+        if (!isLoggedIn(request)) {
+            redirect(response, "login");
             return;
         }
 
-        String userId = (String) httpSession.getAttribute("userId");
-        String role = (String) httpSession.getAttribute("role");
+        String userId = getUserId(request);
 
-        if (!"mentee".equalsIgnoreCase(role)) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+        if (!requireRole(request, response, "mentee")) {
             return;
         }
 
@@ -103,7 +96,7 @@ public class MenteeSession extends HttpServlet {
 
                 matchRequestBean.requestMentor(userId, mentorId, specialization);
                 
-                request.setAttribute("successMessage", "Request sent to mentor successfully!");
+                setAttribute(request, "successMessage", "Request sent to mentor successfully!");
                 handleBrowseMentors(request, response, userId);
             } else if ("cancel-request".equalsIgnoreCase(action)) {
                 String requestId = request.getParameter("requestId");
@@ -111,14 +104,18 @@ public class MenteeSession extends HttpServlet {
                 MatchRequest req = matchRequestBean.getMatchRequest(requestId);
                 if (req != null && req.getMenteeId().equals(userId)) {
                     matchRequestBean.rejectMentorRequest(requestId);
-                    request.setAttribute("successMessage", "Request cancelled successfully!");
+                    setAttribute(request, "successMessage", "Request cancelled successfully!");
                 }
                 handleMyRequests(request, response, userId);
             }
         } catch (Exception e) {
             logger.error("Error processing mentee request", e);
-            request.setAttribute("errorMessage", "An error occurred: " + e.getMessage());
-            request.getRequestDispatcher("/mentee-dashboard.jsp").forward(request, response);
+            setAttribute(request, "errorMessage", "An error occurred: " + e.getMessage());
+            try {
+                forward(request, response, "/mentee-dashboard.jsp");
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
         }
     }
 
@@ -140,9 +137,9 @@ public class MenteeSession extends HttpServlet {
                 mentors = mentorBean.getAllMentors();
             }
 
-            request.setAttribute("mentors", mentors);
-            request.setAttribute("selectedSpecialization", specialization);
-            request.getRequestDispatcher("/browse-mentors.jsp").forward(request, response);
+            setAttribute(request, "mentors", mentors);
+            setAttribute(request, "selectedSpecialization", specialization);
+            forward(request, response, "/browse-mentors.jsp");
 
         } catch (Exception e) {
             logger.error("Error browsing mentors", e);
@@ -163,10 +160,10 @@ public class MenteeSession extends HttpServlet {
             Mentor mentor = mentorBean.getMentorById(mentorId);
             
             if (mentor != null) {
-                request.setAttribute("mentor", mentor);
-                request.getRequestDispatcher("/request-mentor.jsp").forward(request, response);
+                setAttribute(request, "mentor", mentor);
+                forward(request, response, "/request-mentor.jsp");
             } else {
-                request.setAttribute("errorMessage", "Mentor not found");
+                setAttribute(request, "errorMessage", "Mentor not found");
                 handleBrowseMentors(request, response, userId);
             }
         } catch (Exception e) {
@@ -187,9 +184,9 @@ public class MenteeSession extends HttpServlet {
             List<MatchRequest> requests = matchRequestBean.getRequestsByMentee(userId);
             MatchRequest approvedMatch = matchRequestBean.getApprovedMatchForMentee(userId);
 
-            request.setAttribute("requests", requests);
-            request.setAttribute("approvedMatch", approvedMatch);
-            request.getRequestDispatcher("/my-match-requests.jsp").forward(request, response);
+            setAttribute(request, "requests", requests);
+            setAttribute(request, "approvedMatch", approvedMatch);
+            forward(request, response, "/my-match-requests.jsp");
 
         } catch (Exception e) {
             logger.error("Error retrieving match requests", e);
@@ -210,11 +207,11 @@ public class MenteeSession extends HttpServlet {
             Mentor mentor = mentorBean.getMentorById(mentorId);
 
             if (mentor != null) {
-                request.setAttribute("mentor", mentor);
-                request.getRequestDispatcher("/mentor-profile.jsp").forward(request, response);
+                setAttribute(request, "mentor", mentor);
+                forward(request, response, "/mentor-profile.jsp");
             } else {
-                request.setAttribute("errorMessage", "Mentor not found");
-                response.sendRedirect("mentee-dashboard");
+                setAttribute(request, "errorMessage", "Mentor not found");
+                redirect(response, "mentee-dashboard");
             }
         } catch (Exception e) {
             logger.error("Error viewing mentor profile", e);

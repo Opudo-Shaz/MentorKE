@@ -1,157 +1,99 @@
 package app.dao;
 
-import app.dbconnection.DataSourceHelper;
 import app.model.Message;
 import jakarta.enterprise.context.Dependent;
-import jakarta.inject.Inject;
+import jakarta.persistence.TypedQuery;
 
-import java.sql.*;
-import java.util.ArrayList;
 import java.util.List;
 
 @Dependent
 public class MessageDAO extends GenericDAO<Message, String> {
 
-    @Inject
-    public MessageDAO(DataSourceHelper dataSourceHelper) {
-        super(Message.class, dataSourceHelper);
+    public MessageDAO() {
+        super(Message.class);
     }
 
     // Add message
-    public void addMessage(Message message) throws SQLException {
+    public void addMessage(Message message) {
         save(message);
     }
 
     // Find message by id
-    public Message getMessage(String id) throws SQLException {
+    public Message getMessage(String id) {
         return findById(id);
     }
 
     // Find all messages
-    public List<Message> getAllMessages() throws SQLException {
+    public List<Message> getAllMessages() {
         return findAll();
     }
 
     // Update message
-    public void updateMessage(String id, Message message) throws SQLException {
+    public void updateMessage(String id, Message message) {
         message.setId(id);
         update(message);
     }
 
     // Delete message
-    public void deleteMessage(String id) throws SQLException {
+    public void deleteMessage(String id) {
         delete(id);
     }
 
     // Get total number of messages
-    public int getTotalMessages() throws SQLException {
+    public int getTotalMessages() {
         return count();
     }
 
     // Get conversation between two users
-    public List<Message> getConversation(String userId1, String userId2) throws SQLException {
-        List<Message> messages = new ArrayList<>();
-        String sql = "SELECT * FROM messages WHERE " +
-                    "(sender_id = ? AND recipient_id = ?) OR (sender_id = ? AND recipient_id = ?) " +
-                    "ORDER BY created_at ASC";
-        try (Connection conn = dataSourceHelper.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, userId1);
-            stmt.setString(2, userId2);
-            stmt.setString(3, userId2);
-            stmt.setString(4, userId1);
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    messages.add(mapResultSet(rs));
-                }
-            }
-        } catch (Exception e) {
-            throw new SQLException("Error getting conversation", e);
-        }
-        return messages;
+    public List<Message> getConversation(String userId1, String userId2) {
+        String jpql = "SELECT m FROM Message m WHERE " +
+                     "(m.senderId = :userId1 AND m.recipientId = :userId2) OR " +
+                     "(m.senderId = :userId2 AND m.recipientId = :userId1) " +
+                     "ORDER BY m.createdAt ASC";
+        TypedQuery<Message> query = entityManager.createQuery(jpql, Message.class);
+        query.setParameter("userId1", userId1);
+        query.setParameter("userId2", userId2);
+        return query.getResultList();
     }
 
     // Get unread messages for a user
-    public List<Message> getUnreadMessages(String userId) throws SQLException {
-        List<Message> messages = new ArrayList<>();
-        String sql = "SELECT * FROM messages WHERE recipient_id = ? AND is_read = false " +
-                    "ORDER BY created_at DESC";
-        try (Connection conn = dataSourceHelper.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, userId);
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    messages.add(mapResultSet(rs));
-                }
-            }
-        } catch (Exception e) {
-            throw new SQLException("Error getting unread messages", e);
-        }
-        return messages;
+    public List<Message> getUnreadMessages(String userId) {
+        String jpql = "SELECT m FROM Message m WHERE m.recipientId = :userId AND m.isRead = false " +
+                     "ORDER BY m.createdAt DESC";
+        TypedQuery<Message> query = entityManager.createQuery(jpql, Message.class);
+        query.setParameter("userId", userId);
+        return query.getResultList();
     }
 
     // Get unread message count for a user
-    public int getUnreadMessageCount(String userId) throws SQLException {
-        String sql = "SELECT COUNT(*) as count FROM messages WHERE recipient_id = ? AND is_read = false";
-        try (Connection conn = dataSourceHelper.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, userId);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt("count");
-                }
-            }
-        } catch (Exception e) {
-            throw new SQLException("Error getting unread message count", e);
-        }
-        return 0;
+    public int getUnreadMessageCount(String userId) {
+        String jpql = "SELECT COUNT(m) FROM Message m WHERE m.recipientId = :userId AND m.isRead = false";
+        TypedQuery<Long> query = entityManager.createQuery(jpql, Long.class);
+        query.setParameter("userId", userId);
+        return ((Long) query.getSingleResult()).intValue();
     }
 
     // Mark message as read
-    public void markAsRead(String messageId) throws SQLException {
-        String sql = "UPDATE messages SET is_read = true WHERE id = ?";
-        try (Connection conn = dataSourceHelper.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, messageId);
-            stmt.executeUpdate();
-        } catch (Exception e) {
-            throw new SQLException("Error marking message as read", e);
+    public void markAsRead(String messageId) {
+        Message message = findById(messageId);
+        if (message != null) {
+            message.setIsRead(true);
+            update(message);
         }
     }
 
     // Mark all messages in conversation as read
-    public void markConversationAsRead(String userId1, String userId2) throws SQLException {
-        String sql = "UPDATE messages SET is_read = true WHERE recipient_id = ? AND sender_id = ?";
-        try (Connection conn = dataSourceHelper.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, userId1);
-            stmt.setString(2, userId2);
-            stmt.executeUpdate();
-        } catch (Exception e) {
-            throw new SQLException("Error marking conversation as read", e);
-        }
+    public void markConversationAsRead(String userId1, String userId2) {
+        String jpql = "UPDATE Message m SET m.isRead = true WHERE m.recipientId = :userId1 AND m.senderId = :userId2";
+        entityManager.createQuery(jpql).setParameter("userId1", userId1).setParameter("userId2", userId2).executeUpdate();
     }
 
     // Get recent conversations (distinct pairs)
-    public List<Message> getRecentConversations(String userId) throws SQLException {
-        List<Message> conversations = new ArrayList<>();
-        String sql = "SELECT DISTINCT ON (CASE WHEN sender_id = ? THEN recipient_id ELSE sender_id END) * " +
-                    "FROM messages WHERE sender_id = ? OR recipient_id = ? " +
-                    "ORDER BY CASE WHEN sender_id = ? THEN recipient_id ELSE sender_id END, created_at DESC";
-        try (Connection conn = dataSourceHelper.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, userId);
-            stmt.setString(2, userId);
-            stmt.setString(3, userId);
-            stmt.setString(4, userId);
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    conversations.add(mapResultSet(rs));
-                }
-            }
-        } catch (Exception e) {
-            throw new SQLException("Error getting recent conversations", e);
-        }
-        return conversations;
+    public List<Message> getRecentConversations(String userId) {
+        String jpql = "SELECT m FROM Message m WHERE m.senderId = :userId OR m.recipientId = :userId " +
+                     "ORDER BY m.createdAt DESC";
+        TypedQuery<Message> query = entityManager.createQuery(jpql, Message.class);
+        query.setParameter("userId", userId);
+        return query.getResultList();
     }
 }

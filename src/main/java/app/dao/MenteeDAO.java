@@ -1,110 +1,77 @@
 package app.dao;
 
-import app.dbconnection.DataSourceHelper;
 import app.model.Mentee;
 import jakarta.enterprise.context.Dependent;
-import jakarta.inject.Inject;
+import jakarta.persistence.TypedQuery;
 
-import java.sql.*;
-import java.util.ArrayList;
 import java.util.List;
 
 @Dependent
-public class MenteeDAO extends GenericDAO<Mentee, String> {
+public class MenteeDAO extends GenericDAO<Mentee, Long> {
 
-    @Inject
-    public MenteeDAO(DataSourceHelper dataSourceHelper) {
-        super(Mentee.class, dataSourceHelper);
+    public MenteeDAO() {
+        super(Mentee.class);
     }
 
     // Add mentee
-    public void addMentee(Mentee mentee) throws SQLException {
+    public void addMentee(Mentee mentee) {
         save(mentee);
     }
 
     // Find mentee by id
-    public Mentee getMentee(String id) throws SQLException {
-        return findById(id);
+    public Mentee getMentee(String id) {
+        return findById(Long.parseLong(id));
     }
 
     // Find all mentees
-    public List<Mentee> getAllMentees() throws SQLException {
+    public List<Mentee> getAllMentees() {
         return findAll();
     }
 
     // update mentee
-    public void updateMentee(String id, Mentee mentee) throws SQLException {
-        mentee.setId(id);
+    public void updateMentee(String id, Mentee mentee) {
+        mentee.setId(Long.parseLong(id));
         update(mentee);
     }
 
     // delete mentee
-    public void deleteMentee(String id) throws SQLException {
-        delete(id);
+    public void deleteMentee(String id) {
+        delete(Long.parseLong(id));
     }
 
     // Get total number of mentees
-    public int getTotalMentees() throws SQLException {
+    public int getTotalMentees() {
         return count();
     }
 
-    // use custom WHERE clauses GenericDAO can't handle
-    public Mentee getMenteeByUserId(String userId) throws SQLException {
-        String sql = "SELECT * FROM mentees WHERE user_id = ?";
-        try (Connection conn = dataSourceHelper.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, Integer.parseInt(userId));
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) return mapResultSet(rs);
-            }
-        } catch (Exception e) {
-            throw new SQLException("Error finding mentee by user ID", e);
-        }
-        return null;
+    // Find mentee by user id
+    public Mentee getMenteeByUserId(String userId) {
+        String jpql = "SELECT m FROM Mentee m WHERE m.userId = :userId";
+        TypedQuery<Mentee> query = entityManager.createQuery(jpql, Mentee.class);
+        query.setParameter("userId", userId);
+        List<Mentee> results = query.getResultList();
+        return results.isEmpty() ? null : results.get(0);
     }
 
-    public List<Mentee> getActiveMentees() throws SQLException {
-        List<Mentee> list = new ArrayList<>();
-        String sql = "SELECT * FROM mentees WHERE status = 'Active' ORDER BY id ASC";
-        try (Connection conn = dataSourceHelper.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-            while (rs.next()) list.add(mapResultSet(rs));
-        } catch (Exception e) {
-            throw new SQLException("Error getting active mentees", e);
-        }
-        return list;
+    // Get all active mentees
+    public List<Mentee> getActiveMentees() {
+        String jpql = "SELECT m FROM Mentee m WHERE m.status = 'Active' ORDER BY m.id ASC";
+        TypedQuery<Mentee> query = entityManager.createQuery(jpql, Mentee.class);
+        return query.getResultList();
     }
 
-    public List<Mentee> getMenteesWithoutMentor() throws SQLException {
-        List<Mentee> list = new ArrayList<>();
-        String sql = """
-            SELECT * FROM mentees
-            WHERE mentor_id IS NULL AND status = 'Active'
-            ORDER BY id ASC
-        """;
-        try (Connection conn = dataSourceHelper.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-            while (rs.next()) list.add(mapResultSet(rs));
-        } catch (Exception e) {
-            throw new SQLException("Error getting mentees without mentor", e);
-        }
-        return list;
+    // Get mentees without a mentor
+    public List<Mentee> getMenteesWithoutMentor() {
+        String jpql = "SELECT m FROM Mentee m WHERE m.mentorId IS NULL AND m.status = 'Active' ORDER BY m.id ASC";
+        TypedQuery<Mentee> query = entityManager.createQuery(jpql, Mentee.class);
+        return query.getResultList();
     }
 
-    public List<Mentee> getMenteesByMentorId(String mentorId) throws SQLException {
-        List<Mentee> mentees = new ArrayList<>();
-        String sql = "SELECT * FROM mentees WHERE mentor_id = ?";
-        try (Connection conn = dataSourceHelper.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, mentorId);
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) mentees.add(mapResultSet(rs));
-            }
-        } catch (Exception e) {
-            throw new SQLException("Error getting mentees by mentor ID", e);
-        }
-        return mentees;
+    // Get mentees assigned to a specific mentor
+    public List<Mentee> getMenteesByMentorId(String mentorId) {
+        String jpql = "SELECT m FROM Mentee m WHERE m.mentorId = :mentorId";
+        TypedQuery<Mentee> query = entityManager.createQuery(jpql, Mentee.class);
+        query.setParameter("mentorId", mentorId);
+        return query.getResultList();
     }
 }

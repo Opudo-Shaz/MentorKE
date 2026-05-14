@@ -13,6 +13,8 @@ import jakarta.inject.Named;
 import org.slf4j.Logger;
 
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,6 +27,7 @@ import java.util.UUID;
 public class SessionBean {
 
     private static final Logger logger = AppLogger.getLogger(SessionBean.class);
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Inject
     private SessionDAO sessionDAO;
@@ -45,7 +48,7 @@ public class SessionBean {
     /**
      * Schedule a new session between mentor and mentee
      */
-    public String scheduleSession(String mentorId, String menteeId, long scheduledDate, 
+    public String scheduleSession(String mentorId, String menteeId, LocalDateTime scheduledDate,
                                   Integer durationMinutes, String topic) throws SQLException {
         logger.info("Scheduling session - Mentor: {}, Mentee: {}, Topic: {}", 
             mentorId, menteeId, topic);
@@ -83,7 +86,7 @@ public class SessionBean {
      * Send notifications to both mentor and mentee
      */
     private void sendSessionScheduledNotifications(String mentorId, String menteeId, 
-                                                   long scheduledDate, String meetingLink, 
+                                                   LocalDateTime scheduledDate, String meetingLink,
                                                    String topic) throws SQLException {
         Mentor mentor = mentorDAO.getMentor(mentorId);
         Mentee mentee = menteeDAO.getMentee(menteeId);
@@ -95,12 +98,8 @@ public class SessionBean {
             String subject = "Session Scheduled - " + topic;
             String body = buildSessionNotificationBody(topic, scheduledDate, meetingLink);
 
-            if (mentorEmail != null) {
-                emailBean.sendEmail(mentorEmail, subject, body);
-            }
-            if (menteeEmail != null) {
-                emailBean.sendEmail(menteeEmail, subject, body);
-            }
+            emailBean.sendEmail(mentorEmail, subject, body);
+            emailBean.sendEmail(menteeEmail, subject, body);
 
             logger.info("Session notifications sent for mentor {} and mentee {}", mentorId, menteeId);
         }
@@ -109,9 +108,8 @@ public class SessionBean {
     /**
      * Build HTML body for session notification email
      */
-    private String buildSessionNotificationBody(String topic, long scheduledDate, String meetingLink) {
-        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String formattedDate = sdf.format(new java.util.Date(scheduledDate));
+    private String buildSessionNotificationBody(String topic, LocalDateTime scheduledDate, String meetingLink) {
+        String formattedDate = scheduledDate.format(DATE_FORMATTER);
 
         return "<html>" +
                 "<body>" +
@@ -172,7 +170,7 @@ public class SessionBean {
         Session session = sessionDAO.getSession(sessionId);
         if (session != null) {
             session.setStatus(status);
-            session.setUpdatedAt(System.currentTimeMillis());
+            session.setUpdatedAt(LocalDateTime.now());
             sessionDAO.updateSession(sessionId, session);
         }
     }
@@ -186,7 +184,7 @@ public class SessionBean {
         Session session = sessionDAO.getSession(sessionId);
         if (session != null) {
             session.setNotes(notes);
-            session.setUpdatedAt(System.currentTimeMillis());
+            session.setUpdatedAt(LocalDateTime.now());
             sessionDAO.updateSession(sessionId, session);
         }
     }

@@ -1,60 +1,64 @@
 package app.model;
 
-import app.framework.DbTable;
-import app.framework.DbColumn;
+import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import java.io.Serial;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
-
-@DbTable(name = "users")
+@Entity
+@Table(name = "users")
 public class User implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    @DbColumn(name = "id", type = "SERIAL", primaryKey = true, autoIncrement = true)
-    private String id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private Long id;
 
-    @DbColumn(name = "username", type = "VARCHAR(100)", notNull = true, unique = true)
+    @Column(name = "username", length = 100, nullable = false, unique = true)
     private String username;
 
-    @DbColumn(name = "password", type = "VARCHAR(255)", notNull = true)
+    @Column(name = "password", length = 255, nullable = false)
     private String password;
 
-    @DbColumn(name = "role", type = "VARCHAR(50)", notNull = true)
+    @Column(name = "role", length = 50, nullable = false)
     private String role;
 
-    @DbColumn(name = "email", type = "VARCHAR(150)", notNull = true, unique = true)
+    @Column(name = "email", length = 150, nullable = false, unique = true)
     private String email;
 
-    @DbColumn(name = "status", type = "VARCHAR(50)", defaultValue = "'Active'")
+    @Column(name = "status", length = 50)
     private String status;
 
-    @DbColumn(name = "created_at", type = "TIMESTAMP", defaultValue = "CURRENT_TIMESTAMP")
-    private long createdAt;
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
 
-    @DbColumn(name = "updated_at", type = "TIMESTAMP", defaultValue = "CURRENT_TIMESTAMP")
-    private long updatedAt;
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
 
     public User() {
     }
 
-    public User(String id, String username, String password, String role, String email, String status) {
+    public User(Long id, String username, String password, String role, String email, String status) {
         this.id = id;
         this.username = username;
         this.password = password;
         this.role = role;
         this.email = email;
         this.status = status;
-        this.createdAt = System.currentTimeMillis();
-        this.updatedAt = System.currentTimeMillis();
     }
 
     // Getters and Setters
-    public String getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -98,15 +102,19 @@ public class User implements Serializable {
         this.status = status;
     }
 
-    public long getCreatedAt() {
+    public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public long getUpdatedAt() {
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
         return updatedAt;
     }
 
-    public void setUpdatedAt(long updatedAt) {
+    public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
     }
 
@@ -121,4 +129,3 @@ public class User implements Serializable {
                 '}';
     }
 }
-

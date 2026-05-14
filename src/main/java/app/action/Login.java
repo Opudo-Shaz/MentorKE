@@ -4,7 +4,6 @@ import app.bean.UserBean;
 import app.model.User;
 import jakarta.inject.Inject;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -12,7 +11,7 @@ import java.io.IOException;
 import jakarta.servlet.annotation.WebServlet;
 
 @WebServlet(name = "Login", urlPatterns = {"/login"})
-public class Login extends HttpServlet {
+public class Login extends BaseAction {
 
     @Inject
     private UserBean userBean;
@@ -23,33 +22,40 @@ public class Login extends HttpServlet {
         if ("logout".equalsIgnoreCase(action)) {
             HttpSession session = request.getSession(false);
             if (session != null) session.invalidate();
-            response.sendRedirect("login");
+            redirect(response, "login");
             return;
         }
 
-        HttpSession existingSession = request.getSession(false);
-        if (existingSession != null && Boolean.TRUE.equals(existingSession.getAttribute("isLoggedIn"))) {
-            redirectToDashboard(response, String.valueOf(existingSession.getAttribute("role")));
+        if (isLoggedIn(request)) {
+            redirectToDashboard(response, getUserRole(request));
             return;
         }
 
-        request.getRequestDispatcher("/login.jsp").forward(request, response);
+        try {
+            forward(request, response, "/login.jsp");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
-        handleLogin(request, response);
+        try {
+            handleLogin(request, response);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    private void handleLogin(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+    private void handleLogin(HttpServletRequest request, HttpServletResponse response) throws Exception {
         String username = safe(request.getParameter("username"));
         String password = safe(request.getParameter("password"));
         String role     = safe(request.getParameter("role")).toLowerCase();
 
         // Step 1: Basic field validation
         if (username.isEmpty() || password.isEmpty() || role.isEmpty()) {
-            request.setAttribute("errorMessage", "All fields are required.");
-            request.getRequestDispatcher("/login.jsp").forward(request, response);
+            setAttribute(request, "errorMessage", "All fields are required.");
+            forward(request, response, "/login.jsp");
             return;
         }
 
@@ -60,8 +66,8 @@ public class Login extends HttpServlet {
                 String adminPassword = getServletContext().getInitParameter("app.admin.password");
 
                 if (!username.equals(adminUsername) || !password.equals(adminPassword)) {
-                    request.setAttribute("errorMessage", "Invalid admin credentials.");
-                    request.getRequestDispatcher("/login.jsp").forward(request, response);
+                    setAttribute(request, "errorMessage", "Invalid admin credentials.");
+                    forward(request, response, "/login.jsp");
                     return;
                 }
 
@@ -81,29 +87,29 @@ public class Login extends HttpServlet {
 
                 // Check user exists
                 if (user == null) {
-                    request.setAttribute("errorMessage", "No account found with that username.");
-                    request.getRequestDispatcher("/login.jsp").forward(request, response);
+                    setAttribute(request, "errorMessage", "No account found with that username.");
+                    forward(request, response, "/login.jsp");
                     return;
                 }
 
                 // Check password matches
                 if (!password.equals(user.getPassword())) {
-                    request.setAttribute("errorMessage", "Incorrect password.");
-                    request.getRequestDispatcher("/login.jsp").forward(request, response);
+                    setAttribute(request, "errorMessage", "Incorrect password.");
+                    forward(request, response, "/login.jsp");
                     return;
                 }
 
                 // Check role matches what they selected
                 if (!role.equalsIgnoreCase(user.getRole())) {
-                    request.setAttribute("errorMessage", "Selected role does not match your account.");
-                    request.getRequestDispatcher("/login.jsp").forward(request, response);
+                    setAttribute(request, "errorMessage", "Selected role does not match your account.");
+                    forward(request, response, "/login.jsp");
                     return;
                 }
 
                 // Check account is active
                 if (!"Active".equalsIgnoreCase(user.getStatus())) {
-                    request.setAttribute("errorMessage", "Your account is inactive. Please contact an administrator.");
-                    request.getRequestDispatcher("/login.jsp").forward(request, response);
+                    setAttribute(request, "errorMessage", "Your account is inactive. Please contact an administrator.");
+                    forward(request, response, "/login.jsp");
                     return;
                 }
 
@@ -112,7 +118,7 @@ public class Login extends HttpServlet {
                 session.setAttribute("isLoggedIn", true);
                 session.setAttribute("username",   user.getUsername());
                 session.setAttribute("role",       user.getRole().toLowerCase());
-                session.setAttribute("userId",     user.getId());   // ← this is what dashboards need
+                session.setAttribute("userId",     user.getId());
                 session.setAttribute("loginTime",  System.currentTimeMillis());
 
                 redirectToDashboard(response, user.getRole());
@@ -120,12 +126,12 @@ public class Login extends HttpServlet {
             }
 
             // Unknown role
-            request.setAttribute("errorMessage", "Invalid role selected.");
-            request.getRequestDispatcher("/login.jsp").forward(request, response);
+            setAttribute(request, "errorMessage", "Invalid role selected.");
+            forward(request, response, "/login.jsp");
 
         } catch (Exception e) {
-            request.setAttribute("errorMessage", "Login failed: " + e.getMessage());
-            request.getRequestDispatcher("/login.jsp").forward(request, response);
+            setAttribute(request, "errorMessage", "Login failed: " + e.getMessage());
+            forward(request, response, "/login.jsp");
         }
     }
 

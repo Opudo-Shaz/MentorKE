@@ -90,7 +90,7 @@ public class MenteeBean {
         // Step 5: Fire CRUD event for audit trail
         auditTrailEvent.fire(new AuditTrail(
                 "Mentee",
-                mentee.getId(),
+                String.valueOf(mentee.getId()),
                 "CREATE",
                 user.getId(),
                 "Mentee registered: " + user.getUsername() + ", Field: " + mentee.getFieldOfStudy()));
@@ -183,7 +183,7 @@ public class MenteeBean {
         }
 
         // Step 6: Set ID (important for validator context)
-        mentee.setId(menteeId);
+        mentee.setId(Long.parseLong(menteeId));
 
         // Step 7: Set default status if needed
         if (mentee.getStatus() == null || mentee.getStatus().isEmpty()) {
@@ -251,7 +251,7 @@ public class MenteeBean {
         // Step 4: Fire CRUD event for audit trail
         auditTrailEvent.fire(new AuditTrail(
                 "Mentee",
-                mentee.getId(),
+                String.valueOf(mentee.getId()),
                 "CREATE",
                 "ADMIN",
                 "Mentee added by admin: " + user.getUsername() + ", Field: " + mentee.getFieldOfStudy()));

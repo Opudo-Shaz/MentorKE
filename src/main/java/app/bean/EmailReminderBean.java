@@ -17,6 +17,9 @@ import org.slf4j.Logger;
 
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
 
@@ -63,9 +66,9 @@ public class EmailReminderBean {
             // Get all sessions
             List<Session> allSessions = sessionDAO.getAllSessions();
 
-            long currentTime = System.currentTimeMillis();
-            long twentyFourHoursLater = currentTime + (24 * 60 * 60 * 1000); // 24 hours in milliseconds
-            long oneHourLater = currentTime + (60 * 60 * 1000); // 1 hour in milliseconds
+            LocalDateTime currentTime = LocalDateTime.now();
+            LocalDateTime twentyFourHoursLater = currentTime.plusHours(24);
+            LocalDateTime oneHourLater = currentTime.plusHours(1);
 
             int remindersSent = 0;
 
@@ -76,9 +79,10 @@ public class EmailReminderBean {
                 // 3. Within the next 24 hours
                 // 4. At least 1 hour away (to avoid spam)
 
-                if (session.getScheduledDate() > currentTime && 
-                    session.getScheduledDate() <= twentyFourHoursLater &&
-                    session.getScheduledDate() >= oneHourLater &&
+                if (session.getScheduledDate() != null &&
+                    session.getScheduledDate().isAfter(currentTime) &&
+                    session.getScheduledDate().isBefore(twentyFourHoursLater) &&
+                    session.getScheduledDate().isAfter(oneHourLater) &&
                     ("PENDING".equals(session.getStatus()) || "CONFIRMED".equals(session.getStatus()))) {
 
                     try {
@@ -92,8 +96,6 @@ public class EmailReminderBean {
 
             logger.info("=== Session reminder task completed. Reminders sent: {} ===", remindersSent);
 
-        } catch (SQLException e) {
-            logger.error("Error retrieving sessions for reminder", e);
         } catch (Exception e) {
             logger.error("Unexpected error in session reminder scheduler", e);
         }
@@ -128,8 +130,8 @@ public class EmailReminderBean {
             String menteeEmail = menteeUser.getEmail();
 
             // Calculate time remaining
-            long timeRemaining = session.getScheduledDate() - System.currentTimeMillis();
-            String timeRemainingStr = formatTimeRemaining(timeRemaining);
+            LocalDateTime now = LocalDateTime.now();
+            String timeRemainingStr = formatTimeRemaining(session.getScheduledDate(), now);
 
             // Build email bodies
             String mentorSubject = "Reminder: Upcoming Session - " + session.getTopic();
@@ -147,9 +149,6 @@ public class EmailReminderBean {
             logger.info("Reminder emails sent for session {} to mentor {} and mentee {}", 
                 session.getId(), mentorEmail, menteeEmail);
 
-        } catch (SQLException e) {
-            logger.error("Database error sending session reminders", e);
-            throw e;
         } catch (Exception e) {
             logger.error("Error sending session reminder emails", e);
         }
@@ -184,8 +183,8 @@ public class EmailReminderBean {
      */
     private String buildMentorReminderEmailBody(Session session, String mentorName, 
                                                 String menteeName, String timeRemaining) {
-        SimpleDateFormat sdf = new SimpleDateFormat("EEEE, MMMM d, yyyy 'at' h:mm a");
-        String sessionDateTime = sdf.format(new Date(session.getScheduledDate()));
+        String sessionDateTime = session.getScheduledDate().format(
+            java.time.format.DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy 'at' h:mm a"));
 
         return "<html>" +
                "<body style='font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 20px;'>" +
@@ -213,8 +212,8 @@ public class EmailReminderBean {
      */
     private String buildMenteeReminderEmailBody(Session session, String menteeName, 
                                                 String mentorName, String timeRemaining) {
-        SimpleDateFormat sdf = new SimpleDateFormat("EEEE, MMMM d, yyyy 'at' h:mm a");
-        String sessionDateTime = sdf.format(new Date(session.getScheduledDate()));
+        String sessionDateTime = session.getScheduledDate().format(
+            java.time.format.DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy 'at' h:mm a"));
 
         return "<html>" +
                "<body style='font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 20px;'>" +
@@ -240,8 +239,9 @@ public class EmailReminderBean {
     /**
      * Format time remaining in a human-readable format
      */
-    private String formatTimeRemaining(long timeInMillis) {
-        long minutes = timeInMillis / (1000 * 60);
+    private String formatTimeRemaining(LocalDateTime scheduledDate, LocalDateTime now) {
+        java.time.temporal.ChronoUnit unit = java.time.temporal.ChronoUnit.MINUTES;
+        long minutes = unit.between(now, scheduledDate);
         long hours = minutes / 60;
         long days = hours / 24;
 
@@ -261,30 +261,26 @@ public class EmailReminderBean {
     public int getUpcomingReminderCount() throws SQLException {
         logger.info("Calculating upcoming reminder count");
 
-        try {
-            List<Session> allSessions = sessionDAO.getAllSessions();
+        List<Session> allSessions = sessionDAO.getAllSessions();
 
-            long currentTime = System.currentTimeMillis();
-            long twentyFourHoursLater = currentTime + (24 * 60 * 60 * 1000);
-            long oneHourLater = currentTime + (60 * 60 * 1000);
+        LocalDateTime currentTime = LocalDateTime.now();
+        LocalDateTime twentyFourHoursLater = currentTime.plusHours(24);
+        LocalDateTime oneHourLater = currentTime.plusHours(1);
 
-            int count = 0;
+        int count = 0;
 
-            for (Session session : allSessions) {
-                if (session.getScheduledDate() > currentTime && 
-                    session.getScheduledDate() <= twentyFourHoursLater &&
-                    session.getScheduledDate() >= oneHourLater &&
-                    ("PENDING".equals(session.getStatus()) || "CONFIRMED".equals(session.getStatus()))) {
-                    count++;
-                }
+        for (Session session : allSessions) {
+            if (session.getScheduledDate() != null &&
+                session.getScheduledDate().isAfter(currentTime) &&
+                session.getScheduledDate().isBefore(twentyFourHoursLater) &&
+                session.getScheduledDate().isAfter(oneHourLater) &&
+                ("PENDING".equals(session.getStatus()) || "CONFIRMED".equals(session.getStatus()))) {
+                count++;
             }
-
-            logger.info("Upcoming reminders to be sent: {}", count);
-            return count;
-
-        } catch (SQLException e) {
-            logger.error("Error calculating upcoming reminder count", e);
-            throw e;
         }
+
+        logger.info("Upcoming reminders to be sent: {}", count);
+        return count;
+
     }
 }

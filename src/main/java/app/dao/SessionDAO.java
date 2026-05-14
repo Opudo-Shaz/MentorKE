@@ -1,127 +1,82 @@
 package app.dao;
 
-import app.dbconnection.DataSourceHelper;
 import app.model.Session;
 import jakarta.enterprise.context.Dependent;
-import jakarta.inject.Inject;
+import jakarta.persistence.TypedQuery;
 
-import java.sql.*;
-import java.util.ArrayList;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Dependent
 public class SessionDAO extends GenericDAO<Session, String> {
 
-    @Inject
-    public SessionDAO(DataSourceHelper dataSourceHelper) {
-        super(Session.class, dataSourceHelper);
+    public SessionDAO() {
+        super(Session.class);
     }
 
     // Add session
-    public void addSession(Session session) throws SQLException {
+    public void addSession(Session session) {
         save(session);
     }
 
     // Find session by id
-    public Session getSession(String id) throws SQLException {
+    public Session getSession(String id) {
         return findById(id);
     }
 
     // Find all sessions
-    public List<Session> getAllSessions() throws SQLException {
+    public List<Session> getAllSessions() {
         return findAll();
     }
 
     // Update session
-    public void updateSession(String id, Session session) throws SQLException {
+    public void updateSession(String id, Session session) {
         session.setId(id);
         update(session);
     }
 
     // Delete session
-    public void deleteSession(String id) throws SQLException {
+    public void deleteSession(String id) {
         delete(id);
     }
 
     // Get total number of sessions
-    public int getTotalSessions() throws SQLException {
+    public int getTotalSessions() {
         return count();
     }
 
     // Get sessions for a mentor
-    public List<Session> getSessionsByMentor(String mentorId) throws SQLException {
-        List<Session> sessions = new ArrayList<>();
-        String sql = "SELECT * FROM sessions WHERE mentor_id = ? ORDER BY scheduled_date DESC";
-        try (Connection conn = dataSourceHelper.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, mentorId);
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    sessions.add(mapResultSet(rs));
-                }
-            }
-        } catch (Exception e) {
-            throw new SQLException("Error getting sessions by mentor", e);
-        }
-        return sessions;
+    public List<Session> getSessionsByMentor(String mentorId) {
+        String jpql = "SELECT s FROM Session s WHERE s.mentorId = :mentorId ORDER BY s.scheduledDate DESC";
+        TypedQuery<Session> query = entityManager.createQuery(jpql, Session.class);
+        query.setParameter("mentorId", mentorId);
+        return query.getResultList();
     }
 
     // Get sessions for a mentee
-    public List<Session> getSessionsByMentee(String menteeId) throws SQLException {
-        List<Session> sessions = new ArrayList<>();
-        String sql = "SELECT * FROM sessions WHERE mentee_id = ? ORDER BY scheduled_date DESC";
-        try (Connection conn = dataSourceHelper.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, menteeId);
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    sessions.add(mapResultSet(rs));
-                }
-            }
-        } catch (Exception e) {
-            throw new SQLException("Error getting sessions by mentee", e);
-        }
-        return sessions;
+    public List<Session> getSessionsByMentee(String menteeId) {
+        String jpql = "SELECT s FROM Session s WHERE s.menteeId = :menteeId ORDER BY s.scheduledDate DESC";
+        TypedQuery<Session> query = entityManager.createQuery(jpql, Session.class);
+        query.setParameter("menteeId", menteeId);
+        return query.getResultList();
     }
 
     // Get upcoming sessions (scheduled_date > now)
-    public List<Session> getUpcomingSessions(String userId) throws SQLException {
-        List<Session> sessions = new ArrayList<>();
-        String sql = "SELECT * FROM sessions WHERE (mentor_id = ? OR mentee_id = ?) " +
-                    "AND scheduled_date > ? ORDER BY scheduled_date ASC";
-        try (Connection conn = dataSourceHelper.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, userId);
-            stmt.setString(2, userId);
-            stmt.setLong(3, System.currentTimeMillis());
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    sessions.add(mapResultSet(rs));
-                }
-            }
-        } catch (Exception e) {
-            throw new SQLException("Error getting upcoming sessions", e);
-        }
-        return sessions;
+    public List<Session> getUpcomingSessions(String userId) {
+        String jpql = "SELECT s FROM Session s WHERE (s.mentorId = :userId OR s.menteeId = :userId) " +
+                     "AND s.scheduledDate > :now ORDER BY s.scheduledDate ASC";
+        TypedQuery<Session> query = entityManager.createQuery(jpql, Session.class);
+        query.setParameter("userId", userId);
+        query.setParameter("now", LocalDateTime.now());
+        return query.getResultList();
     }
 
     // Get completed sessions
-    public List<Session> getCompletedSessions(String userId) throws SQLException {
-        List<Session> sessions = new ArrayList<>();
-        String sql = "SELECT * FROM sessions WHERE (mentor_id = ? OR mentee_id = ?) " +
-                    "AND status = 'COMPLETED' ORDER BY scheduled_date DESC";
-        try (Connection conn = dataSourceHelper.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, userId);
-            stmt.setString(2, userId);
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    sessions.add(mapResultSet(rs));
-                }
-            }
-        } catch (Exception e) {
-            throw new SQLException("Error getting completed sessions", e);
-        }
-        return sessions;
+    public List<Session> getCompletedSessions(String userId) {
+        String jpql = "SELECT s FROM Session s WHERE (s.mentorId = :userId OR s.menteeId = :userId) " +
+                     "AND s.status = 'COMPLETED' ORDER BY s.scheduledDate DESC";
+        TypedQuery<Session> query = entityManager.createQuery(jpql, Session.class);
+        query.setParameter("userId", userId);
+        return query.getResultList();
     }
 }

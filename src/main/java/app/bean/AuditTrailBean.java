@@ -35,37 +35,26 @@ public class AuditTrailBean {
      * Observes AuditTrail events and saves them to the database and JMS queue
      */
     public void save(@Observes AuditTrail auditTrail) {
-        try {
-            logger.info("=== Audit Trail Event Observed ===");
+        logger.info("=== Audit Trail Event Observed ===");
 
-            // Add timestamp to details
-            String detailedInfo = new Date() + ": " + auditTrail.getDetails();
-            auditTrail.setDetails(detailedInfo);
+        // Add timestamp to details
+        String detailedInfo = new Date() + ": " + auditTrail.getDetails();
+        auditTrail.setDetails(detailedInfo);
 
-            // Save to database
-            auditTrailDAO.addAuditTrail(auditTrail);
-            logger.info("Audit recorded to database. ID: {}", auditTrail.getId());
+        // Save to database
+        auditTrailDAO.addAuditTrail(auditTrail);
+        logger.info("Audit recorded to database. ID: {}", auditTrail.getId());
 
-            // Send to JMS queue as producer
-            context.createProducer().send(auditQueue, detailedInfo);
-            logger.info("Audit message sent to JMS queue");
+        // Send to JMS queue as producer
+        context.createProducer().send(auditQueue, detailedInfo);
+        logger.info("Audit message sent to JMS queue");
 
-        } catch (SQLException e) {
-            logger.error("Error saving audit trail: {}", e.getMessage());
-            e.printStackTrace();
-        }
     }
 
     /**
      * Retrieves all audit trails
      */
     public List<AuditTrail> list(AuditTrail filter) {
-        try {
-            return auditTrailDAO.getAllAuditTrails();
-        } catch (SQLException e) {
-            logger.error("Error retrieving audit trails: {}", e.getMessage());
-            e.printStackTrace();
-            return List.of();
-        }
+        return auditTrailDAO.getAllAuditTrails();
     }
 }

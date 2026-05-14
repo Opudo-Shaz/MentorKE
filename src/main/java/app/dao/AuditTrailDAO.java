@@ -1,80 +1,53 @@
 package app.dao;
 
-import app.dbconnection.DataSourceHelper;
 import app.model.AuditTrail;
 import jakarta.enterprise.context.Dependent;
-import jakarta.inject.Inject;
+import jakarta.persistence.TypedQuery;
 
-import java.sql.*;
-import java.util.ArrayList;
 import java.util.List;
 
 @Dependent
 public class AuditTrailDAO extends GenericDAO<AuditTrail, String> {
 
-    @Inject
-    public AuditTrailDAO(DataSourceHelper dataSourceHelper) {
-        super(AuditTrail.class, dataSourceHelper);
+    public AuditTrailDAO() {
+        super(AuditTrail.class);
     }
 
-    // method save() audit trail
-    public void addAuditTrail(AuditTrail audit) throws SQLException {
+    // Add audit trail
+    public void addAuditTrail(AuditTrail audit) {
         save(audit);
     }
 
-    // get by id
-    public AuditTrail getAuditTrail(String id) throws SQLException {
+    // Get by id
+    public AuditTrail getAuditTrail(String id) {
         return findById(id);
     }
 
-    // return audit trail count
-    public int getTotalAuditTrails() throws SQLException {
+    // Return audit trail count
+    public int getTotalAuditTrails() {
         return count();
     }
 
-    //  Keep — custom ORDER BY, GenericDAO.findAll() has no ordering
-    public List<AuditTrail> getAllAuditTrails() throws SQLException {
-        List<AuditTrail> audits = new ArrayList<>();
-        String sql = "SELECT * FROM audit_trail ORDER BY timestamp DESC";
-        try (Connection conn = dataSourceHelper.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-            while (rs.next()) audits.add(mapResultSet(rs));
-        } catch (Exception e) {
-            throw new SQLException("Error getting all audit trails", e);
-        }
-        return audits;
+    // Get all audit trails ordered by timestamp
+    public List<AuditTrail> getAllAuditTrails() {
+        String jpql = "SELECT a FROM AuditTrail a ORDER BY a.timestamp DESC";
+        TypedQuery<AuditTrail> query = entityManager.createQuery(jpql, AuditTrail.class);
+        return query.getResultList();
     }
 
-    // custom WHERE clause
-    public List<AuditTrail> getAuditTrailsByEntityType(String entityType) throws SQLException {
-        List<AuditTrail> audits = new ArrayList<>();
-        String sql = "SELECT * FROM audit_trail WHERE entity_type = ? ORDER BY timestamp DESC";
-        try (Connection conn = dataSourceHelper.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, entityType);
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) audits.add(mapResultSet(rs));
-            }
-        } catch (Exception e) {
-            throw new SQLException("Error getting audit trails by entity type", e);
-        }
-        return audits;
+    // Get audit trails by entity type
+    public List<AuditTrail> getAuditTrailsByEntityType(String entityType) {
+        String jpql = "SELECT a FROM AuditTrail a WHERE a.entityType = :entityType ORDER BY a.timestamp DESC";
+        TypedQuery<AuditTrail> query = entityManager.createQuery(jpql, AuditTrail.class);
+        query.setParameter("entityType", entityType);
+        return query.getResultList();
     }
 
-    //  custom WHERE clause
-    public List<AuditTrail> getAuditTrailsByEntityId(String entityId) throws SQLException {
-        List<AuditTrail> audits = new ArrayList<>();
-        String sql = "SELECT * FROM audit_trail WHERE entity_id = ? ORDER BY timestamp DESC";
-        try (Connection conn = dataSourceHelper.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, entityId);
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) audits.add(mapResultSet(rs));
-            }
-        } catch (Exception e) {
-            throw new SQLException("Error getting audit trails by entity ID", e);
-        }
-        return audits;
+    // Get audit trails by entity id
+    public List<AuditTrail> getAuditTrailsByEntityId(String entityId) {
+        String jpql = "SELECT a FROM AuditTrail a WHERE a.entityId = :entityId ORDER BY a.timestamp DESC";
+        TypedQuery<AuditTrail> query = entityManager.createQuery(jpql, AuditTrail.class);
+        query.setParameter("entityId", entityId);
+        return query.getResultList();
     }
 }

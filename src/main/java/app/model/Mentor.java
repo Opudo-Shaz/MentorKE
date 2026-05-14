@@ -1,51 +1,54 @@
 package app.model;
 
+import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import java.io.Serial;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
-import app.framework.DbTable;
-import app.framework.DbColumn;
-
-
-
-
-@DbTable(name = "mentors")
+@Entity
+@Table(name = "mentors")
 public class Mentor implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    @DbColumn(name = "id", type = "SERIAL", primaryKey = true, autoIncrement = true)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private String id;
 
-    @DbColumn(name = "user_id", type = "VARCHAR(50)", notNull = true)
+    @Column(name = "user_id", length = 50, nullable = false)
     private String userId;
 
-    @DbColumn(name = "specialization", type = "VARCHAR(100)")
+    @Column(name = "specialization", length = 100)
     private String specialization;
 
-    @DbColumn(name = "expertise", type = "TEXT")
+    @Column(name = "expertise", columnDefinition = "TEXT")
     private String expertise;
 
-    @DbColumn(name = "years_of_experience", type = "INTEGER")
+    @Column(name = "years_of_experience")
     private Integer yearsOfExperience;
 
-    @DbColumn(name = "bio", type = "TEXT")
+    @Column(name = "bio", columnDefinition = "TEXT")
     private String bio;
 
-    @DbColumn(name = "qualifications", type = "TEXT")
+    @Column(name = "qualifications", columnDefinition = "TEXT")
     private String qualifications;
 
-    @DbColumn(name = "phone_number", type = "VARCHAR(20)")
+    @Column(name = "phone_number", length = 20)
     private String phoneNumber;
 
-    @DbColumn(name = "status", type = "VARCHAR(50)", defaultValue = "'Active'")
+    @Column(name = "status", length = 50)
     private String status;
 
-    @DbColumn(name = "created_at", type = "TIMESTAMP", defaultValue = "CURRENT_TIMESTAMP")
-    private long createdAt;
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
 
-    @DbColumn(name = "updated_at", type = "TIMESTAMP", defaultValue = "CURRENT_TIMESTAMP")
-    private long updatedAt;
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
 
     public Mentor(String id, String userId, String specialization, String expertise,
                   Integer yearsOfExperience, String bio, String qualifications,
@@ -59,15 +62,11 @@ public class Mentor implements Serializable {
         this.qualifications = qualifications;
         this.phoneNumber = phoneNumber;
         this.status = status;
-        this.createdAt = System.currentTimeMillis();
-        this.updatedAt = System.currentTimeMillis();
     }
 
     public Mentor() {
-
     }
 
-    // Getters and Setters
     public String getId() {
         return id;
     }
@@ -140,19 +139,19 @@ public class Mentor implements Serializable {
         this.status = status;
     }
 
-    public long getCreatedAt() {
+    public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(long createdAt) {
+    public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
 
-    public long getUpdatedAt() {
+    public LocalDateTime getUpdatedAt() {
         return updatedAt;
     }
 
-    public void setUpdatedAt(long updatedAt) {
+    public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
     }
 
@@ -171,4 +170,3 @@ public class Mentor implements Serializable {
                 '}';
     }
 }
-

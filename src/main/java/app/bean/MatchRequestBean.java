@@ -83,10 +83,10 @@ public class MatchRequestBean {
     public void approveMentorRequest(String requestId) throws SQLException {
         logger.info("Approving match request: {}", requestId);
 
-        MatchRequest request = matchRequestDAO.getMatchRequest(requestId);
+        MatchRequest request = matchRequestDAO.getMatchRequest(Long.parseLong(requestId));
         if (request != null) {
             request.setStatus("APPROVED");
-            matchRequestDAO.updateMatchRequest(requestId, request);
+            matchRequestDAO.updateMatchRequest(request.getId(), request);
 
             // Update mentee's mentor_id
             Mentee mentee = menteeDAO.getMentee(request.getMenteeId());
@@ -105,10 +105,10 @@ public class MatchRequestBean {
     public void rejectMentorRequest(String requestId) throws SQLException {
         logger.info("Rejecting match request: {}", requestId);
 
-        MatchRequest request = matchRequestDAO.getMatchRequest(requestId);
+        MatchRequest request = matchRequestDAO.getMatchRequest(Long.parseLong(requestId));
         if (request != null) {
             request.setStatus("REJECTED");
-            matchRequestDAO.updateMatchRequest(requestId, request);
+            matchRequestDAO.updateMatchRequest(request.getId(), request);
             logger.info("Match request rejected");
         }
     }
@@ -141,7 +141,7 @@ public class MatchRequestBean {
      * Get a specific match request
      */
     public MatchRequest getMatchRequest(String requestId) throws SQLException {
-        return matchRequestDAO.getMatchRequest(requestId);
+        return matchRequestDAO.getMatchRequest(Long.parseLong(requestId));
     }
 
     /**

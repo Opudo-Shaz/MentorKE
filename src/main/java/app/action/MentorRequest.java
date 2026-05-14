@@ -8,10 +8,8 @@ import app.model.Mentor;
 import app.model.Mentee;
 import jakarta.inject.Inject;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.annotation.WebServlet;
 import app.utility.logging.AppLogger;
 import org.slf4j.Logger;
@@ -25,7 +23,7 @@ import java.util.List;
  * Actions: pending, approve, reject, my-mentees
  */
 @WebServlet(name = "MentorRequest", urlPatterns = {"/mentor-requests"})
-public class MentorRequest extends HttpServlet {
+public class MentorRequest extends BaseAction {
 
     private static final Logger logger = AppLogger.getLogger(MentorRequest.class);
 
@@ -43,22 +41,17 @@ public class MentorRequest extends HttpServlet {
             throws ServletException, IOException {
         
         String action = request.getParameter("action");
-        HttpSession httpSession = request.getSession(false);
 
-        // Check if user is logged in
-        if (httpSession == null || !Boolean.TRUE.equals(httpSession.getAttribute("isLoggedIn"))) {
-            response.sendRedirect("login");
+        if (!isLoggedIn(request)) {
+            redirect(response, "login");
             return;
         }
 
-        String userId = (String) httpSession.getAttribute("userId");
-        String role = (String) httpSession.getAttribute("role");
-
-        // Verify user is a mentor
-        if (!"mentor".equalsIgnoreCase(role)) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Only mentors can access this page");
+        if (!requireRole(request, response, "mentor")) {
             return;
         }
+
+        String userId = getUserId(request);
 
         try {
             if ("pending".equalsIgnoreCase(action)) {
@@ -70,8 +63,12 @@ public class MentorRequest extends HttpServlet {
             }
         } catch (Exception e) {
             logger.error("Error in MentorRequestAction", e);
-            request.setAttribute("errorMessage", "An error occurred: " + e.getMessage());
-            request.getRequestDispatcher("/mentor-dashboard.jsp").forward(request, response);
+            setAttribute(request, "errorMessage", "An error occurred: " + e.getMessage());
+            try {
+                forward(request, response, "/mentor-dashboard.jsp");
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
         }
     }
 
@@ -80,30 +77,26 @@ public class MentorRequest extends HttpServlet {
             throws ServletException, IOException {
         
         String action = request.getParameter("action");
-        HttpSession httpSession = request.getSession(false);
 
-        if (httpSession == null || !Boolean.TRUE.equals(httpSession.getAttribute("isLoggedIn"))) {
-            response.sendRedirect("login");
+        if (!isLoggedIn(request)) {
+            redirect(response, "login");
             return;
         }
 
-        String userId = (String) httpSession.getAttribute("userId");
-        String role = (String) httpSession.getAttribute("role");
-
-        if (!"mentor".equalsIgnoreCase(role)) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+        if (!requireRole(request, response, "mentor")) {
             return;
         }
+
+        String userId = getUserId(request);
 
         try {
             if ("approve".equalsIgnoreCase(action)) {
                 String requestId = request.getParameter("requestId");
                 MatchRequest req = matchRequestBean.getMatchRequest(requestId);
                 
-                // Verify this mentor is the one being requested
                 if (req != null && req.getMentorId().equals(userId)) {
                     matchRequestBean.approveMentorRequest(requestId);
-                    request.setAttribute("successMessage", "Request approved! You now have a mentee.");
+                    setAttribute(request, "successMessage", "Request approved! You now have a mentee.");
                 }
                 
                 handlePendingRequests(request, response, userId);
@@ -112,18 +105,21 @@ public class MentorRequest extends HttpServlet {
                 String requestId = request.getParameter("requestId");
                 MatchRequest req = matchRequestBean.getMatchRequest(requestId);
                 
-                // Verify this mentor is the one being requested
-                if (req != null && req.getMentorId().equals(userId)) {
+                if (req != null && userId.equals(req.getMentorId())) {
                     matchRequestBean.rejectMentorRequest(requestId);
-                    request.setAttribute("successMessage", "Request rejected.");
+                    setAttribute(request, "successMessage", "Request rejected.");
                 }
                 
                 handlePendingRequests(request, response, userId);
             }
         } catch (Exception e) {
             logger.error("Error processing mentor request action", e);
-            request.setAttribute("errorMessage", "An error occurred: " + e.getMessage());
-            request.getRequestDispatcher("/mentor-dashboard.jsp").forward(request, response);
+            setAttribute(request, "errorMessage", "An error occurred: " + e.getMessage());
+            try {
+                forward(request, response, "/mentor-dashboard.jsp");
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
         }
     }
 
@@ -138,7 +134,6 @@ public class MentorRequest extends HttpServlet {
         try {
             List<MatchRequest> pendingRequests = matchRequestBean.getPendingRequestsForMentor(mentorId);
             
-            // Enrich with mentee details
             for (MatchRequest req : pendingRequests) {
                 try {
                     Mentee mentee = menteeBean.getMenteeById(req.getMenteeId());
@@ -148,8 +143,8 @@ public class MentorRequest extends HttpServlet {
                 }
             }
 
-            request.setAttribute("pendingRequests", pendingRequests);
-            request.getRequestDispatcher("/pending-mentee-requests.jsp").forward(request, response);
+            setAttribute(request, "pendingRequests", pendingRequests);
+            forward(request, response, "/pending-mentee-requests.jsp");
 
         } catch (Exception e) {
             logger.error("Error retrieving pending requests", e);
@@ -168,9 +163,9 @@ public class MentorRequest extends HttpServlet {
         try {
             List<Mentee> mentees = menteeBean.getMenteesByMentorId(mentorId);
 
-            request.setAttribute("mentees", mentees);
-            request.setAttribute("menteeCount", mentees.size());
-            request.getRequestDispatcher("/mentor-mentees.jsp").forward(request, response);
+            setAttribute(request, "mentees", mentees);
+            setAttribute(request, "menteeCount", mentees.size());
+            forward(request, response, "/mentor-mentees.jsp");
 
         } catch (Exception e) {
             logger.error("Error retrieving mentees", e);

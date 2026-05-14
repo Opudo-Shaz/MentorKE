@@ -1,53 +1,59 @@
 package app.model;
 
+import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import java.io.Serial;
 import java.io.Serializable;
-import app.framework.DbTable;
-import app.framework.DbColumn;
+import java.time.LocalDateTime;
 
-@DbTable(name = "sessions")
+@Entity
+@Table(name = "sessions")
 public class Session implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    @DbColumn(name = "id", type = "SERIAL", primaryKey = true, autoIncrement = true)
-    private String id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private Long id;
 
-    @DbColumn(name = "mentor_id", type = "VARCHAR(50)", notNull = true)
+    @Column(name = "mentor_id", length = 50, nullable = false)
     private String mentorId;
 
-    @DbColumn(name = "mentee_id", type = "VARCHAR(50)", notNull = true)
+    @Column(name = "mentee_id", length = 50, nullable = false)
     private String menteeId;
 
-    @DbColumn(name = "session_link", type = "VARCHAR(255)")
+    @Column(name = "session_link", length = 255)
     private String sessionLink;
 
-    @DbColumn(name = "scheduled_date", type = "BIGINT")
-    private long scheduledDate;
+    @Column(name = "scheduled_date", nullable = false)
+    private LocalDateTime scheduledDate;
 
-    @DbColumn(name = "duration_minutes", type = "INTEGER")
+    @Column(name = "duration_minutes")
     private Integer durationMinutes;
 
-    @DbColumn(name = "status", type = "VARCHAR(50)", defaultValue = "'PENDING'")
+    @Column(name = "status", length = 50)
     private String status;
 
-    @DbColumn(name = "topic", type = "TEXT")
+    @Column(name = "topic", columnDefinition = "TEXT")
     private String topic;
 
-    @DbColumn(name = "notes", type = "TEXT")
+    @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
 
-    @DbColumn(name = "created_at", type = "TIMESTAMP", defaultValue = "CURRENT_TIMESTAMP")
-    private long createdAt;
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
 
-    @DbColumn(name = "updated_at", type = "TIMESTAMP", defaultValue = "CURRENT_TIMESTAMP")
-    private long updatedAt;
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
 
-    // Constructors
     public Session() {
     }
 
-    public Session(String mentorId, String menteeId, long scheduledDate, 
+    public Session(String mentorId, String menteeId, LocalDateTime scheduledDate,
                    Integer durationMinutes, String topic) {
         this.mentorId = mentorId;
         this.menteeId = menteeId;
@@ -55,16 +61,14 @@ public class Session implements Serializable {
         this.durationMinutes = durationMinutes;
         this.topic = topic;
         this.status = "PENDING";
-        this.createdAt = System.currentTimeMillis();
-        this.updatedAt = System.currentTimeMillis();
     }
 
-    // Getters and Setters
-    public String getId() {
+    // ...existing code...
+    public Long getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -92,11 +96,11 @@ public class Session implements Serializable {
         this.sessionLink = sessionLink;
     }
 
-    public long getScheduledDate() {
+    public LocalDateTime getScheduledDate() {
         return scheduledDate;
     }
 
-    public void setScheduledDate(long scheduledDate) {
+    public void setScheduledDate(LocalDateTime scheduledDate) {
         this.scheduledDate = scheduledDate;
     }
 
@@ -132,19 +136,19 @@ public class Session implements Serializable {
         this.notes = notes;
     }
 
-    public long getCreatedAt() {
+    public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(long createdAt) {
+    public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
 
-    public long getUpdatedAt() {
+    public LocalDateTime getUpdatedAt() {
         return updatedAt;
     }
 
-    public void setUpdatedAt(long updatedAt) {
+    public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
     }
 

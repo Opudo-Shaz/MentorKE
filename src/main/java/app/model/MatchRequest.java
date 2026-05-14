@@ -1,105 +1,64 @@
 package app.model;
 
+import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import java.io.Serial;
 import java.io.Serializable;
-import app.framework.DbTable;
-import app.framework.DbColumn;
+import java.time.LocalDateTime;
 
-@DbTable(name = "match_requests")
+@Entity
+@Table(name = "match_requests")
 public class MatchRequest implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    @DbColumn(name = "id", type = "SERIAL", primaryKey = true, autoIncrement = true)
-    private String id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private Long id;
 
-    @DbColumn(name = "mentee_id", type = "VARCHAR(50)", notNull = true)
+    @Column(name = "mentee_id", length = 50, nullable = false)
     private String menteeId;
 
-    @DbColumn(name = "mentor_id", type = "VARCHAR(50)")
+    @Column(name = "mentor_id", length = 50)
     private String mentorId;
 
-    @DbColumn(name = "requested_specialization", type = "VARCHAR(100)")
+    @Column(name = "requested_specialization", length = 100)
     private String requestedSpecialization;
 
-    @DbColumn(name = "status", type = "VARCHAR(50)", defaultValue = "'PENDING'")
+    @Column(name = "status", length = 50)
     private String status;
 
-    @DbColumn(name = "created_at", type = "TIMESTAMP", defaultValue = "CURRENT_TIMESTAMP")
-    private long createdAt;
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
 
-    @DbColumn(name = "updated_at", type = "TIMESTAMP", defaultValue = "CURRENT_TIMESTAMP")
-    private long updatedAt;
-
-    // Constructors
-    public MatchRequest() {
-    }
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
 
     public MatchRequest(String menteeId, String mentorId, String requestedSpecialization) {
         this.menteeId = menteeId;
         this.mentorId = mentorId;
         this.requestedSpecialization = requestedSpecialization;
         this.status = "PENDING";
-        this.createdAt = System.currentTimeMillis();
-        this.updatedAt = System.currentTimeMillis();
     }
 
-    // Getters and Setters
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getMenteeId() {
-        return menteeId;
-    }
-
-    public void setMenteeId(String menteeId) {
-        this.menteeId = menteeId;
-    }
-
-    public String getMentorId() {
-        return mentorId;
-    }
-
-    public void setMentorId(String mentorId) {
-        this.mentorId = mentorId;
-    }
-
-    public String getRequestedSpecialization() {
-        return requestedSpecialization;
-    }
-
-    public void setRequestedSpecialization(String requestedSpecialization) {
-        this.requestedSpecialization = requestedSpecialization;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public long getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(long createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public long getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(long updatedAt) {
-        this.updatedAt = updatedAt;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getMenteeId() { return menteeId; }
+    public void setMenteeId(String menteeId) { this.menteeId = menteeId; }
+    public String getMentorId() { return mentorId; }
+    public void setMentorId(String mentorId) { this.mentorId = mentorId; }
+    public String getRequestedSpecialization() { return requestedSpecialization; }
+    public void setRequestedSpecialization(String requestedSpecialization) { this.requestedSpecialization = requestedSpecialization; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 
     @Override
     public String toString() {

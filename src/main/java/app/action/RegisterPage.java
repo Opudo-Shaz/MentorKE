@@ -1,6 +1,5 @@
 package app.action;
 
-import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.ServletException;
@@ -15,7 +14,7 @@ import app.utility.logging.AppLogger;
 import org.slf4j.Logger;
 
 @WebServlet(name = "Register", urlPatterns = {"/register"})
-public class RegisterPage extends HttpServlet {
+public class RegisterPage extends BaseAction {
 
     private static final Logger logger = AppLogger.getLogger(RegisterPage.class);
 
@@ -24,16 +23,23 @@ public class RegisterPage extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
-        // Forward to JSP
-        request.getRequestDispatcher("/register.jsp").forward(request, response);
+        try {
+            forward(request, response, "/register.jsp");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
-        handlePost(request, response);
+        try {
+            handlePost(request, response);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    private void handlePost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+    private void handlePost(HttpServletRequest request, HttpServletResponse response) throws Exception {
         logger.info("Processing registration form submission");
 
         // ===== HTTP HANDLER ONLY: Read request parameters =====
@@ -48,8 +54,8 @@ public class RegisterPage extends HttpServlet {
             email == null || email.trim().isEmpty() ||
             role == null || role.trim().isEmpty()) {
             logger.warn("Validation failed - missing required fields");
-            request.setAttribute("errorMessage", "All fields are required");
-            request.getRequestDispatcher("/register-error.jsp").forward(request, response);
+            setAttribute(request, "errorMessage", "All fields are required");
+            forward(request, response, "/register-error.jsp");
             return;
         }
 
@@ -70,18 +76,20 @@ public class RegisterPage extends HttpServlet {
 
             // ===== HTTP HANDLER ONLY: Prepare response and forward to JSP =====
             logger.info("User registered successfully: username={}, role={}", username, role);
-            request.setAttribute("username", username);
-            request.setAttribute("role", role);
-            request.getRequestDispatcher("/register-success.jsp").forward(request, response);
+            setAttribute(request, "username", username);
+            setAttribute(request, "role", role);
+            forward(request, response, "/register-success.jsp");
 
         } catch (IllegalArgumentException e) {
             logger.error("Validation error during registration: {}", e.getMessage());
-            request.setAttribute("errorMessage", "Registration failed: " + e.getMessage());
-            request.getRequestDispatcher("/register-error.jsp").forward(request, response);
+            setAttribute(request, "errorMessage", "Registration failed: " + e.getMessage());
+            forward(request, response, "/register-error.jsp");
         } catch (SQLException e) {
             logger.error("Database error during registration: {}", e.getMessage());
-            request.setAttribute("errorMessage", "Error registering user: " + e.getMessage());
-            request.getRequestDispatcher("/register-error.jsp").forward(request, response);
+            setAttribute(request, "errorMessage", "Error registering user: " + e.getMessage());
+            forward(request, response, "/register-error.jsp");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 }

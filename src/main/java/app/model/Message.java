@@ -1,34 +1,38 @@
 package app.model;
 
+import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
 import java.io.Serial;
 import java.io.Serializable;
-import app.framework.DbTable;
-import app.framework.DbColumn;
+import java.time.LocalDateTime;
 
-@DbTable(name = "messages")
+@Entity
+@Table(name = "messages")
 public class Message implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    @DbColumn(name = "id", type = "SERIAL", primaryKey = true, autoIncrement = true)
-    private String id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private Long id;
 
-    @DbColumn(name = "sender_id", type = "VARCHAR(50)", notNull = true)
+    @Column(name = "sender_id", length = 50, nullable = false)
     private String senderId;
 
-    @DbColumn(name = "recipient_id", type = "VARCHAR(50)", notNull = true)
+    @Column(name = "recipient_id", length = 50, nullable = false)
     private String recipientId;
 
-    @DbColumn(name = "message", type = "TEXT", notNull = true)
+    @Column(name = "message", columnDefinition = "TEXT", nullable = false)
     private String message;
 
-    @DbColumn(name = "is_read", type = "BOOLEAN", defaultValue = "false")
+    @Column(name = "is_read")
     private Boolean isRead;
 
-    @DbColumn(name = "created_at", type = "TIMESTAMP", defaultValue = "CURRENT_TIMESTAMP")
-    private long createdAt;
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
 
-    // Constructors
     public Message() {
     }
 
@@ -37,57 +41,20 @@ public class Message implements Serializable {
         this.recipientId = recipientId;
         this.message = message;
         this.isRead = false;
-        this.createdAt = System.currentTimeMillis();
     }
 
-    // Getters and Setters
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getSenderId() {
-        return senderId;
-    }
-
-    public void setSenderId(String senderId) {
-        this.senderId = senderId;
-    }
-
-    public String getRecipientId() {
-        return recipientId;
-    }
-
-    public void setRecipientId(String recipientId) {
-        this.recipientId = recipientId;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
-    public Boolean getIsRead() {
-        return isRead;
-    }
-
-    public void setIsRead(Boolean isRead) {
-        this.isRead = isRead;
-    }
-
-    public long getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(long createdAt) {
-        this.createdAt = createdAt;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getSenderId() { return senderId; }
+    public void setSenderId(String senderId) { this.senderId = senderId; }
+    public String getRecipientId() { return recipientId; }
+    public void setRecipientId(String recipientId) { this.recipientId = recipientId; }
+    public String getMessage() { return message; }
+    public void setMessage(String message) { this.message = message; }
+    public Boolean getIsRead() { return isRead; }
+    public void setIsRead(Boolean isRead) { this.isRead = isRead; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
     @Override
     public String toString() {

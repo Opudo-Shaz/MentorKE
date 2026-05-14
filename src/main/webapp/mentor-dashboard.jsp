@@ -242,40 +242,74 @@
         .pill-inactive { background: var(--amber-50);  color: var(--amber-700); }
         .pill-inactive::before { background: var(--amber-700); }
 
-        /* ── EXPERTISE TAGS ── */
-        .tag {
-            display: inline-block;
-            background: var(--blue-50); color: var(--blue-800);
-            font-size: 12px; font-weight: 500;
-            padding: 4px 12px; border-radius: 20px;
-            border: 1px solid var(--blue-100);
-            margin: 3px;
-        }
+         /* ── EXPERTISE TAGS ── */
+         .tag {
+             display: inline-block;
+             background: var(--blue-50); color: var(--blue-800);
+             font-size: 12px; font-weight: 500;
+             padding: 4px 12px; border-radius: 20px;
+             border: 1px solid var(--blue-100);
+             margin: 3px;
+         }
 
-        /* ── BIO / GOALS BOX ── */
-        .info-box {
-            font-size: 13px; color: var(--gray-600); line-height: 1.7;
-            background: var(--blue-25);
-            border-left: 3px solid var(--blue-200);
-            border-radius: 0 var(--radius-md) var(--radius-md) 0;
-            padding: 12px 14px;
-        }
+         /* ── BIO / GOALS BOX ── */
+         .info-box {
+             font-size: 13px; color: var(--gray-600); line-height: 1.7;
+             background: var(--blue-25);
+             border-left: 3px solid var(--blue-200);
+             border-radius: 0 var(--radius-md) var(--radius-md) 0;
+             padding: 12px 14px;
+         }
 
-        /* ── OVERVIEW TILES ── */
-        .overview-tile {
-            border-radius: var(--radius-md); padding: 14px 16px; margin-bottom: 12px;
-        }
-        .overview-tile:last-child { margin-bottom: 0; }
-        .overview-tile-label {
-            font-size: 11px; font-weight: 600; text-transform: uppercase;
-            letter-spacing: 0.06em; margin-bottom: 4px;
-        }
-        .overview-tile-value { font-size: 15px; font-weight: 600; color: var(--gray-800); }
+         /* ── OVERVIEW TILES ── */
+         .overview-tile {
+             border-radius: var(--radius-md); padding: 14px 16px; margin-bottom: 12px;
+         }
+         .overview-tile:last-child { margin-bottom: 0; }
+         .overview-tile-label {
+             font-size: 11px; font-weight: 600; text-transform: uppercase;
+             letter-spacing: 0.06em; margin-bottom: 4px;
+         }
+         .overview-tile-value { font-size: 15px; font-weight: 600; color: var(--gray-800); }
 
-        /* ── EMPTY STATE ── */
-        .empty-state { text-align: center; padding: 32px 20px; color: var(--gray-400); }
-        .empty-state svg { width: 36px; height: 36px; margin: 0 auto 10px; display: block; opacity: 0.35; }
-        .empty-state p { font-size: 14px; }
+         /* ── EMPTY STATE ── */
+         .empty-state { text-align: center; padding: 32px 20px; color: var(--gray-400); }
+         .empty-state svg { width: 36px; height: 36px; margin: 0 auto 10px; display: block; opacity: 0.35; }
+         .empty-state p { font-size: 14px; }
+
+         /* ── ACTION GRID ── */
+         .action-grid {
+             display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 20px;
+         }
+         .action-card {
+             background: var(--white); border: 1px solid var(--gray-200);
+             border-radius: var(--radius-lg); padding: 18px; text-align: center;
+             box-shadow: var(--shadow-sm); text-decoration: none;
+             color: var(--gray-800); transition: all 0.15s;
+             display: flex; flex-direction: column; align-items: center; gap: 10px;
+         }
+         .action-card:hover {
+             border-color: var(--blue-200); background: var(--blue-25);
+             transform: translateY(-2px);
+         }
+         .action-icon {
+             width: 40px; height: 40px; border-radius: var(--radius-md);
+             background: var(--blue-50); display: flex; align-items: center; justify-content: center;
+         }
+         .action-icon svg { width: 20px; height: 20px; color: var(--blue-800); }
+         .action-label { font-size: 13px; font-weight: 500; line-height: 1.3; }
+
+         /* ── UNREAD BADGE ── */
+         .unread-badge {
+             position: absolute; top: -4px; right: -4px;
+             background: var(--red-700); color: var(--white);
+             font-size: 10px; font-weight: 600;
+             width: 18px; height: 18px;
+             border-radius: 50%;
+             display: flex; align-items: center; justify-content: center;
+             border: 2px solid var(--white);
+         }
+         .unread-badge.hidden { display: none; }
     </style>
 </head>
 <body>
@@ -373,6 +407,41 @@
             <%= errorMsg %>
         </div>
         <% } %>
+
+        <!-- QUICK ACTIONS -->
+        <div class="action-grid">
+            <a href="mentor-requests?action=pending" class="action-card">
+                <div class="action-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                </div>
+                <span class="action-label">Pending<br>Requests</span>
+            </a>
+            <a href="mentor-requests?action=my-mentees" class="action-card">
+                <div class="action-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                </div>
+                <span class="action-label">My<br>Mentees</span>
+            </a>
+            <a href="sessions?action=upcoming" class="action-card">
+                <div class="action-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </div>
+                <span class="action-label">Upcoming<br>Sessions</span>
+            </a>
+            <a href="sessions?action=completed" class="action-card">
+                <div class="action-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <span class="action-label">Completed<br>Sessions</span>
+            </a>
+            <a href="messaging?action=list-conversations" class="action-card" id="messagesActionCard">
+                <div class="action-icon" style="position:relative;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    <span id="unreadBadge" class="unread-badge hidden">0</span>
+                </div>
+                <span class="action-label">Messages</span>
+            </a>
+        </div>
 
         <!-- STATS -->
         <div class="stats-grid">
@@ -607,6 +676,30 @@
 
     </div><!-- /content -->
 </div><!-- /main -->
+
+<script>
+    /* ── Unread message count polling ── */
+    function updateUnreadCount() {
+        fetch('messaging?action=unread-count', { credentials: 'same-origin' })
+            .then(response => response.json())
+            .then(data => {
+                var badge = document.getElementById('unreadBadge');
+                if (data.unreadCount && data.unreadCount > 0) {
+                    badge.textContent = data.unreadCount;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+            })
+            .catch(err => console.log('Unread count fetch failed:', err));
+    }
+
+    // Initial fetch
+    updateUnreadCount();
+
+    // Poll every 30 seconds
+    setInterval(updateUnreadCount, 30000);
+</script>
 
 </body>
 </html>

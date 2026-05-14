@@ -2,13 +2,10 @@ package app.action;
 
 import app.bean.UserBean;
 import app.model.User;
-import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import jakarta.inject.Inject;
 import java.io.IOException;
-import java.sql.SQLException;
 import jakarta.servlet.annotation.WebServlet;
 import app.utility.logging.AppLogger;
 import org.slf4j.Logger;
@@ -16,7 +13,7 @@ import org.slf4j.Logger;
 
 @WebServlet(name = "UserManagement",
         urlPatterns = {"/user-management"})
-public class UserManagement extends HttpServlet {
+public class UserManagement extends BaseAction {
 
     private static final Logger logger = AppLogger.getLogger(UserManagement.class);
 
@@ -28,17 +25,15 @@ public class UserManagement extends HttpServlet {
         logger.info("=== HTTP POST called ===");
 
         // STEP 1: Verify admin session
-        HttpSession session = request.getSession(false);
-        if (session == null || !Boolean.TRUE.equals(session.getAttribute("isLoggedIn"))) {
+        if (!isLoggedIn(request)) {
             logger.warn("Session invalid or not logged in");
-            response.sendRedirect("login");
+            redirect(response, "login");
             return;
         }
 
-        String role = String.valueOf(session.getAttribute("role"));
-        if (!"admin".equalsIgnoreCase(role)) {
+        String role = getUserRole(request);
+        if (!requireRole(request, response, "admin")) {
             logger.warn("User is not admin, role={}", role);
-            response.sendRedirect("login");
             return;
         }
 
@@ -58,20 +53,20 @@ public class UserManagement extends HttpServlet {
                 redirectParam = handleDeleteUser(request);
             } else {
                 logger.warn("Unknown action, redirecting to admin");
-                response.sendRedirect("admin?view=users");
+                redirect(response, "admin?view=users");
                 return;
             }
 
             // STEP 4: Redirect with result
-            response.sendRedirect("admin?view=users&" + redirectParam);
+            redirect(response, "admin?view=users&" + redirectParam);
 
         } catch (IllegalArgumentException e) {
             logger.error("Validation error: {}", e.getMessage());
             String errorMsg = e.getMessage().replace("User validation failed: ", "");
-            response.sendRedirect("admin?view=users&error=" + java.net.URLEncoder.encode(errorMsg, "UTF-8"));
+            redirect(response, "admin?view=users&error=" + java.net.URLEncoder.encode(errorMsg, "UTF-8"));
         } catch (Exception e) {
             logger.error("Error: {}", e.getMessage());
-            response.sendRedirect("admin?view=users&error=" + java.net.URLEncoder.encode(e.getMessage(), "UTF-8"));
+            redirect(response, "admin?view=users&error=" + java.net.URLEncoder.encode(e.getMessage(), "UTF-8"));
         }
     }
 

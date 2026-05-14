@@ -8,10 +8,8 @@ import app.model.Mentor;
 import app.model.Mentee;
 import jakarta.inject.Inject;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.annotation.WebServlet;
 import app.utility.logging.AppLogger;
 import org.slf4j.Logger;
@@ -25,7 +23,7 @@ import java.util.List;
  * Actions: conversation, send, mark-read, unread-count
  */
 @WebServlet(name = "Messaging", urlPatterns = {"/messaging"})
-public class Messaging extends HttpServlet {
+public class Messaging extends BaseAction {
 
     private static final Logger logger = AppLogger.getLogger(Messaging.class);
 
@@ -43,15 +41,13 @@ public class Messaging extends HttpServlet {
             throws ServletException, IOException {
         
         String action = request.getParameter("action");
-        HttpSession httpSession = request.getSession(false);
 
-        // Check if user is logged in
-        if (httpSession == null || !Boolean.TRUE.equals(httpSession.getAttribute("isLoggedIn"))) {
-            response.sendRedirect("login");
+        if (!isLoggedIn(request)) {
+            redirect(response, "login");
             return;
         }
 
-        String userId = (String) httpSession.getAttribute("userId");
+        String userId = getUserId(request);
 
         try {
             if ("conversation".equalsIgnoreCase(action)) {
@@ -65,8 +61,12 @@ public class Messaging extends HttpServlet {
             }
         } catch (Exception e) {
             logger.error("Error in MessagingAction", e);
-            request.setAttribute("errorMessage", "An error occurred: " + e.getMessage());
-            request.getRequestDispatcher("/mentee-dashboard.jsp").forward(request, response);
+            setAttribute(request, "errorMessage", "An error occurred: " + e.getMessage());
+            try {
+                forward(request, response, "/mentee-dashboard.jsp");
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
         }
     }
 
@@ -75,14 +75,13 @@ public class Messaging extends HttpServlet {
             throws ServletException, IOException {
         
         String action = request.getParameter("action");
-        HttpSession httpSession = request.getSession(false);
 
-        if (httpSession == null || !Boolean.TRUE.equals(httpSession.getAttribute("isLoggedIn"))) {
-            response.sendRedirect("login");
+        if (!isLoggedIn(request)) {
+            redirect(response, "login");
             return;
         }
 
-        String userId = (String) httpSession.getAttribute("userId");
+        String userId = getUserId(request);
 
         try {
             if ("send-message".equalsIgnoreCase(action)) {
@@ -92,8 +91,12 @@ public class Messaging extends HttpServlet {
             }
         } catch (Exception e) {
             logger.error("Error processing messaging action", e);
-            request.setAttribute("errorMessage", "An error occurred: " + e.getMessage());
-            request.getRequestDispatcher("/mentee-dashboard.jsp").forward(request, response);
+            setAttribute(request, "errorMessage", "An error occurred: " + e.getMessage());
+            try {
+                forward(request, response, "/mentee-dashboard.jsp");
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
         }
     }
 
@@ -108,17 +111,14 @@ public class Messaging extends HttpServlet {
 
         try {
             if (otherUserId == null || otherUserId.isEmpty()) {
-                request.setAttribute("errorMessage", "User ID not provided");
+                setAttribute(request, "errorMessage", "User ID not provided");
                 handleListConversations(request, response, userId);
                 return;
             }
 
             List<Message> messages = messageBean.getConversation(userId, otherUserId);
-            
-            // Mark all messages from other user as read
             messageBean.markConversationAsRead(userId, otherUserId);
 
-            // Get other user details (mentor or mentee)
             Object otherUser = null;
             try {
                 otherUser = mentorBean.getMentorById(otherUserId);
@@ -129,10 +129,10 @@ public class Messaging extends HttpServlet {
                 logger.warn("Could not load other user details");
             }
 
-            request.setAttribute("messages", messages);
-            request.setAttribute("otherUserId", otherUserId);
-            request.setAttribute("otherUser", otherUser);
-            request.getRequestDispatcher("/conversation.jsp").forward(request, response);
+            setAttribute(request, "messages", messages);
+            setAttribute(request, "otherUserId", otherUserId);
+            setAttribute(request, "otherUser", otherUser);
+            forward(request, response, "/conversation.jsp");
 
         } catch (Exception e) {
             logger.error("Error retrieving conversation", e);
@@ -153,21 +153,18 @@ public class Messaging extends HttpServlet {
 
         try {
             if (messageText == null || messageText.trim().isEmpty()) {
-                request.setAttribute("errorMessage", "Message cannot be empty");
+                setAttribute(request, "errorMessage", "Message cannot be empty");
                 handleConversation(request, response, userId);
                 return;
             }
 
             messageBean.sendMessage(userId, recipientId, messageText.trim());
-
             logger.info("Message sent successfully");
-
-            // Return to conversation view
             handleConversation(request, response, userId);
 
         } catch (Exception e) {
             logger.error("Error sending message", e);
-            request.setAttribute("errorMessage", "Error sending message: " + e.getMessage());
+            setAttribute(request, "errorMessage", "Error sending message: " + e.getMessage());
             handleConversation(request, response, userId);
         }
     }
@@ -188,7 +185,6 @@ public class Messaging extends HttpServlet {
                 logger.info("Message {} marked as read", messageId);
             }
 
-            // Return appropriate response based on request type
             String returnTo = request.getParameter("returnTo");
             if ("conversation".equals(returnTo)) {
                 String otherUserId = request.getParameter("userId");
@@ -205,17 +201,14 @@ public class Messaging extends HttpServlet {
 
     /**
      * Get unread message count for the user
-     * Can be called via AJAX to update badge count
      */
     private void handleUnreadCount(HttpServletRequest request, HttpServletResponse response, String userId) 
             throws IOException {
         
         try {
             int count = messageBean.getUnreadMessageCount(userId);
-            
             response.setContentType("application/json");
             response.getWriter().write("{\"unreadCount\": " + count + "}");
-            
             logger.debug("Unread message count for user {}: {}", userId, count);
 
         } catch (Exception e) {
@@ -237,9 +230,9 @@ public class Messaging extends HttpServlet {
             List<Message> recentConversations = messageBean.getRecentConversations(userId);
             int unreadCount = messageBean.getUnreadMessageCount(userId);
 
-            request.setAttribute("conversations", recentConversations);
-            request.setAttribute("unreadCount", unreadCount);
-            request.getRequestDispatcher("/message-inbox.jsp").forward(request, response);
+            setAttribute(request, "conversations", recentConversations);
+            setAttribute(request, "unreadCount", unreadCount);
+            forward(request, response, "/message-inbox.jsp");
 
         } catch (Exception e) {
             logger.error("Error retrieving conversations", e);
