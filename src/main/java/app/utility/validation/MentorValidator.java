@@ -1,6 +1,7 @@
 package app.utility.validation;
 
 import app.model.Mentor;
+import app.model.User;
 import jakarta.enterprise.context.Dependent;
 
 import java.util.regex.Pattern;
@@ -65,14 +66,14 @@ public class MentorValidator implements Validator<Mentor> {
      */
     private void validateUserId(Mentor mentor, ValidationResult result) {
 
-        Integer userId = Integer.valueOf(mentor.getUserId());
+        User user = mentor.getUser();
 
-        if (userId == null) {
+        if (user == null || user.getId() == null) {
             result.addError("User ID is required for mentor profile");
             return;
         }
 
-        if (userId <= 0) {
+        if (user.getId() <= 0) {
             result.addError("User ID must be a positive integer");
         }
     }

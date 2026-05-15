@@ -18,8 +18,13 @@ public class Mentee implements Serializable {
     @Column(name = "id")
     private Long id;
 
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "mentor_id")
+    private Mentor mentor;
 
     @Column(name = "education_level", length = 100)
     private String educationLevel;
@@ -32,9 +37,6 @@ public class Mentee implements Serializable {
 
     @Column(name = "phone_number", length = 20)
     private String phoneNumber;
-
-    @Column(name = "mentor_id", length = 50)
-    private String mentorId;
 
     @Column(name = "status", length = 50)
     private String status;
@@ -50,12 +52,12 @@ public class Mentee implements Serializable {
     public Mentee(Long id, Long userId, String educationLevel, String fieldOfStudy,
                   String learningGoals, String phoneNumber, String mentorId, String status) {
         this.id = id;
-        this.userId = userId;
+        setUserId(userId);
         this.educationLevel = educationLevel;
         this.fieldOfStudy = fieldOfStudy;
         this.learningGoals = learningGoals;
         this.phoneNumber = phoneNumber;
-        this.mentorId = mentorId;
+        setMentorId(mentorId);
         this.status = status;
     }
 
@@ -70,12 +72,28 @@ public class Mentee implements Serializable {
         this.id = id;
     }
 
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    @Transient
     public Long getUserId() {
-        return userId;
+        return user != null ? user.getId() : null;
     }
 
     public void setUserId(Long userId) {
-        this.userId = userId;
+        if (userId == null) {
+            this.user = null;
+            return;
+        }
+
+        User reference = new User();
+        reference.setId(userId);
+        this.user = reference;
     }
 
     public String getEducationLevel() {
@@ -110,12 +128,28 @@ public class Mentee implements Serializable {
         this.phoneNumber = phoneNumber;
     }
 
+    public Mentor getMentor() {
+        return mentor;
+    }
+
+    public void setMentor(Mentor mentor) {
+        this.mentor = mentor;
+    }
+
+    @Transient
     public String getMentorId() {
-        return mentorId;
+        return mentor != null && mentor.getId() != null ? String.valueOf(mentor.getId()) : null;
     }
 
     public void setMentorId(String mentorId) {
-        this.mentorId = mentorId;
+        if (mentorId == null || mentorId.trim().isEmpty()) {
+            this.mentor = null;
+            return;
+        }
+
+        Mentor reference = new Mentor();
+        reference.setId(Long.parseLong(mentorId));
+        this.mentor = reference;
     }
 
     public String getStatus() {
@@ -146,12 +180,12 @@ public class Mentee implements Serializable {
     public String toString() {
         return "Mentee{" +
                 "id='" + id + '\'' +
-                ", userId='" + userId + '\'' +
+                ", userId='" + getUserId() + '\'' +
                 ", educationLevel='" + educationLevel + '\'' +
                 ", fieldOfStudy='" + fieldOfStudy + '\'' +
                 ", learningGoals='" + learningGoals + '\'' +
                 ", phoneNumber='" + phoneNumber + '\'' +
-                ", mentorId='" + mentorId + '\'' +
+                ", mentorId='" + getMentorId() + '\'' +
                 ", status='" + status + '\'' +
                 '}';
     }

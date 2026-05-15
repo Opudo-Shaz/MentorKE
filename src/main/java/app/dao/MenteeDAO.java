@@ -46,7 +46,7 @@ public class MenteeDAO extends GenericDAO<Mentee, Long> {
 
     // Find mentee by user id
     public Mentee getMenteeByUserId(String userId) {
-        String jpql = "SELECT m FROM Mentee m WHERE m.userId = :userId";
+        String jpql = "SELECT m FROM Mentee m WHERE m.user.id = :userId";
         TypedQuery<Mentee> query = entityManager.createQuery(jpql, Mentee.class);
         query.setParameter("userId", Long.parseLong(userId));
         List<Mentee> results = query.getResultList();
@@ -62,16 +62,16 @@ public class MenteeDAO extends GenericDAO<Mentee, Long> {
 
     // Get mentees without a mentor
     public List<Mentee> getMenteesWithoutMentor() {
-        String jpql = "SELECT m FROM Mentee m WHERE m.mentorId IS NULL AND m.status = 'Active' ORDER BY m.id ASC";
+        String jpql = "SELECT m FROM Mentee m WHERE m.mentor IS NULL AND m.status = 'Active' ORDER BY m.id ASC";
         TypedQuery<Mentee> query = entityManager.createQuery(jpql, Mentee.class);
         return query.getResultList();
     }
 
     // Get mentees assigned to a specific mentor
     public List<Mentee> getMenteesByMentorId(String mentorId) {
-        String jpql = "SELECT m FROM Mentee m WHERE m.mentorId = :mentorId";
+        String jpql = "SELECT m FROM Mentee m WHERE m.mentor.id = :mentorId";
         TypedQuery<Mentee> query = entityManager.createQuery(jpql, Mentee.class);
-        query.setParameter("mentorId", mentorId);
+        query.setParameter("mentorId", Long.parseLong(mentorId));
         return query.getResultList();
     }
 }

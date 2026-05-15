@@ -6,6 +6,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "mentors")
@@ -18,8 +20,12 @@ public class Mentor implements Serializable {
     @Column(name = "id")
     private Long id;
 
-    @Column(name = "user_id", length = 50, nullable = false)
-    private String userId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    @OneToMany(mappedBy = "mentor")
+    private List<Mentee> mentees = new ArrayList<>();
 
     @Column(name = "specialization", length = 100)
     private String specialization;
@@ -54,7 +60,7 @@ public class Mentor implements Serializable {
                   Integer yearsOfExperience, String bio, String qualifications,
                   String phoneNumber, String status) {
         this.id = id;
-        this.userId = userId;
+        setUserId(userId);
         this.specialization = specialization;
         this.expertise = expertise;
         this.yearsOfExperience = yearsOfExperience;
@@ -75,12 +81,36 @@ public class Mentor implements Serializable {
         this.id = id;
     }
 
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    @Transient
     public String getUserId() {
-        return userId;
+        return user != null && user.getId() != null ? String.valueOf(user.getId()) : null;
     }
 
     public void setUserId(String userId) {
-        this.userId = userId;
+        if (userId == null || userId.trim().isEmpty()) {
+            this.user = null;
+            return;
+        }
+
+        User reference = new User();
+        reference.setId(Long.parseLong(userId));
+        this.user = reference;
+    }
+
+    public List<Mentee> getMentees() {
+        return mentees;
+    }
+
+    public void setMentees(List<Mentee> mentees) {
+        this.mentees = mentees;
     }
 
     public String getSpecialization() {
@@ -159,7 +189,7 @@ public class Mentor implements Serializable {
     public String toString() {
         return "Mentor{" +
                 "id='" + id + '\'' +
-                ", userId='" + userId + '\'' +
+                ", userId='" + getUserId() + '\'' +
                 ", specialization='" + specialization + '\'' +
                 ", expertise='" + expertise + '\'' +
                 ", yearsOfExperience=" + yearsOfExperience +

@@ -69,7 +69,7 @@ public class MenteeBean {
         logger.info("User added successfully, ID: {}", user.getId());
 
         // Step 2: Set the user ID and status for mentee
-        mentee.setUserId(user.getId());
+        mentee.setUser(user);
         mentee.setStatus("Active");
 
         // Step 3: NOW validate mentee data (after required fields are set)
@@ -232,6 +232,7 @@ public class MenteeBean {
             throw new IllegalArgumentException("User with ID '" + mentee.getUserId() + "' not found");
         }
         logger.debug("User found ✓");
+        mentee.setUser(user);
 
         // Step 2: Validate mentee data
         logger.debug("Validating mentee data...");

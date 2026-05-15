@@ -66,7 +66,7 @@ public class MentorBean {
         logger.info("User added successfully, ID: {}", user.getId());
 
         // Step 2: Set the user ID and status for mentor
-            mentor.setUserId(String.valueOf(user.getId()));
+        mentor.setUser(user);
         mentor.setStatus("Active");
 
         // Step 3: NOW validate mentor data (after required fields are set)
@@ -147,7 +147,7 @@ public class MentorBean {
          logger.debug("Mentor found ✓");
 
          // Step 2: Validate that user still exists
-         if (!userDAO.exists(existingMentor.getUserId())) {
+         if (existingMentor.getUserId() == null || !userDAO.exists(existingMentor.getUserId())) {
              logger.error("Associated user does not exist!");
              throw new IllegalArgumentException("Associated user no longer exists");
          }
@@ -210,6 +210,7 @@ public class MentorBean {
             throw new IllegalArgumentException("User with ID '" + mentor.getUserId() + "' not found");
         }
         logger.debug("User found ✓");
+        mentor.setUser(user);
 
         // Step 2: Validate mentor data
         logger.debug("Validating mentor data...");

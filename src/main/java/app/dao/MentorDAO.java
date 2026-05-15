@@ -46,9 +46,9 @@ public class MentorDAO extends GenericDAO<Mentor, Long> {
 
     // Find mentor by user id
     public Mentor getMentorByUserId(String userId) {
-        String jpql = "SELECT m FROM Mentor m WHERE m.userId = :userId";
+        String jpql = "SELECT m FROM Mentor m WHERE m.user.id = :userId";
         TypedQuery<Mentor> query = entityManager.createQuery(jpql, Mentor.class);
-        query.setParameter("userId", userId);
+        query.setParameter("userId", Long.parseLong(userId));
         List<Mentor> results = query.getResultList();
         return results.isEmpty() ? null : results.get(0);
     }

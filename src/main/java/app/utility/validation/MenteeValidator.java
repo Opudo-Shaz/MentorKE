@@ -1,6 +1,8 @@
 package app.utility.validation;
 
 import app.model.Mentee;
+import app.model.Mentor;
+import app.model.User;
 import jakarta.enterprise.context.Dependent;
 
 import java.util.Arrays;
@@ -77,14 +79,12 @@ public class MenteeValidator implements Validator<Mentee> {
      */
     private void validateUserId(Mentee mentee, ValidationResult result) {
 
-        Long userId = mentee.getUserId();
+        User user = mentee.getUser();
 
-        if (userId == null) {
+        if (user == null || user.getId() == null) {
             result.addError("User ID is required");
             return;
         }
-
-        // Numeric foreign key to users.id
     }
 
     /**
@@ -198,16 +198,14 @@ public class MenteeValidator implements Validator<Mentee> {
      */
     private void validateMentorId(Mentee mentee, ValidationResult result) {
 
-        String mentorId = safeTrim(mentee.getMentorId());
+        Mentor mentor = mentee.getMentor();
 
-        if (mentorId == null) {
-            mentee.setMentorId(null);
+        if (mentor == null) {
             return;
         }
 
-        // Mentor ID is a string reference to the mentors table
-        if (mentorId.length() > 50) {
-            result.addError("Mentor ID exceeds maximum length");
+        if (mentor.getId() == null || mentor.getId() <= 0) {
+            result.addError("Mentor ID must be a positive integer");
         }
     }
 
