@@ -54,11 +54,7 @@ public class MenteeDAO extends GenericDAO<Mentee, Long> {
 
     // Find mentee by user id
     public Mentee getMenteeByUserId(String userId) {
-        String jpql = "SELECT m FROM Mentee m WHERE m.user.id = :userId";
-        TypedQuery<Mentee> query = entityManager.createQuery(jpql, Mentee.class);
-        query.setParameter("userId", Long.parseLong(userId));
-        List<Mentee> results = query.getResultList();
-        return results.isEmpty() ? null : results.get(0);
+        return getMentee(userId);
     }
 
     // Get all active mentees

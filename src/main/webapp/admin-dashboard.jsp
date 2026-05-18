@@ -675,6 +675,61 @@
                                 </select>
                             </div>
                         </div>
+
+                        <div class="form-grid-2" style="margin-top:16px">
+                            <div class="form-group">
+                                <label for="addSpecialization">Mentor specialization</label>
+                                <input type="text" id="addSpecialization" name="specialization" placeholder="Required for mentor accounts">
+                            </div>
+                            <div class="form-group">
+                                <label for="addYearsOfExperience">Years of experience</label>
+                                <input type="number" id="addYearsOfExperience" name="yearsOfExperience" placeholder="Required for mentor accounts">
+                            </div>
+                            <div class="form-group">
+                                <label for="addExpertise">Expertise</label>
+                                <textarea id="addExpertise" name="expertise" placeholder="Required for mentor accounts"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="addBio">Bio</label>
+                                <textarea id="addBio" name="bio" placeholder="Required for mentor accounts"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="addQualifications">Qualifications</label>
+                                <textarea id="addQualifications" name="qualifications" placeholder="Required for mentor accounts"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="addEducationLevel">Mentee education level</label>
+                                <select id="addEducationLevel" name="educationLevel">
+                                    <option value="">Optional for mentor accounts</option>
+                                    <option value="Primary">Primary</option>
+                                    <option value="Secondary">Secondary</option>
+                                    <option value="High School">High School</option>
+                                    <option value="Certificate">Certificate</option>
+                                    <option value="Diploma">Diploma</option>
+                                    <option value="Undergraduate">Undergraduate</option>
+                                    <option value="Postgraduate">Postgraduate</option>
+                                    <option value="PhD">PhD</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="addFieldOfStudy">Field of study</label>
+                                <input type="text" id="addFieldOfStudy" name="fieldOfStudy" placeholder="Required for mentee accounts">
+                            </div>
+                            <div class="form-group">
+                                <label for="addLearningGoals">Learning goals</label>
+                                <textarea id="addLearningGoals" name="learningGoals" placeholder="Required for mentee accounts"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="addMentorId">Mentor ID</label>
+                                <input type="text" id="addMentorId" name="mentorId" placeholder="Optional for mentee accounts">
+                            </div>
+                            <div class="form-group">
+                                <label for="addPhoneNumberMentee">Mentee phone number</label>
+                                <input type="tel" id="addPhoneNumberMentee" name="phoneNumber" placeholder="Optional or required based on role">
+                            </div>
+                        </div>
+
                         <div class="form-actions">
                             <button type="submit" class="btn btn-primary">Add user</button>
                             <button type="button" class="btn btn-outline" onclick="toggleForm('addUserForm')">Cancel</button>

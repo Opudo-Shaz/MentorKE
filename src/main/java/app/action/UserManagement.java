@@ -1,6 +1,10 @@
 package app.action;
 
 import app.bean.UserBean;
+import app.bean.MentorBean;
+import app.bean.MenteeBean;
+import app.model.Mentor;
+import app.model.Mentee;
 import app.model.User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -19,6 +23,12 @@ public class UserManagement extends BaseAction {
 
     @Inject
     private UserBean userBean;
+
+    @Inject
+    private MentorBean mentorBean;
+
+    @Inject
+    private MenteeBean menteeBean;
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -82,12 +92,48 @@ public class UserManagement extends BaseAction {
         String email = safe(request.getParameter("email"));
         String status = safe(request.getParameter("status"));
 
-        // Create user object
-        User newUser = new User(null, username, password, role, email, status);
+        if ("mentor".equalsIgnoreCase(role)) {
+            Mentor mentor = new Mentor();
+            mentor.setUsername(username);
+            mentor.setPassword(password);
+            mentor.setRole(role);
+            mentor.setEmail(email);
+            mentor.setStatus(status);
+            mentor.setSpecialization(safe(request.getParameter("specialization")));
+            mentor.setExpertise(safe(request.getParameter("expertise")));
+            String yearsOfExperience = safe(request.getParameter("yearsOfExperience"));
+            if (!yearsOfExperience.isEmpty()) {
+                mentor.setYearsOfExperience(Integer.parseInt(yearsOfExperience));
+            }
+            mentor.setBio(safe(request.getParameter("bio")));
+            mentor.setQualifications(safe(request.getParameter("qualifications")));
+            mentor.setPhoneNumber(safe(request.getParameter("phoneNumber")));
 
-        // Delegate to bean (validation & business logic)
-        userBean.registerUser(newUser);
-        return "success=user_added";
+            mentorBean.addMentorAdmin(mentor);
+            return "success=mentor_added";
+        }
+
+        if ("mentee".equalsIgnoreCase(role)) {
+            Mentee mentee = new Mentee();
+            mentee.setUsername(username);
+            mentee.setPassword(password);
+            mentee.setRole(role);
+            mentee.setEmail(email);
+            mentee.setStatus(status);
+            mentee.setEducationLevel(safe(request.getParameter("educationLevel")));
+            mentee.setFieldOfStudy(safe(request.getParameter("fieldOfStudy")));
+            mentee.setLearningGoals(safe(request.getParameter("learningGoals")));
+            mentee.setPhoneNumber(safe(request.getParameter("phoneNumber")));
+            String mentorId = safe(request.getParameter("mentorId"));
+            if (!mentorId.isEmpty()) {
+                mentee.setMentorId(mentorId);
+            }
+
+            menteeBean.addMenteeAdmin(mentee);
+            return "success=mentee_added";
+        }
+
+        throw new IllegalArgumentException("Please choose Mentor or Mentee for account creation.");
     }
 
     /**
