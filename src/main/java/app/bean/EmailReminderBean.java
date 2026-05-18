@@ -3,11 +3,9 @@ package app.bean;
 import app.dao.SessionDAO;
 import app.dao.MentorDAO;
 import app.dao.MenteeDAO;
-import app.dao.UserDAO;
 import app.model.Session;
 import app.model.Mentor;
 import app.model.Mentee;
-import app.model.User;
 import app.utility.logging.AppLogger;
 import jakarta.ejb.Stateless;
 import jakarta.ejb.Schedule;
@@ -42,9 +40,6 @@ public class EmailReminderBean {
 
     @Inject
     private MenteeDAO menteeDAO;
-
-    @Inject
-    private UserDAO userDAO;
 
     @Inject
     private EmailBean emailBean;
@@ -117,17 +112,8 @@ public class EmailReminderBean {
                 return;
             }
 
-            // Get user emails
-            User mentorUser = userDAO.getUser(mentor.getUserId());
-            User menteeUser = userDAO.getUser(String.valueOf(mentee.getUserId()));
-
-            if (mentorUser == null || menteeUser == null) {
-                logger.warn("User records not found for session: {}", session.getId());
-                return;
-            }
-
-            String mentorEmail = mentorUser.getEmail();
-            String menteeEmail = menteeUser.getEmail();
+            String mentorEmail = mentor.getEmail();
+            String menteeEmail = mentee.getEmail();
 
             // Calculate time remaining
             LocalDateTime now = LocalDateTime.now();
@@ -135,12 +121,12 @@ public class EmailReminderBean {
 
             // Build email bodies
             String mentorSubject = "Reminder: Upcoming Session - " + session.getTopic();
-            String mentorBody = buildMentorReminderEmailBody(session, mentorUser.getUsername(), 
-                                                             menteeUser.getUsername(), timeRemainingStr);
+            String mentorBody = buildMentorReminderEmailBody(session, mentor.getUsername(), 
+                                                             mentee.getUsername(), timeRemainingStr);
 
             String menteeSubject = "Reminder: Upcoming Session - " + session.getTopic();
-            String menteeBody = buildMenteeReminderEmailBody(session, menteeUser.getUsername(), 
-                                                             mentorUser.getUsername(), timeRemainingStr);
+            String menteeBody = buildMenteeReminderEmailBody(session, mentee.getUsername(), 
+                                                             mentor.getUsername(), timeRemainingStr);
 
             // Send emails
             emailBean.sendEmail(mentorEmail, mentorSubject, mentorBody);

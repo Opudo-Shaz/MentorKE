@@ -44,7 +44,6 @@ public class MentorValidator implements Validator<Mentor> {
             return result;
         }
 
-        validateUserId(mentor, result);
         validateSpecialization(mentor, result);
         validateExpertise(mentor, result);
         validateYearsOfExperience(mentor, result);
@@ -59,23 +58,6 @@ public class MentorValidator implements Validator<Mentor> {
     @Override
     public ValidatorQualifier.ValidationChoice getValidationChoice() {
         return ValidatorQualifier.ValidationChoice.MENTOR;
-    }
-
-    /**
-     * Validate user ID reference
-     */
-    private void validateUserId(Mentor mentor, ValidationResult result) {
-
-        User user = mentor.getUser();
-
-        if (user == null || user.getId() == null) {
-            result.addError("User ID is required for mentor profile");
-            return;
-        }
-
-        if (user.getId() <= 0) {
-            result.addError("User ID must be a positive integer");
-        }
     }
 
     /**

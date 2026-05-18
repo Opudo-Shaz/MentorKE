@@ -1,8 +1,11 @@
 package app.bean;
 
 import app.bean.event.UserRegisteredEvent;
-import app.dao.UserDAO;
+import app.dao.MenteeDAO;
+import app.dao.MentorDAO;
 import app.model.AuditTrail;
+import app.model.Mentee;
+import app.model.Mentor;
 import app.model.User;
 import app.utility.logging.AppLogger;
 import app.utility.validation.ValidationResult;
@@ -15,6 +18,7 @@ import jakarta.ejb.Stateless;
 import org.slf4j.Logger;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -25,7 +29,10 @@ public class UserBean {
     private static final Logger logger = AppLogger.getLogger(UserBean.class);
 
     @Inject
-    private UserDAO userDAO;
+    private MentorDAO mentorDAO;
+
+    @Inject
+    private MenteeDAO menteeDAO;
 
     @Inject
     private Event<AuditTrail> auditTrailEvent;
@@ -39,8 +46,9 @@ public class UserBean {
 
     // CONSTRUCTOR INJECTION (alternative)
     @Inject
-    public UserBean(UserDAO userDAO) {
-        this.userDAO = userDAO;
+    public UserBean(MentorDAO mentorDAO, MenteeDAO menteeDAO) {
+        this.mentorDAO = mentorDAO;
+        this.menteeDAO = menteeDAO;
         logger.debug("[UserBean] CDI Bean initialized with constructor injection");
     }
 
@@ -55,7 +63,7 @@ public class UserBean {
 
         // Step 1: Check if username already exists
         logger.debug("[UserBean] Checking if username exists...");
-        User existingUser = userDAO.getUserByUsername(user.getUsername());
+        User existingUser = getUserByUsername(user.getUsername());
         if (existingUser != null) {
             logger.warn("[UserBean] Username already exists!");
             throw new IllegalArgumentException("Username '" + user.getUsername() + "' already exists");
@@ -71,10 +79,22 @@ public class UserBean {
         }
         logger.debug("[UserBean] Validation passed ✓");
 
-        // Step 3: Add user to database
+        // Step 3: Add account to the appropriate table
         logger.debug("[UserBean] Adding user to database...");
         user.setStatus("Active");
-        userDAO.addUser(user);
+
+        if ("mentor".equalsIgnoreCase(user.getRole())) {
+            Mentor mentor = copyToMentor(user);
+            mentorDAO.addMentor(mentor);
+            user.setId(mentor.getId());
+        } else if ("mentee".equalsIgnoreCase(user.getRole())) {
+            Mentee mentee = copyToMentee(user);
+            menteeDAO.addMentee(mentee);
+            user.setId(mentee.getId());
+        } else {
+            throw new IllegalArgumentException("Role '" + user.getRole() + "' is not supported for database registration");
+        }
+
         logger.info("[UserBean] User registered successfully, ID: {}", user.getId());
 
         // Step 4: Fire CRUD event for audit trail
@@ -102,7 +122,12 @@ public class UserBean {
      */
     public User getUserById(String userId) throws SQLException {
         logger.debug("[UserBean] Fetching user by ID: {}", userId);
-        return userDAO.getUser(userId);
+        Mentor mentor = mentorDAO.getMentor(userId);
+        if (mentor != null) {
+            return mentor;
+        }
+
+        return menteeDAO.getMentee(userId);
     }
 
     /**
@@ -110,7 +135,12 @@ public class UserBean {
      */
     public User getUserByUsername(String username) throws SQLException {
         logger.debug("[UserBean] Fetching user by username: {}", username);
-        return userDAO.getUserByUsername(username);
+        Mentor mentor = mentorDAO.getMentorByUsername(username);
+        if (mentor != null) {
+            return mentor;
+        }
+
+        return menteeDAO.getMenteeByUsername(username);
     }
 
     /**
@@ -118,7 +148,10 @@ public class UserBean {
      */
     public List<User> getAllUsers() throws SQLException {
         logger.debug("[UserBean] Fetching all users");
-        return userDAO.getAllUsers();
+        List<User> users = new ArrayList<>();
+        users.addAll(mentorDAO.getAllMentors());
+        users.addAll(menteeDAO.getAllMentees());
+        return users;
     }
 
     /**
@@ -130,7 +163,7 @@ public class UserBean {
 
     // Step 1: Check if user exists
     logger.debug("[UserBean] Checking if user exists...");
-    User existingUser = userDAO.getUser(userId);
+    User existingUser = getUserById(userId);
     if (existingUser == null) {
         logger.error("[UserBean] User not found!");
         throw new IllegalArgumentException("User with ID '" + userId + "' not found");
@@ -162,7 +195,17 @@ public class UserBean {
 
     // Step 6: Update user in database
     logger.debug("[UserBean] Updating user in database...");
-    userDAO.updateUser(userId, user);
+    if (existingUser instanceof Mentor existingMentor) {
+        Mentor mentor = copyToMentor(user);
+        mentor.setId(existingMentor.getId());
+        mentorDAO.updateMentor(userId, mentor);
+    } else if (existingUser instanceof Mentee existingMentee) {
+        Mentee mentee = copyToMentee(user);
+        mentee.setId(existingMentee.getId());
+        menteeDAO.updateMentee(userId, mentee);
+    } else {
+        throw new IllegalStateException("Unsupported account type: " + existingUser.getClass().getSimpleName());
+    }
     logger.info("[UserBean] User updated successfully");
 
     // Step 7: Fire CRUD event
@@ -186,7 +229,7 @@ public class UserBean {
 
         // Step 1: Check if user exists
         logger.debug("[UserBean] Checking if user exists...");
-        User user = userDAO.getUser(userId);
+        User user = getUserById(userId);
         if (user == null) {
             logger.error("[UserBean] User not found!");
             throw new IllegalArgumentException("User with ID '" + userId + "' not found");
@@ -195,7 +238,13 @@ public class UserBean {
 
         // Step 2: Delete user from database
         logger.debug("[UserBean] Deleting user from database...");
-        userDAO.deleteUser(userId);
+        if (user instanceof Mentor) {
+            mentorDAO.deleteMentor(userId);
+        } else if (user instanceof Mentee) {
+            menteeDAO.deleteMentee(userId);
+        } else {
+            throw new IllegalStateException("Unsupported account type: " + user.getClass().getSimpleName());
+        }
         logger.info("[UserBean] User deleted successfully");
 
         // Step 3: Fire CRUD event for audit trail
@@ -208,5 +257,31 @@ public class UserBean {
         ));
 
         logger.info("[UserBean] === User Deletion Completed Successfully ===");
+    }
+
+    private Mentor copyToMentor(User user) {
+        Mentor mentor = new Mentor();
+        mentor.setId(user.getId());
+        mentor.setUsername(user.getUsername());
+        mentor.setPassword(user.getPassword());
+        mentor.setRole(user.getRole());
+        mentor.setEmail(user.getEmail());
+        mentor.setStatus(user.getStatus());
+        mentor.setCreatedAt(user.getCreatedAt());
+        mentor.setUpdatedAt(user.getUpdatedAt());
+        return mentor;
+    }
+
+    private Mentee copyToMentee(User user) {
+        Mentee mentee = new Mentee();
+        mentee.setId(user.getId());
+        mentee.setUsername(user.getUsername());
+        mentee.setPassword(user.getPassword());
+        mentee.setRole(user.getRole());
+        mentee.setEmail(user.getEmail());
+        mentee.setStatus(user.getStatus());
+        mentee.setCreatedAt(user.getCreatedAt());
+        mentee.setUpdatedAt(user.getUpdatedAt());
+        return mentee;
     }
 }

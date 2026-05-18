@@ -80,7 +80,9 @@ public class MentorManagement extends HttpServlet {
     private String handleAddMentor(HttpServletRequest request) throws Exception {
         logger.debug("handleAddMentor - extracting parameters");
 
-        String userId = safe(request.getParameter("userId"));
+        String username = safe(request.getParameter("username"));
+        String email = safe(request.getParameter("email"));
+        String password = safe(request.getParameter("password"));
         String specialization = safe(request.getParameter("specialization"));
         String expertise = safe(request.getParameter("expertise"));
         String yearsOfExperience = safe(request.getParameter("yearsOfExperience"));
@@ -91,7 +93,10 @@ public class MentorManagement extends HttpServlet {
 
         // Create mentor object
         Mentor newMentor = new Mentor();
-        newMentor.setUserId(userId);
+        newMentor.setUsername(username);
+        newMentor.setEmail(email);
+        newMentor.setPassword(password);
+        newMentor.setRole("mentor");
         newMentor.setSpecialization(specialization);
         newMentor.setExpertise(expertise);
         if (!yearsOfExperience.isEmpty()) {
@@ -114,6 +119,9 @@ public class MentorManagement extends HttpServlet {
         logger.debug("handleUpdateMentor - extracting parameters");
 
         String mentorId = safe(request.getParameter("id"));
+        String username = safe(request.getParameter("username"));
+        String email = safe(request.getParameter("email"));
+        String password = safe(request.getParameter("password"));
         String specialization = safe(request.getParameter("specialization"));
         String expertise = safe(request.getParameter("expertise"));
         String yearsOfExperience = safe(request.getParameter("yearsOfExperience"));
@@ -124,6 +132,10 @@ public class MentorManagement extends HttpServlet {
 
         // Create mentor object
         Mentor mentor = new Mentor();
+        mentor.setUsername(username);
+        mentor.setEmail(email);
+        mentor.setPassword(password);
+        mentor.setRole("mentor");
         mentor.setSpecialization(specialization);
         mentor.setExpertise(expertise);
         if (!yearsOfExperience.isEmpty()) {

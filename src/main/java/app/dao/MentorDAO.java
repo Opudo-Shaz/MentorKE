@@ -28,6 +28,14 @@ public class MentorDAO extends GenericDAO<Mentor, Long> {
         return findAll();
     }
 
+    public Mentor getMentorByUsername(String username) {
+        String jpql = "SELECT m FROM Mentor m WHERE m.username = :username";
+        TypedQuery<Mentor> query = entityManager.createQuery(jpql, Mentor.class);
+        query.setParameter("username", username);
+        List<Mentor> results = query.getResultList();
+        return results.isEmpty() ? null : results.get(0);
+    }
+
     // Update mentor
     public void updateMentor(String id, Mentor mentor) {
         mentor.setId(Long.parseLong(id));

@@ -1,9 +1,7 @@
 package app.bean;
 
 import app.dao.MessageDAO;
-import app.dao.UserDAO;
 import app.model.Message;
-import app.model.User;
 import app.utility.logging.AppLogger;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
@@ -22,9 +20,6 @@ public class MessageBean {
 
     @Inject
     private MessageDAO messageDAO;
-
-    @Inject
-    private UserDAO userDAO;
 
     public MessageBean() {
         logger.debug("CDI Bean initialized with default constructor");

@@ -2,7 +2,6 @@ package app.bean;
 
 import app.bean.event.UserRegisteredEvent;
 import app.dao.MenteeDAO;
-import app.dao.UserDAO;
 import app.model.AuditTrail;
 import app.model.Mentee;
 import app.model.User;
@@ -30,8 +29,6 @@ public class MenteeBean {
     private static final Logger logger = AppLogger.getLogger(MenteeBean.class);
 
     private MenteeDAO menteeDAO;
-    private UserDAO userDAO;
-
     @Inject
     private Event<AuditTrail> auditTrailEvent;
 
@@ -49,9 +46,8 @@ public class MenteeBean {
 
     // CONSTRUCTOR INJECTION (alternative)
     @Inject
-    public MenteeBean(MenteeDAO menteeDAO, UserDAO userDAO) {
+    public MenteeBean(MenteeDAO menteeDAO) {
         this.menteeDAO = menteeDAO;
-        this.userDAO = userDAO;
         logger.debug("CDI Bean initialized with constructor injection");
     }
 
@@ -63,16 +59,14 @@ public class MenteeBean {
         logger.info("Username: {}, Email: {}, Field of Study: {}", user.getUsername(), user.getEmail(),
                 mentee.getFieldOfStudy());
 
-        // Step 1: Add user to database first
-        logger.debug("Adding user to database...");
-        userDAO.addUser(user);
-        logger.info("User added successfully, ID: {}", user.getId());
-
-        // Step 2: Set the user ID and status for mentee
+        // Step 1: Copy shared account fields onto the mentee record
         mentee.setUser(user);
-        mentee.setStatus("Active");
+        mentee.setRole("mentee");
+        if (mentee.getStatus() == null || mentee.getStatus().isEmpty()) {
+            mentee.setStatus("Active");
+        }
 
-        // Step 3: NOW validate mentee data (after required fields are set)
+        // Step 2: Validate mentee data
         logger.debug("Validating mentee data...");
         ValidationResult validationResult = menteeValidator.validate(mentee);
         if (!validationResult.isValid()) {
@@ -81,20 +75,20 @@ public class MenteeBean {
         }
         logger.debug("Validation passed ✓");
 
-        // Step 4: Add mentee to database
+        // Step 3: Add mentee to database
         logger.debug("Adding mentee to database...");
         menteeDAO.addMentee(mentee);
         logger.info("Mentee added successfully, ID: {}", mentee.getId());
 
-        // Step 5: Fire CRUD event for audit trail
+        // Step 4: Fire CRUD event for audit trail
         auditTrailEvent.fire(new AuditTrail(
             "Mentee",
             String.valueOf(mentee.getId()),
             "CREATE",
-            String.valueOf(user.getId()),
+            String.valueOf(mentee.getId()),
             "Mentee registered: " + user.getUsername() + ", Field: " + mentee.getFieldOfStudy()));
 
-        // Step 6: Fire email event for mentees
+        // Step 5: Fire email event for mentees
         logger.debug("Firing email registration event for mentee...");
         userRegisteredEvent.fire(
                 new UserRegisteredEvent(
@@ -163,11 +157,8 @@ public class MenteeBean {
             mentee.setMentorId(null);
         }
 
-        // Step 3: Preserve existing userId BEFORE validation (cannot be changed)
-        if (mentee.getUserId() == null) {
-            logger.debug("No new userId provided, keeping existing userId");
-            mentee.setUserId(existingMentee.getUserId());
-        }
+        // Step 3: Preserve immutable account identity
+        mentee.setUser(existingMentee);
 
         // Step 4: Preserve existing educationLevel if not provided
         if (mentee.getEducationLevel() == null || mentee.getEducationLevel().isEmpty()) {
@@ -208,7 +199,7 @@ public class MenteeBean {
                 "Mentee",
                 menteeId,
                 "UPDATE",
-                String.valueOf(existingMentee.getUserId()),
+            menteeId,
                 "Mentee updated: Field=" + mentee.getFieldOfStudy()));
 
         logger.info("=== Mentee Update Completed Successfully ===");
@@ -219,20 +210,10 @@ public class MenteeBean {
      */
     public void addMenteeAdmin(Mentee mentee) throws SQLException {
         logger.info("=== Admin Adding Mentee ===");
-        logger.info("User ID: {}, Field of Study: {}", mentee.getUserId(), mentee.getFieldOfStudy());
+        logger.info("Username: {}, Email: {}, Field of Study: {}", mentee.getUsername(), mentee.getEmail(), mentee.getFieldOfStudy());
 
-        // Step 1: Check if user exists
-        logger.debug("Checking if user exists...");
-        if (mentee.getUserId() == null) {
-            throw new IllegalArgumentException("User ID is required");
-        }
-        User user = userDAO.getUser(String.valueOf(mentee.getUserId()));
-        if (user == null) {
-            logger.error("User not found!");
-            throw new IllegalArgumentException("User with ID '" + mentee.getUserId() + "' not found");
-        }
-        logger.debug("User found ✓");
-        mentee.setUser(user);
+        // Step 1: Use the inherited account fields directly
+        User user = mentee;
 
         // Step 2: Validate mentee data
         logger.debug("Validating mentee data...");
@@ -254,14 +235,14 @@ public class MenteeBean {
                 String.valueOf(mentee.getId()),
                 "CREATE",
                 "ADMIN",
-                "Mentee added by admin: " + user.getUsername() + ", Field: " + mentee.getFieldOfStudy()));
+            "Mentee added by admin: " + mentee.getUsername() + ", Field: " + mentee.getFieldOfStudy()));
 
         // Step 5: Fire email event to notify user they're now a mentee
         logger.debug("Firing email for newly assigned mentee...");
         userRegisteredEvent.fire(
                 new UserRegisteredEvent(
-                        user.getEmail(),
-                        user.getUsername(),
+                mentee.getEmail(),
+                mentee.getUsername(),
                         "MENTEE"));
 
         logger.info("=== Mentee Addition Completed Successfully ===");

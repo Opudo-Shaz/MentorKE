@@ -81,7 +81,9 @@ public class MenteeManagement extends HttpServlet {
     private String handleAddMentee(HttpServletRequest request) throws Exception {
         logger.debug("handleAddMentee - extracting parameters");
 
-        String userId = safe(request.getParameter("userId"));
+        String username = safe(request.getParameter("username"));
+        String email = safe(request.getParameter("email"));
+        String password = safe(request.getParameter("password"));
         String educationLevel = safe(request.getParameter("educationLevel"));
         String fieldOfStudy = safe(request.getParameter("fieldOfStudy"));
         String learningGoals = safe(request.getParameter("learningGoals"));
@@ -91,9 +93,10 @@ public class MenteeManagement extends HttpServlet {
 
         // Create mentee object
         Mentee newMentee = new Mentee();
-        if (!userId.isEmpty()) {
-            newMentee.setUserId(Long.parseLong(userId));
-        }
+        newMentee.setUsername(username);
+        newMentee.setEmail(email);
+        newMentee.setPassword(password);
+        newMentee.setRole("mentee");
         newMentee.setEducationLevel(educationLevel);
         newMentee.setFieldOfStudy(fieldOfStudy);
         newMentee.setLearningGoals(learningGoals);
@@ -115,6 +118,9 @@ public class MenteeManagement extends HttpServlet {
         logger.debug("handleUpdateMentee - extracting parameters");
 
         String menteeId = safe(request.getParameter("id"));
+        String username = safe(request.getParameter("username"));
+        String email = safe(request.getParameter("email"));
+        String password = safe(request.getParameter("password"));
         String educationLevel = safe(request.getParameter("educationLevel"));
         String fieldOfStudy = safe(request.getParameter("fieldOfStudy"));
         String learningGoals = safe(request.getParameter("learningGoals"));
@@ -124,6 +130,10 @@ public class MenteeManagement extends HttpServlet {
 
         // Create mentee object
         Mentee mentee = new Mentee();
+        mentee.setUsername(username);
+        mentee.setEmail(email);
+        mentee.setPassword(password);
+        mentee.setRole("mentee");
         mentee.setEducationLevel(educationLevel);
         mentee.setFieldOfStudy(fieldOfStudy);
         mentee.setLearningGoals(learningGoals);

@@ -28,6 +28,14 @@ public class MenteeDAO extends GenericDAO<Mentee, Long> {
         return findAll();
     }
 
+    public Mentee getMenteeByUsername(String username) {
+        String jpql = "SELECT m FROM Mentee m WHERE m.username = :username";
+        TypedQuery<Mentee> query = entityManager.createQuery(jpql, Mentee.class);
+        query.setParameter("username", username);
+        List<Mentee> results = query.getResultList();
+        return results.isEmpty() ? null : results.get(0);
+    }
+
     // update mentee
     public void updateMentee(String id, Mentee mentee) {
         mentee.setId(Long.parseLong(id));

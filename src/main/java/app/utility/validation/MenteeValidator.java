@@ -2,7 +2,6 @@ package app.utility.validation;
 
 import app.model.Mentee;
 import app.model.Mentor;
-import app.model.User;
 import jakarta.enterprise.context.Dependent;
 
 import java.util.Arrays;
@@ -58,7 +57,6 @@ public class MenteeValidator implements Validator<Mentee> {
             return result;
         }
 
-        validateUserId(mentee, result);
         validateEducationLevel(mentee, result);
         validateFieldOfStudy(mentee, result);
         validateLearningGoals(mentee, result);
@@ -72,19 +70,6 @@ public class MenteeValidator implements Validator<Mentee> {
     @Override
     public ValidatorQualifier.ValidationChoice getValidationChoice() {
         return ValidatorQualifier.ValidationChoice.MENTEE;
-    }
-
-    /**
-     * Validate user ID reference
-     */
-    private void validateUserId(Mentee mentee, ValidationResult result) {
-
-        User user = mentee.getUser();
-
-        if (user == null || user.getId() == null) {
-            result.addError("User ID is required");
-            return;
-        }
     }
 
     /**

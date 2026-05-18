@@ -1,14 +1,16 @@
 package app.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "users")
+@MappedSuperclass
 public class User implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -18,18 +20,28 @@ public class User implements Serializable {
     @Column(name = "id")
     private Long id;
 
+    @NotBlank
+    @Size(max = 100)
     @Column(name = "username", length = 100, nullable = false, unique = true)
     private String username;
 
+    @NotBlank
+    @Size(max = 255)
     @Column(name = "password", length = 255, nullable = false)
     private String password;
 
+    @NotBlank
+    @Size(max = 50)
     @Column(name = "role", length = 50, nullable = false)
     private String role;
 
+    @NotBlank
+    @Email
+    @Size(max = 150)
     @Column(name = "email", length = 150, nullable = false, unique = true)
     private String email;
 
+    @Size(max = 50)
     @Column(name = "status", length = 50)
     private String status;
 

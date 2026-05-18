@@ -1,6 +1,12 @@
 package app.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import java.io.Serial;
@@ -11,55 +17,44 @@ import java.util.List;
 
 @Entity
 @Table(name = "mentors")
-public class Mentor implements Serializable {
+public class Mentor extends User implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    private Long id;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
 
     @OneToMany(mappedBy = "mentor")
     private List<Mentee> mentees = new ArrayList<>();
 
+    @NotBlank
+    @Size(max = 100)
     @Column(name = "specialization", length = 100)
     private String specialization;
 
+    @Size(max = 5000)
     @Column(name = "expertise", columnDefinition = "TEXT")
     private String expertise;
 
+    @Min(0)
+    @Max(80)
     @Column(name = "years_of_experience")
     private Integer yearsOfExperience;
 
+    @Size(max = 5000)
     @Column(name = "bio", columnDefinition = "TEXT")
     private String bio;
 
+    @Size(max = 5000)
     @Column(name = "qualifications", columnDefinition = "TEXT")
     private String qualifications;
 
+    @Pattern(regexp = "^$|^[0-9+()\\-\\s]{7,20}$")
+    @Size(max = 20)
     @Column(name = "phone_number", length = 20)
     private String phoneNumber;
-
-    @Column(name = "status", length = 50)
-    private String status;
-
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
 
     public Mentor(Long id, String userId, String specialization, String expertise,
                   Integer yearsOfExperience, String bio, String qualifications,
                   String phoneNumber, String status) {
-        this.id = id;
+        setId(id);
         setUserId(userId);
         this.specialization = specialization;
         this.expertise = expertise;
@@ -67,42 +62,51 @@ public class Mentor implements Serializable {
         this.bio = bio;
         this.qualifications = qualifications;
         this.phoneNumber = phoneNumber;
-        this.status = status;
+        setStatus(status);
     }
 
     public Mentor() {
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
     @Transient
     public String getUserId() {
-        return user != null && user.getId() != null ? String.valueOf(user.getId()) : null;
+        return getId() != null ? String.valueOf(getId()) : null;
     }
 
     public void setUserId(String userId) {
         if (userId == null || userId.trim().isEmpty()) {
-            this.user = null;
+            setId(null);
             return;
         }
 
-        User reference = new User();
-        reference.setId(Long.parseLong(userId));
-        this.user = reference;
+        setId(Long.parseLong(userId));
+    }
+
+    public User getUser() {
+        return this;
+    }
+
+    public void setUser(User user) {
+        if (user == null) {
+            setId(null);
+            setUsername(null);
+            setPassword(null);
+            setRole(null);
+            setEmail(null);
+            setStatus(null);
+            setCreatedAt(null);
+            setUpdatedAt(null);
+            return;
+        }
+
+        setId(user.getId());
+        setUsername(user.getUsername());
+        setPassword(user.getPassword());
+        setRole(user.getRole());
+        setEmail(user.getEmail());
+        setStatus(user.getStatus());
+        setCreatedAt(user.getCreatedAt());
+        setUpdatedAt(user.getUpdatedAt());
     }
 
     public List<Mentee> getMentees() {
@@ -161,34 +165,10 @@ public class Mentor implements Serializable {
         this.phoneNumber = phoneNumber;
     }
 
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
     @Override
     public String toString() {
         return "Mentor{" +
-                "id='" + id + '\'' +
+                "id='" + getId() + '\'' +
                 ", userId='" + getUserId() + '\'' +
                 ", specialization='" + specialization + '\'' +
                 ", expertise='" + expertise + '\'' +
@@ -196,7 +176,7 @@ public class Mentor implements Serializable {
                 ", bio='" + bio + '\'' +
                 ", qualifications='" + qualifications + '\'' +
                 ", phoneNumber='" + phoneNumber + '\'' +
-                ", status='" + status + '\'' +
+                ", status='" + getStatus() + '\'' +
                 '}';
     }
 }

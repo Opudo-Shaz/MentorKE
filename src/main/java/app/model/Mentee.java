@@ -1,6 +1,10 @@
 package app.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import java.io.Serial;
@@ -9,91 +13,82 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "mentees")
-public class Mentee implements Serializable {
+public class Mentee extends User implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    private Long id;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "mentor_id")
     private Mentor mentor;
 
+    @NotBlank
+    @Size(max = 100)
     @Column(name = "education_level", length = 100)
     private String educationLevel;
 
+    @NotBlank
+    @Size(max = 100)
     @Column(name = "field_of_study", length = 100)
     private String fieldOfStudy;
 
+    @Size(max = 5000)
     @Column(name = "learning_goals", columnDefinition = "TEXT")
     private String learningGoals;
 
+    @Pattern(regexp = "^$|^[0-9+()\\-\\s]{7,20}$")
+    @Size(max = 20)
     @Column(name = "phone_number", length = 20)
     private String phoneNumber;
 
-    @Column(name = "status", length = 50)
-    private String status;
-
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
-
     public Mentee(Long id, Long userId, String educationLevel, String fieldOfStudy,
                   String learningGoals, String phoneNumber, String mentorId, String status) {
-        this.id = id;
+        setId(id);
         setUserId(userId);
         this.educationLevel = educationLevel;
         this.fieldOfStudy = fieldOfStudy;
         this.learningGoals = learningGoals;
         this.phoneNumber = phoneNumber;
         setMentorId(mentorId);
-        this.status = status;
+        setStatus(status);
     }
 
     public Mentee() {
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
     @Transient
     public Long getUserId() {
-        return user != null ? user.getId() : null;
+        return getId();
     }
 
     public void setUserId(Long userId) {
-        if (userId == null) {
-            this.user = null;
+        setId(userId);
+    }
+
+    public User getUser() {
+        return this;
+    }
+
+    public void setUser(User user) {
+        if (user == null) {
+            setId(null);
+            setUsername(null);
+            setPassword(null);
+            setRole(null);
+            setEmail(null);
+            setStatus(null);
+            setCreatedAt(null);
+            setUpdatedAt(null);
             return;
         }
 
-        User reference = new User();
-        reference.setId(userId);
-        this.user = reference;
+        setId(user.getId());
+        setUsername(user.getUsername());
+        setPassword(user.getPassword());
+        setRole(user.getRole());
+        setEmail(user.getEmail());
+        setStatus(user.getStatus());
+        setCreatedAt(user.getCreatedAt());
+        setUpdatedAt(user.getUpdatedAt());
     }
 
     public String getEducationLevel() {
@@ -153,40 +148,24 @@ public class Mentee implements Serializable {
     }
 
     public String getStatus() {
-        return status;
+        return super.getStatus();
     }
 
     public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
+        super.setStatus(status);
     }
 
     @Override
     public String toString() {
         return "Mentee{" +
-                "id='" + id + '\'' +
+            "id='" + getId() + '\'' +
                 ", userId='" + getUserId() + '\'' +
                 ", educationLevel='" + educationLevel + '\'' +
                 ", fieldOfStudy='" + fieldOfStudy + '\'' +
                 ", learningGoals='" + learningGoals + '\'' +
                 ", phoneNumber='" + phoneNumber + '\'' +
                 ", mentorId='" + getMentorId() + '\'' +
-                ", status='" + status + '\'' +
+            ", status='" + getStatus() + '\'' +
                 '}';
     }
 }

@@ -665,7 +665,6 @@
                                     <option value="">Select role</option>
                                     <option value="mentee">Mentee</option>
                                     <option value="mentor">Mentor</option>
-                                    <option value="admin">Admin</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -765,8 +764,16 @@
                         <input type="hidden" name="action" value="add">
                         <div class="form-grid">
                             <div class="form-group">
-                                <label for="addMentorUserId">User ID</label>
-                                <input type="text" id="addMentorUserId" name="userId" placeholder="Enter user ID" required>
+                                <label for="addMentorUsername">Username</label>
+                                <input type="text" id="addMentorUsername" name="username" placeholder="Enter username" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="addMentorEmail">Email</label>
+                                <input type="email" id="addMentorEmail" name="email" placeholder="Enter email" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="addMentorPassword">Password</label>
+                                <input type="password" id="addMentorPassword" name="password" placeholder="Enter password" required>
                             </div>
                             <div class="form-group">
                                 <label for="addSpecialization">Specialization</label>
@@ -892,8 +899,16 @@
                         <input type="hidden" name="action" value="add">
                         <div class="form-grid">
                             <div class="form-group">
-                                <label for="addMenteeUserId">User ID</label>
-                                <input type="text" id="addMenteeUserId" name="userId" placeholder="Enter user ID" required>
+                                <label for="addMenteeUsername">Username</label>
+                                <input type="text" id="addMenteeUsername" name="username" placeholder="Enter username" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="addMenteeEmail">Email</label>
+                                <input type="email" id="addMenteeEmail" name="email" placeholder="Enter email" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="addMenteePassword">Password</label>
+                                <input type="password" id="addMenteePassword" name="password" placeholder="Enter password" required>
                             </div>
                             <div class="form-group">
                                 <label for="addEducationLevel">Education level</label>
@@ -1036,7 +1051,6 @@
                             <select name="role" id="editRole">
                                 <option value="mentee">Mentee</option>
                                 <option value="mentor">Mentor</option>
-                                <option value="admin">Admin</option>
                             </select>
                         </div>
                         <div class="form-group">
