@@ -98,11 +98,7 @@ public class RegistrationService {
 
     /**
      * Extracts role-specific parameters from the form data
-     * 
-     * MOVED FROM: RegisterPage.extractFormDataUsingReflection()
-     * This is BUSINESS LOGIC (which parameters belong to which role)
-     * and should NOT be in the Servlet
-     */
+    */
     public Map<String, String> extractRoleSpecificData(String role, Map<String, String> formData) {
         logger.debug("[RegistrationService] Extracting role-specific data for role: {}", role);
         

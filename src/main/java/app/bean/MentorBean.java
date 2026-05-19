@@ -40,9 +40,7 @@ public class MentorBean {
     private Validator<Mentor> mentorValidator;
 
     // PUBLIC NO-ARG CONSTRUCTOR (required by CDI/EJB)
-    public MentorBean() {
-        logger.debug("CDI Bean initialized with default constructor");
-    }
+    public MentorBean() {}
 
     // CONSTRUCTOR INJECTION (alternative)
     @Inject
