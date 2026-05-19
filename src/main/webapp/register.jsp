@@ -268,14 +268,14 @@
 
     <!-- ══════════ NAVBAR ══════════ -->
     <nav class="navbar">
-        <a href="index" class="nav-brand">
+        <a href="<%= request.getContextPath() %>/app/home/" class="nav-brand">
             <div class="nav-brand-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
             </div>
             <span class="nav-brand-name">MentorKE</span>
         </a>
         <div class="nav-links">
-            <a href="index">Home</a>
+            <a href="<%= request.getContextPath() %>/app/home/">Home</a>
             <a href="/MentorKE/app/about/">About</a>
             <a href="<%= request.getContextPath() %>/app/login/" class="btn-outline">Login</a>
         </div>
@@ -509,7 +509,7 @@
                 <div class="form-footer">
                     Already have an account? <a href="<%= request.getContextPath() %>/app/login/">Sign in</a>
                     &nbsp;·&nbsp;
-                    <a href="index">Back to home</a>
+                    <a href="<%= request.getContextPath() %>/app/home/">Back to home</a>
                 </div>
 
             </div>

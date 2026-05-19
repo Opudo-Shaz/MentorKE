@@ -410,12 +410,12 @@
     <nav class="sidebar-nav">
         <div class="nav-section-label">Menu</div>
 
-        <a href="mentee-dashboard" class="nav-link active">
+        <a href="<%= request.getContextPath() %>/app/mentee-dashboard/" class="nav-link active">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
             Dashboard
         </a>
 
-        <a href="index" class="nav-link">
+        <a href="<%= request.getContextPath() %>/app/home/" class="nav-link">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
             Home
         </a>
@@ -434,7 +434,7 @@
                 <div class="user-role">Mentee</div>
             </div>
         </div>
-        <a href="login?action=logout" class="btn-logout">
+        <a href="<%= request.getContextPath() %>/app/login/?action=logout" class="btn-logout">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
             Sign out
         </a>
@@ -477,19 +477,19 @@
                 </div>
                 <span class="action-label">My<br>Requests</span>
             </a>
-            <a href="sessions?action=upcoming" class="action-card">
+            <a href="<%= request.getContextPath() %>/app/sessions/upcoming" class="action-card">
                 <div class="action-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 </div>
                 <span class="action-label">Upcoming<br>Sessions</span>
             </a>
-            <a href="sessions?action=completed" class="action-card">
+            <a href="<%= request.getContextPath() %>/app/sessions/completed" class="action-card">
                 <div class="action-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                 </div>
                 <span class="action-label">Completed<br>Sessions</span>
             </a>
-            <a href="messaging?action=list-conversations" class="action-card" id="messagesActionCard">
+            <a href="<%= request.getContextPath() %>/app/messaging/list-conversations" class="action-card" id="messagesActionCard">
                 <div class="action-icon" style="position:relative;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                     <span id="unreadBadge" class="unread-badge hidden">0</span>

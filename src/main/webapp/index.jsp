@@ -380,17 +380,17 @@
 
     <!-- ══════════ NAVBAR ══════════ -->
     <nav class="navbar">
-        <a href="index" class="nav-brand">
+        <a href="<%= request.getContextPath() %>/app/home/" class="nav-brand">
             <div class="nav-brand-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
             </div>
             <span class="nav-brand-name">MentorKE</span>
         </a>
         <div class="nav-links">
-            <a href="index">Home</a>
+            <a href="<%= request.getContextPath() %>/app/home/">Home</a>
             <a href="/MentorKE/app/about/">About</a>
             <a href="<%= request.getContextPath() %>/app/login/" class="btn-nav-outline">Login</a>
-            <a href="register" class="btn-nav-primary">Get started</a>
+            <a href="<%= request.getContextPath() %>/app/register/" class="btn-nav-primary">Get started</a>
         </div>
     </nav>
 
@@ -403,7 +403,7 @@
         <h1>Connect, grow and <span>thrive</span> with the right mentor</h1>
         <p>MentorKE pairs ambitious Kenyans with experienced professionals for personalised, goal-driven mentorship journeys.</p>
         <div class="hero-cta">
-            <a href="register" class="btn-hero-primary">
+            <a href="<%= request.getContextPath() %>/app/register/" class="btn-hero-primary">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Get started — it's free
             </a>
@@ -578,7 +578,7 @@
             <h2 class="section-title">Start your mentorship journey today</h2>
             <p class="section-sub">Join thousands of Kenyans already growing with MentorKE. Registration is free and takes under five minutes.</p>
             <div class="cta-btns">
-                <a href="register" class="btn-cta-primary">
+                <a href="<%= request.getContextPath() %>/app/register/" class="btn-cta-primary">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                     Create a free account
                 </a>
@@ -599,15 +599,15 @@
                 </div>
                 <div class="footer-col">
                     <div class="footer-col-title">Platform</div>
-                    <a href="index">Home</a>
+                    <a href="<%= request.getContextPath() %>/app/home/">Home</a>
                     <a href="/MentorKE/app/about/">About</a>
-                    <a href="register">Register</a>
+                    <a href="<%= request.getContextPath() %>/app/register/">Register</a>
                     <a href="<%= request.getContextPath() %>/app/login/">Login</a>
                 </div>
                 <div class="footer-col">
                     <div class="footer-col-title">Roles</div>
-                    <a href="register">Join as a mentee</a>
-                    <a href="register">Join as a mentor</a>
+                    <a href="<%= request.getContextPath() %>/app/register/">Join as a mentee</a>
+                    <a href="<%= request.getContextPath() %>/app/register/">Join as a mentor</a>
                     <a href="<%= request.getContextPath() %>/app/login/?role=admin">Admin login</a>
                 </div>
             </div>
