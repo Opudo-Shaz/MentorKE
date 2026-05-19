@@ -139,8 +139,8 @@
             <p>Review new mentee requests, then approve to accept the match or reject to decline it. Requests default to <strong>PENDING</strong> until you choose.</p>
         </div>
         <div class="hero-actions">
-            <a class="btn btn-outline" href="mentor-dashboard">Back to Dashboard</a>
-            <a class="btn btn-primary" href="mentor-requests?action=my-mentees">View My Mentees</a>
+            <a class="btn btn-outline" href="/MentorKE/mentor-dashboard.jsp">Back to Dashboard</a>
+            <a class="btn btn-primary" href="/MentorKE/mentor-dashboard.jsp">View My Mentees</a>
         </div>
     </div>
 
@@ -182,12 +182,12 @@
                     </td>
                     <td>
                         <div class="actions">
-                            <form class="action-form" action="mentor-requests" method="post">
+                            <form class="action-form" action="/MentorKE/app/mentor-requests/approve" method="post">
                                 <input type="hidden" name="action" value="approve">
                                 <input type="hidden" name="requestId" value="<%= req.getId() %>">
                                 <button type="submit" class="btn-small btn-approve">Approve</button>
                             </form>
-                            <form class="action-form" action="mentor-requests" method="post">
+                            <form class="action-form" action="/MentorKE/app/mentor-requests/reject" method="post">
                                 <input type="hidden" name="action" value="reject">
                                 <input type="hidden" name="requestId" value="<%= req.getId() %>">
                                 <button type="submit" class="btn-small btn-reject">Reject</button>

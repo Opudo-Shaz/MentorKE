@@ -2,53 +2,46 @@ package app.action;
 
 import app.bean.MentorBean;
 import app.model.Mentor;
-import jakarta.servlet.http.HttpServlet;
+import app.utility.logging.AppLogger;
+import app.framework.Action;
+import app.framework.ActionPostMethod;
+import app.framework.ActionResponse;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
-import jakarta.inject.Inject;
-import java.io.IOException;
-import jakarta.servlet.annotation.WebServlet;
-import app.utility.logging.AppLogger;
 import org.slf4j.Logger;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
-@WebServlet(name = "MentorManagement",
-        urlPatterns = {"/mentor-management"})
-public class MentorManagement extends HttpServlet {
+@ApplicationScoped
+@Action(value = "mentor-management", label = "Mentor Management", showLink = false)
+public class MentorManagement extends AbstractAction {
 
     private static final Logger logger = AppLogger.getLogger(MentorManagement.class);
 
     @Inject
     private MentorBean mentorBean;
 
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        logger.info("=== HTTP POST called ===");
+    @ActionPostMethod("add")
+    public ActionResponse add(HttpServletRequest request, HttpServletResponse response) {
+        return handleMentorMutation(request, response, "add");
+    }
 
-        // STEP 1: Verify admin session
-        HttpSession session = request.getSession(false);
-        if (session == null || !Boolean.TRUE.equals(session.getAttribute("isLoggedIn"))) {
-            logger.warn("Session invalid or not logged in");
-            response.sendRedirect("login");
-            return;
-        }
+    @ActionPostMethod("update")
+    public ActionResponse update(HttpServletRequest request, HttpServletResponse response) {
+        return handleMentorMutation(request, response, "update");
+    }
 
-        String role = String.valueOf(session.getAttribute("role"));
-        if (!"admin".equalsIgnoreCase(role)) {
-            logger.warn("User is not admin, role={}", role);
-            response.sendRedirect("login");
-            return;
-        }
+    @ActionPostMethod("delete")
+    public ActionResponse delete(HttpServletRequest request, HttpServletResponse response) {
+        return handleMentorMutation(request, response, "delete");
+    }
 
-        // STEP 2: Extract action parameter
-        String action = request.getParameter("action");
-        logger.info("Action requested: {}", action);
-
-        // STEP 3: Route to bean based on action
+    private ActionResponse handleMentorMutation(HttpServletRequest request, HttpServletResponse response, String action) {
         try {
-            String redirectParam = null;
-
+            String redirectParam;
             if ("add".equalsIgnoreCase(action)) {
                 redirectParam = handleAddMentor(request);
             } else if ("update".equalsIgnoreCase(action)) {
@@ -56,30 +49,24 @@ public class MentorManagement extends HttpServlet {
             } else if ("delete".equalsIgnoreCase(action)) {
                 redirectParam = handleDeleteMentor(request);
             } else {
-                logger.warn("Unknown action, redirecting to admin");
-                response.sendRedirect("admin?view=mentors");
-                return;
+                response.sendRedirect("/MentorKE/admin?view=mentors");
+                return null;
             }
 
-            // STEP 4: Redirect with result
-            response.sendRedirect("admin?view=mentors&" + redirectParam);
-
+            response.sendRedirect("/MentorKE/admin?view=mentors&" + redirectParam);
+            return null;
         } catch (IllegalArgumentException e) {
             logger.error("Validation error: {}", e.getMessage());
-            String errorMsg = e.getMessage().replace("Mentor validation failed: ", "");
-            response.sendRedirect("admin?view=mentors&error=" + java.net.URLEncoder.encode(errorMsg, "UTF-8"));
+            sendRedirectWithError(response, e.getMessage().replace("Mentor validation failed: ", ""));
+            return null;
         } catch (Exception e) {
             logger.error("Error: {}", e.getMessage());
-            response.sendRedirect("admin?view=mentors&error=" + java.net.URLEncoder.encode(e.getMessage(), "UTF-8"));
+            sendRedirectWithError(response, e.getMessage());
+            return null;
         }
     }
 
-    /**
-     * Handle add mentor request - only extracts parameters and delegates to bean
-     */
     private String handleAddMentor(HttpServletRequest request) throws Exception {
-        logger.debug("handleAddMentor - extracting parameters");
-
         String username = safe(request.getParameter("username"));
         String email = safe(request.getParameter("email"));
         String password = safe(request.getParameter("password"));
@@ -91,7 +78,6 @@ public class MentorManagement extends HttpServlet {
         String phoneNumber = safe(request.getParameter("phoneNumber"));
         String status = safe(request.getParameter("status"));
 
-        // Create mentor object
         Mentor newMentor = new Mentor();
         newMentor.setUsername(username);
         newMentor.setEmail(email);
@@ -107,17 +93,11 @@ public class MentorManagement extends HttpServlet {
         newMentor.setPhoneNumber(phoneNumber);
         newMentor.setStatus(status.isEmpty() ? "Active" : status);
 
-        // Delegate to bean (validation & business logic)
         mentorBean.addMentorAdmin(newMentor);
         return "success=mentor_added";
     }
 
-    /**
-     * Handle update mentor request - only extracts parameters and delegates to bean
-     */
     private String handleUpdateMentor(HttpServletRequest request) throws Exception {
-        logger.debug("handleUpdateMentor - extracting parameters");
-
         String mentorId = safe(request.getParameter("id"));
         String username = safe(request.getParameter("username"));
         String email = safe(request.getParameter("email"));
@@ -130,7 +110,6 @@ public class MentorManagement extends HttpServlet {
         String phoneNumber = safe(request.getParameter("phoneNumber"));
         String status = safe(request.getParameter("status"));
 
-        // Create mentor object
         Mentor mentor = new Mentor();
         mentor.setUsername(username);
         mentor.setEmail(email);
@@ -146,27 +125,24 @@ public class MentorManagement extends HttpServlet {
         mentor.setPhoneNumber(phoneNumber);
         mentor.setStatus(status.isEmpty() ? "Active" : status);
 
-        // Delegate to bean (validation & business logic)
         mentorBean.updateMentor(mentorId, mentor);
         return "success=mentor_updated";
     }
 
-    /**
-     * Handle delete mentor request - only extracts parameters and delegates to bean
-     */
     private String handleDeleteMentor(HttpServletRequest request) throws Exception {
-        logger.debug("handleDeleteMentor - extracting parameters");
-
         String mentorId = safe(request.getParameter("mentorId"));
-
-        // Delegate to bean (validation & business logic)
         mentorBean.deleteMentor(mentorId);
         return "success=mentor_deleted";
     }
 
-    /**
-     * Utility to safely extract string parameters
-     */
+    private void sendRedirectWithError(HttpServletResponse response, String message) {
+        try {
+            response.sendRedirect("/MentorKE/admin?view=mentors&error=" + URLEncoder.encode(message, StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private String safe(String value) {
         return value == null ? "" : value.trim();
     }

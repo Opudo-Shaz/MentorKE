@@ -1,6 +1,5 @@
 package app.action;
 
-import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -16,7 +15,7 @@ import app.model.Mentor;
 import jakarta.servlet.annotation.WebServlet;
 
 @WebServlet(name = "MentorDashboard", urlPatterns = { "/mentor-dashboard" })
-public class MentorDashboard extends HttpServlet {
+public class MentorDashboard extends BaseAction {
     @Inject
     private MentorBean mentorBean;
 
@@ -32,14 +31,12 @@ public class MentorDashboard extends HttpServlet {
             return;
         }
 
-        String role = String.valueOf(session.getAttribute("role"));
-        if (!"mentor".equalsIgnoreCase(role)) {
-            response.sendRedirect("login");
+        if (!requireRole(request, response, "mentor")) {
             return;
         }
 
         try {
-            String userId = String.valueOf(session.getAttribute("userId"));
+            String userId = getUserId(request);
 
             // Load mentor profile
             Mentor mentor = mentorBean.getMentorByUserId(userId);

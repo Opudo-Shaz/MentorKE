@@ -51,12 +51,19 @@ public class ActionDispatcherServlet extends HttpServlet {
             );
 
             // 3. Invoke the matched handler method via reflection
-            ActionResponse actionResponse = (ActionResponse) actionMapMatch
+            Object actionResult = actionMapMatch
                 .getActionMap()
                 .getMethod()
                 .invoke(actionCtxInstance, argsParams);
 
-            // 4. Decide what to render
+            // 4. If the action already forwarded/wrote the response, stop here.
+            if (resp.isCommitted() || actionResult == null) {
+                return;
+            }
+
+            ActionResponse actionResponse = (ActionResponse) actionResult;
+
+            // 5. Decide what to render
             String displayContent;
             if (actionResponse.getResponseText() != null)
                 displayContent = actionResponse.getResponseText();
@@ -66,7 +73,7 @@ public class ActionDispatcherServlet extends HttpServlet {
                     actionResponse.getResponseDataList()
                 );
 
-            // 5. Wrap in the full HTML layout and write to response
+            // 6. Wrap in the full HTML layout and write to response
             appPage.display(req, resp, displayContent);
 
         } catch (Exception e) {

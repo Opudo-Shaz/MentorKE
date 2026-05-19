@@ -410,7 +410,7 @@
 
         <!-- QUICK ACTIONS -->
         <div class="action-grid">
-            <a href="mentor-requests?action=pending" class="action-card">
+            <a href="/MentorKE/app/mentor-requests/pending" class="action-card">
                 <div class="action-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                 </div>
