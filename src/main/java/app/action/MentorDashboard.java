@@ -2,19 +2,20 @@ package app.action;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import jakarta.inject.Inject;
-import jakarta.servlet.ServletException;
 import java.io.IOException;
 import java.util.List;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import app.bean.MenteeBean;
 import app.bean.MentorBean;
 import app.model.Mentee;
 import app.model.Mentor;
-import jakarta.servlet.annotation.WebServlet;
+import app.framework.Action;
+import app.framework.ActionGetMethod;
 
-@WebServlet(name = "MentorDashboard", urlPatterns = { "/mentor-dashboard" })
+@ApplicationScoped
+@Action(value = "mentor-dashboard", label = "Mentor Dashboard", showLink = false)
 public class MentorDashboard extends BaseAction {
     @Inject
     private MentorBean mentorBean;
@@ -22,18 +23,10 @@ public class MentorDashboard extends BaseAction {
     @Inject
     private MenteeBean menteeBean;
 
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws IOException, ServletException {
-        HttpSession session = request.getSession(false);
-        if (session == null || !Boolean.TRUE.equals(session.getAttribute("isLoggedIn"))) {
-            response.sendRedirect("login");
-            return;
-        }
-
-        if (!requireRole(request, response, "mentor")) {
-            return;
-        }
+    @ActionGetMethod("")
+    public void get(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
+        if (!requireRole(request, response, "mentor")) return;
 
         try {
             String userId = getUserId(request);
@@ -52,6 +45,6 @@ public class MentorDashboard extends BaseAction {
             request.setAttribute("error", e.getMessage());
         }
 
-        request.getRequestDispatcher("/mentor-dashboard.jsp").forward(request, response);
+        forward(request, response, "/mentor-dashboard.jsp");
     }
 }

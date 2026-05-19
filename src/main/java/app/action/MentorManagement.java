@@ -49,11 +49,11 @@ public class MentorManagement extends AbstractAction {
             } else if ("delete".equalsIgnoreCase(action)) {
                 redirectParam = handleDeleteMentor(request);
             } else {
-                response.sendRedirect("/MentorKE/admin?view=mentors");
+                response.sendRedirect("/MentorKE/app/admin/?view=mentors");
                 return null;
             }
 
-            response.sendRedirect("/MentorKE/admin?view=mentors&" + redirectParam);
+            response.sendRedirect("/MentorKE/app/admin/?view=mentors&" + redirectParam);
             return null;
         } catch (IllegalArgumentException e) {
             logger.error("Validation error: {}", e.getMessage());
@@ -137,7 +137,7 @@ public class MentorManagement extends AbstractAction {
 
     private void sendRedirectWithError(HttpServletResponse response, String message) {
         try {
-            response.sendRedirect("/MentorKE/admin?view=mentors&error=" + URLEncoder.encode(message, StandardCharsets.UTF_8));
+            response.sendRedirect("/MentorKE/app/admin/?view=mentors&error=" + URLEncoder.encode(message, StandardCharsets.UTF_8));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

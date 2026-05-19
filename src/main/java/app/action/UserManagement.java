@@ -10,13 +10,14 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.inject.Inject;
 import java.io.IOException;
-import jakarta.servlet.annotation.WebServlet;
 import app.utility.logging.AppLogger;
 import org.slf4j.Logger;
+import jakarta.enterprise.context.ApplicationScoped;
+import app.framework.Action;
+import app.framework.ActionPostMethod;
 
-
-@WebServlet(name = "UserManagement",
-        urlPatterns = {"/user-management"})
+@ApplicationScoped
+@Action(value = "user-management", label = "User Management", showLink = false)
 public class UserManagement extends BaseAction {
 
     private static final Logger logger = AppLogger.getLogger(UserManagement.class);
@@ -30,52 +31,53 @@ public class UserManagement extends BaseAction {
     @Inject
     private MenteeBean menteeBean;
 
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        logger.info("=== HTTP POST called ===");
+    @ActionPostMethod("add")
+    public void add(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        logger.info("=== HTTP POST add user ===");
+        if (!isLoggedIn(request)) { redirect(response, "login"); return; }
+        if (!requireRole(request, response, "admin")) return;
 
-        // STEP 1: Verify admin session
-        if (!isLoggedIn(request)) {
-            logger.warn("Session invalid or not logged in");
-            redirect(response, "login");
-            return;
-        }
-
-        String role = getUserRole(request);
-        if (!requireRole(request, response, "admin")) {
-            logger.warn("User is not admin, role={}", role);
-            return;
-        }
-
-        // STEP 2: Extract action parameter
-        String action = request.getParameter("action");
-        logger.info("Action requested: {}", action);
-
-        // STEP 3: Route to bean based on action
         try {
-            String redirectParam = null;
-
-            if ("add".equalsIgnoreCase(action)) {
-                redirectParam = handleAddUser(request);
-            } else if ("update".equalsIgnoreCase(action)) {
-                redirectParam = handleUpdateUser(request);
-            } else if ("delete".equalsIgnoreCase(action)) {
-                redirectParam = handleDeleteUser(request);
-            } else {
-                logger.warn("Unknown action, redirecting to admin");
-                redirect(response, "admin?view=users");
-                return;
-            }
-
-            // STEP 4: Redirect with result
+            String redirectParam = handleAddUser(request);
             redirect(response, "admin?view=users&" + redirectParam);
-
         } catch (IllegalArgumentException e) {
-            logger.error("Validation error: {}", e.getMessage());
             String errorMsg = e.getMessage().replace("User validation failed: ", "");
             redirect(response, "admin?view=users&error=" + java.net.URLEncoder.encode(errorMsg, "UTF-8"));
         } catch (Exception e) {
-            logger.error("Error: {}", e.getMessage());
+            redirect(response, "admin?view=users&error=" + java.net.URLEncoder.encode(e.getMessage(), "UTF-8"));
+        }
+    }
+
+    @ActionPostMethod("update")
+    public void update(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        logger.info("=== HTTP POST update user ===");
+        if (!isLoggedIn(request)) { redirect(response, "login"); return; }
+        if (!requireRole(request, response, "admin")) return;
+
+        try {
+            String redirectParam = handleUpdateUser(request);
+            redirect(response, "admin?view=users&" + redirectParam);
+        } catch (IllegalArgumentException e) {
+            String errorMsg = e.getMessage().replace("User validation failed: ", "");
+            redirect(response, "admin?view=users&error=" + java.net.URLEncoder.encode(errorMsg, "UTF-8"));
+        } catch (Exception e) {
+            redirect(response, "admin?view=users&error=" + java.net.URLEncoder.encode(e.getMessage(), "UTF-8"));
+        }
+    }
+
+    @ActionPostMethod("delete")
+    public void delete(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        logger.info("=== HTTP POST delete user ===");
+        if (!isLoggedIn(request)) { redirect(response, "login"); return; }
+        if (!requireRole(request, response, "admin")) return;
+
+        try {
+            String redirectParam = handleDeleteUser(request);
+            redirect(response, "admin?view=users&" + redirectParam);
+        } catch (IllegalArgumentException e) {
+            String errorMsg = e.getMessage().replace("User validation failed: ", "");
+            redirect(response, "admin?view=users&error=" + java.net.URLEncoder.encode(errorMsg, "UTF-8"));
+        } catch (Exception e) {
             redirect(response, "admin?view=users&error=" + java.net.URLEncoder.encode(e.getMessage(), "UTF-8"));
         }
     }
@@ -177,4 +179,3 @@ public class UserManagement extends BaseAction {
         return value == null ? "" : value.trim();
     }
 }
-

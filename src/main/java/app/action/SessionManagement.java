@@ -10,16 +10,19 @@ import jakarta.inject.Inject;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.annotation.WebServlet;
 import app.utility.logging.AppLogger;
 import org.slf4j.Logger;
+import jakarta.enterprise.context.ApplicationScoped;
+import app.framework.Action;
+import app.framework.ActionGetMethod;
+import app.framework.ActionPostMethod;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
-
-@WebServlet(name = "SessionManagement", urlPatterns = {"/sessions"})
+@ApplicationScoped
+@Action(value = "sessions", label = "Sessions", showLink = false)
 public class SessionManagement extends BaseAction {
 
     private static final Logger logger = AppLogger.getLogger(SessionManagement.class);
@@ -33,72 +36,59 @@ public class SessionManagement extends BaseAction {
     @Inject
     private MenteeBean menteeBean;
 
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) 
-            throws ServletException, IOException {
-        
-        String action = request.getParameter("action");
-
-        if (!isLoggedIn(request)) {
-            redirect(response, "login");
-            return;
-        }
-
+    @ActionGetMethod("upcoming")
+    public void upcoming(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
         String userId = getUserId(request);
-
-        try {
-            if ("upcoming".equalsIgnoreCase(action)) {
-                handleUpcomingSessions(request, response, userId);
-            } else if ("completed".equalsIgnoreCase(action)) {
-                handleCompletedSessions(request, response, userId);
-            } else if ("view".equalsIgnoreCase(action)) {
-                handleViewSession(request, response, userId);
-            } else if ("schedule-form".equalsIgnoreCase(action)) {
-                handleScheduleForm(request, response);
-            } else {
-                handleUpcomingSessions(request, response, userId);
-            }
-        } catch (Exception e) {
-            logger.error("Error in SessionManagementAction", e);
-            setAttribute(request, "errorMessage", "An error occurred: " + e.getMessage());
-            try {
-                forward(request, response, "/mentee-dashboard.jsp");
-            } catch (Exception ex) {
-                throw new RuntimeException(ex);
-            }
-        }
+        handleUpcomingSessions(request, response, userId);
     }
 
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) 
-            throws ServletException, IOException {
-        
-        String action = request.getParameter("action");
-
-        if (!isLoggedIn(request)) {
-            redirect(response, "login");
-            return;
-        }
-
+    @ActionGetMethod("completed")
+    public void completed(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
         String userId = getUserId(request);
+        handleCompletedSessions(request, response, userId);
+    }
 
-        try {
-            if ("create-session".equalsIgnoreCase(action)) {
-                handleCreateSession(request, response, userId);
-            } else if ("cancel".equalsIgnoreCase(action)) {
-                handleCancelSession(request, response, userId);
-            } else if ("add-notes".equalsIgnoreCase(action)) {
-                handleAddNotes(request, response, userId);
-            }
-        } catch (Exception e) {
-            logger.error("Error processing session action", e);
-            setAttribute(request, "errorMessage", "An error occurred: " + e.getMessage());
-            try {
-                forward(request, response, "/mentee-dashboard.jsp");
-            } catch (Exception ex) {
-                throw new RuntimeException(ex);
-            }
-        }
+    @ActionGetMethod("view")
+    public void view(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
+        String userId = getUserId(request);
+        handleViewSession(request, response, userId);
+    }
+
+    @ActionGetMethod("schedule-form")
+    public void scheduleForm(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
+        handleScheduleForm(request, response);
+    }
+
+    @ActionGetMethod("")
+    public void defaultGet(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
+        String userId = getUserId(request);
+        handleUpcomingSessions(request, response, userId);
+    }
+
+    @ActionPostMethod("create-session")
+    public void createSession(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
+        String userId = getUserId(request);
+        handleCreateSession(request, response, userId);
+    }
+
+    @ActionPostMethod("cancel")
+    public void cancel(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
+        String userId = getUserId(request);
+        handleCancelSession(request, response, userId);
+    }
+
+    @ActionPostMethod("add-notes")
+    public void addNotes(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
+        String userId = getUserId(request);
+        handleAddNotes(request, response, userId);
     }
 
     /**

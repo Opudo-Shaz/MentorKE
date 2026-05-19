@@ -115,7 +115,7 @@ public class LoginAction extends BaseAction {
     private void redirectToDashboard(HttpServletRequest request, HttpServletResponse response, String role) throws java.io.IOException {
         String ctx = request.getContextPath();
         if ("admin".equalsIgnoreCase(role)) {
-            response.sendRedirect(ctx + "/admin");
+            response.sendRedirect(ctx + "/app/admin/");
         } else if ("mentor".equalsIgnoreCase(role)) {
             response.sendRedirect(ctx + "/mentor-dashboard");
         } else if ("mentee".equalsIgnoreCase(role)) {

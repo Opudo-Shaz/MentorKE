@@ -9,9 +9,12 @@ public class LoginFilter implements Filter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         if (request instanceof jakarta.servlet.http.HttpServletRequest httpRequest) {
-            String path = httpRequest.getRequestURI();
+            String path = httpRequest.getPathInfo();
+            if (path == null || path.isEmpty()) {
+                path = httpRequest.getRequestURI();
+            }
 
-            if (path.startsWith("/admin") || path.startsWith("/mentor") || path.startsWith("/mentee")) {
+            if (path != null && (path.contains("/admin") || path.contains("/mentor") || path.contains("/mentee"))) {
                 jakarta.servlet.http.HttpSession session = httpRequest.getSession(false);
                 if (session == null || !Boolean.TRUE.equals(session.getAttribute("isLoggedIn"))) {
                     ((jakarta.servlet.http.HttpServletResponse) response).sendRedirect("login");

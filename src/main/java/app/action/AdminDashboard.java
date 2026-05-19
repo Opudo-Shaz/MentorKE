@@ -6,17 +6,19 @@ import app.bean.MenteeBean;
 import app.model.User;
 import app.model.Mentor;
 import app.model.Mentee;
-import jakarta.inject.Inject;
-import jakarta.servlet.*;
-import jakarta.servlet.http.*;
-import jakarta.servlet.annotation.WebServlet;
-import java.io.IOException;
-import java.util.List;
+import app.framework.Action;
+import app.framework.ActionGetMethod;
 import app.utility.logging.AppLogger;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.util.List;
 import org.slf4j.Logger;
 
-@WebServlet(name = "AdminDashboard", urlPatterns = {"/admin"})
-public class AdminDashboard extends HttpServlet {
+@ApplicationScoped
+@Action(value = "admin", label = "Admin Dashboard", showLink = false)
+public class AdminDashboard extends BaseAction {
 
     private static final Logger logger = AppLogger.getLogger(AdminDashboard.class);
 
@@ -29,9 +31,17 @@ public class AdminDashboard extends HttpServlet {
     @Inject
     private MenteeBean menteeBean;
 
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+    @ActionGetMethod("")
+    public void get(HttpServletRequest request, HttpServletResponse response) throws Exception {
+
+        if (!isLoggedIn(request)) {
+            redirect(response, request.getContextPath() + "/app/login/");
+            return;
+        }
+
+        if (!requireRole(request, response, "admin")) {
+            return;
+        }
 
         String view = request.getParameter("view");
         if (view == null || view.isEmpty()) {
@@ -71,7 +81,6 @@ public class AdminDashboard extends HttpServlet {
             request.setAttribute("error", "Failed to load data: " + e.getMessage());
         }
 
-        request.getRequestDispatcher("/admin-dashboard.jsp")
-                .forward(request, response);
+        forward(request, response, "/admin-dashboard.jsp");
     }
 }

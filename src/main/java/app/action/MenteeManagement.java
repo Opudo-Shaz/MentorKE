@@ -2,76 +2,70 @@ package app.action;
 
 import app.bean.MenteeBean;
 import app.model.Mentee;
-import jakarta.servlet.http.HttpServlet;
+import jakarta.inject.Inject;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
-import jakarta.inject.Inject;
 import java.io.IOException;
-import jakarta.servlet.annotation.WebServlet;
 import app.utility.logging.AppLogger;
 import org.slf4j.Logger;
+import jakarta.enterprise.context.ApplicationScoped;
+import app.framework.Action;
+import app.framework.ActionPostMethod;
 
- 
-
-@WebServlet(name = "MenteeManagement",
-        urlPatterns = {"/mentee-management"})
-public class MenteeManagement extends HttpServlet {
+@ApplicationScoped
+@Action(value = "mentee-management", label = "Mentee Management", showLink = false)
+public class MenteeManagement extends BaseAction {
 
     private static final Logger logger = AppLogger.getLogger(MenteeManagement.class);
 
     @Inject
     private MenteeBean menteeBean;
 
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        logger.info("=== HTTP POST called ===");
+    @ActionPostMethod("add")
+    public void add(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        if (!isLoggedIn(request)) { redirect(response, "login"); return; }
+        if (!requireRole(request, response, "admin")) return;
 
-        // STEP 1: Verify admin session
-        HttpSession session = request.getSession(false);
-        if (session == null || !Boolean.TRUE.equals(session.getAttribute("isLoggedIn"))) {
-            logger.warn("Session invalid or not logged in");
-            response.sendRedirect("login");
-            return;
-        }
-
-        String role = String.valueOf(session.getAttribute("role"));
-        if (!"admin".equalsIgnoreCase(role)) {
-            logger.warn("User is not admin, role={}", role);
-            response.sendRedirect("login");
-            return;
-        }
-
-        // STEP 2: Extract action parameter
-        String action = request.getParameter("action");
-        logger.info("Action requested: {}", action);
-
-        // STEP 3: Route to bean based on action
         try {
-            String redirectParam = null;
-
-            if ("add".equalsIgnoreCase(action)) {
-                redirectParam = handleAddMentee(request);
-            } else if ("update".equalsIgnoreCase(action)) {
-                redirectParam = handleUpdateMentee(request);
-            } else if ("delete".equalsIgnoreCase(action)) {
-                redirectParam = handleDeleteMentee(request);
-            } else {
-                logger.warn("Unknown action, redirecting to admin");
-                response.sendRedirect("admin?view=mentees");
-                return;
-            }
-
-            // STEP 4: Redirect with result
-            response.sendRedirect("admin?view=mentees&" + redirectParam);
-
+            String redirectParam = handleAddMentee(request);
+            redirect(response, "admin?view=mentees&" + redirectParam);
         } catch (IllegalArgumentException e) {
-            logger.error("Validation error: {}", e.getMessage());
             String errorMsg = e.getMessage().replace("Mentee validation failed: ", "");
-            response.sendRedirect("admin?view=mentees&error=" + java.net.URLEncoder.encode(errorMsg, "UTF-8"));
+            redirect(response, "admin?view=mentees&error=" + java.net.URLEncoder.encode(errorMsg, "UTF-8"));
         } catch (Exception e) {
-            logger.error("Error: {}", e.getMessage());
-            response.sendRedirect("admin?view=mentees&error=" + java.net.URLEncoder.encode(e.getMessage(), "UTF-8"));
+            redirect(response, "admin?view=mentees&error=" + java.net.URLEncoder.encode(e.getMessage(), "UTF-8"));
+        }
+    }
+
+    @ActionPostMethod("update")
+    public void update(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        if (!isLoggedIn(request)) { redirect(response, "login"); return; }
+        if (!requireRole(request, response, "admin")) return;
+
+        try {
+            String redirectParam = handleUpdateMentee(request);
+            redirect(response, "admin?view=mentees&" + redirectParam);
+        } catch (IllegalArgumentException e) {
+            String errorMsg = e.getMessage().replace("Mentee validation failed: ", "");
+            redirect(response, "admin?view=mentees&error=" + java.net.URLEncoder.encode(errorMsg, "UTF-8"));
+        } catch (Exception e) {
+            redirect(response, "admin?view=mentees&error=" + java.net.URLEncoder.encode(e.getMessage(), "UTF-8"));
+        }
+    }
+
+    @ActionPostMethod("delete")
+    public void delete(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        if (!isLoggedIn(request)) { redirect(response, "login"); return; }
+        if (!requireRole(request, response, "admin")) return;
+
+        try {
+            String redirectParam = handleDeleteMentee(request);
+            redirect(response, "admin?view=mentees&" + redirectParam);
+        } catch (IllegalArgumentException e) {
+            String errorMsg = e.getMessage().replace("Mentee validation failed: ", "");
+            redirect(response, "admin?view=mentees&error=" + java.net.URLEncoder.encode(errorMsg, "UTF-8"));
+        } catch (Exception e) {
+            redirect(response, "admin?view=mentees&error=" + java.net.URLEncoder.encode(e.getMessage(), "UTF-8"));
         }
     }
 

@@ -14,12 +14,7 @@ import java.util.Map;
 @WebFilter(
         filterName = "AuthenticationFilter",
         urlPatterns = {
-                "/admin",
-                "/mentor-dashboard",
-                "/mentee-dashboard",
-                "/user-management",
-                "/mentor-management",
-                "/mentee-management"
+                "/app/*"
         }
 )
 public class AuthenticationFilter implements Filter {
@@ -55,7 +50,18 @@ public class AuthenticationFilter implements Filter {
         HttpServletResponse httpResponse =
                 (HttpServletResponse) response;
 
-        String requestPath = httpRequest.getServletPath();
+                String requestPath = httpRequest.getPathInfo();
+                if (requestPath == null || requestPath.isEmpty()) {
+                        requestPath = httpRequest.getServletPath();
+                }
+
+                if (requestPath == null || requestPath.isEmpty()) {
+                        requestPath = httpRequest.getRequestURI();
+                }
+
+                if (requestPath != null && requestPath.startsWith("/app/")) {
+                        requestPath = requestPath.substring(4);
+                }
 
         logger.debug(
                 "[AuthenticationFilter] Checking authentication for: {}",

@@ -504,19 +504,19 @@
     <nav class="sidebar-nav">
         <div class="nav-section-label">Main</div>
 
-        <a href="admin" class="nav-link <%= "users".equals(currentView) ? "active" : "" %>">
+        <a href="<%= request.getContextPath() %>/app/admin/" class="nav-link <%= "users".equals(currentView) ? "active" : "" %>">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             Users
             <span class="nav-badge"><%= userCount %></span>
         </a>
 
-        <a href="admin?view=mentors" class="nav-link <%= "mentors".equals(currentView) ? "active" : "" %>">
+        <a href="<%= request.getContextPath() %>/app/admin/?view=mentors" class="nav-link <%= "mentors".equals(currentView) ? "active" : "" %>">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
             Mentors
             <span class="nav-badge"><%= mentorCount %></span>
         </a>
 
-        <a href="admin?view=mentees" class="nav-link <%= "mentees".equals(currentView) ? "active" : "" %>">
+        <a href="<%= request.getContextPath() %>/app/admin/?view=mentees" class="nav-link <%= "mentees".equals(currentView) ? "active" : "" %>">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>
             Mentees
             <span class="nav-badge"><%= menteeCount %></span>
