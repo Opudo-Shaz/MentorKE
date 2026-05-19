@@ -2,9 +2,11 @@ package app.action;
 
 import app.framework.Action;
 import app.framework.ActionGetMethod;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+@ApplicationScoped
 @Action("home")
 public class IndexAction extends BaseAction {
 

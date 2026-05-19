@@ -5,11 +5,13 @@ import app.model.User;
 import app.framework.Action;
 import app.framework.ActionGetMethod;
 import app.framework.ActionPostMethod;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
+@ApplicationScoped
 @Action("login")
 public class LoginAction extends BaseAction {
 
@@ -52,8 +54,8 @@ public class LoginAction extends BaseAction {
 
         // Admin via web.xml params
         if ("admin".equals(role)) {
-            String adminUsername = getServletContext().getInitParameter("app.admin.username");
-            String adminPassword = getServletContext().getInitParameter("app.admin.password");
+            String adminUsername = request.getServletContext().getInitParameter("app.admin.username");
+            String adminPassword = request.getServletContext().getInitParameter("app.admin.password");
 
             if (!username.equals(adminUsername) || !password.equals(adminPassword)) {
                 setAttribute(request, "errorMessage", "Invalid admin credentials.");

@@ -17,7 +17,7 @@ public class LoginFilter implements Filter {
             if (path != null && (path.contains("/admin") || path.contains("/mentor") || path.contains("/mentee"))) {
                 jakarta.servlet.http.HttpSession session = httpRequest.getSession(false);
                 if (session == null || !Boolean.TRUE.equals(session.getAttribute("isLoggedIn"))) {
-                    ((jakarta.servlet.http.HttpServletResponse) response).sendRedirect("login");
+                    ((jakarta.servlet.http.HttpServletResponse) response).sendRedirect(httpRequest.getContextPath() + "/app/login/");
                     return;
                 }
             }

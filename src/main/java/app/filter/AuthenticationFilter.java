@@ -31,6 +31,18 @@ public class AuthenticationFilter implements Filter {
             "/mentee-dashboard", "mentee"
     );
 
+    private static final java.util.Set<String> PUBLIC_PATHS = java.util.Set.of(
+            "/",
+            "/home",
+            "/home/",
+            "/about",
+            "/about/",
+            "/login",
+            "/login/",
+            "/register",
+            "/register/"
+    );
+
     @Override
     public void init(FilterConfig filterConfig) {
 
@@ -63,6 +75,11 @@ public class AuthenticationFilter implements Filter {
                         requestPath = requestPath.substring(4);
                 }
 
+        if (requestPath != null && PUBLIC_PATHS.contains(requestPath)) {
+            chain.doFilter(request, response);
+            return;
+        }
+
         logger.debug(
                 "[AuthenticationFilter] Checking authentication for: {}",
                 requestPath
@@ -74,6 +91,11 @@ public class AuthenticationFilter implements Filter {
                 !Boolean.TRUE.equals(
                         session.getAttribute("isLoggedIn"))
         ) {
+
+            if (ROLE_MAPPINGS.get(requestPath) == null) {
+                chain.doFilter(request, response);
+                return;
+            }
 
             logger.warn(
                     "[AuthenticationFilter] No valid session"
@@ -124,7 +146,7 @@ public class AuthenticationFilter implements Filter {
     ) throws IOException {
 
         response.sendRedirect(
-                request.getContextPath() + "/login"
+                request.getContextPath() + "/app/login/"
         );
     }
 
