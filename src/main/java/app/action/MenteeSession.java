@@ -1,24 +1,26 @@
 package app.action;
 
-import app.bean.*;
+import app.bean.SessionMatchingBean;
+import app.bean.MatchRequestBean;
+import app.bean.MentorBean;
 import app.model.Mentor;
 import app.model.MatchRequest;
 import jakarta.inject.Inject;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
-import jakarta.servlet.annotation.WebServlet;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.servlet.ServletException;
+import java.io.IOException;
 import app.utility.logging.AppLogger;
 import org.slf4j.Logger;
-
-import java.io.IOException;
 import java.util.List;
+import app.framework.Action;
+import app.framework.ActionGetMethod;
+import app.framework.ActionPostMethod;
 
-
-@WebServlet(name = "MenteeSession", urlPatterns = {"/mentee-sessions"})
-public class MenteeSession extends HttpServlet {
+@ApplicationScoped
+@Action(value = "mentee-sessions", label = "Mentee Sessions", showLink = false)
+public class MenteeSession extends BaseAction {
 
     private static final Logger logger = AppLogger.getLogger(MenteeSession.class);
 
@@ -31,91 +33,69 @@ public class MenteeSession extends HttpServlet {
     @Inject
     private MentorBean mentorBean;
 
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) 
-            throws ServletException, IOException {
-        
-        String action = request.getParameter("action");
-        HttpSession httpSession = request.getSession(false);
-
-        // Check if user is logged in
-        if (httpSession == null || !Boolean.TRUE.equals(httpSession.getAttribute("isLoggedIn"))) {
-            response.sendRedirect("login");
-            return;
-        }
-
-        String userId = String.valueOf(httpSession.getAttribute("userId"));
-        String role = (String) httpSession.getAttribute("role");
-
-        // Verify user is a mentee
-        if (!"mentee".equalsIgnoreCase(role)) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Only mentees can access this page");
-            return;
-        }
-
-        try {
-            if ("browse".equalsIgnoreCase(action)) {
-                handleBrowseMentors(request, response, userId);
-            } else if ("request".equalsIgnoreCase(action)) {
-                handleRequestMentor(request, response, userId);
-            } else if ("my-requests".equalsIgnoreCase(action)) {
-                handleMyRequests(request, response, userId);
-            } else if ("view-mentor".equalsIgnoreCase(action)) {
-                handleViewMentor(request, response);
-            } else {
-                handleBrowseMentors(request, response, userId);
-            }
-        } catch (Exception e) {
-            logger.error("Error in MenteeSessionAction", e);
-            request.setAttribute("errorMessage", "An error occurred: " + e.getMessage());
-            request.getRequestDispatcher("/mentee-dashboard.jsp").forward(request, response);
-        }
+    @ActionGetMethod("browse")
+    public void browse(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
+        if (!requireRole(request, response, "mentee")) return;
+        String userId = getUserId(request);
+        handleBrowseMentors(request, response, userId);
     }
 
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) 
-            throws ServletException, IOException {
-        
-        String action = request.getParameter("action");
-        HttpSession httpSession = request.getSession(false);
+    @ActionGetMethod("request")
+    public void requestForm(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
+        if (!requireRole(request, response, "mentee")) return;
+        String userId = getUserId(request);
+        handleRequestMentor(request, response, userId);
+    }
 
-        if (httpSession == null || !Boolean.TRUE.equals(httpSession.getAttribute("isLoggedIn"))) {
-            response.sendRedirect("login");
-            return;
+    @ActionGetMethod("my-requests")
+    public void myRequests(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
+        if (!requireRole(request, response, "mentee")) return;
+        String userId = getUserId(request);
+        handleMyRequests(request, response, userId);
+    }
+
+    @ActionGetMethod("view-mentor")
+    public void viewMentor(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
+        if (!requireRole(request, response, "mentee")) return;
+        handleViewMentor(request, response);
+    }
+
+    @ActionGetMethod("")
+    public void defaultGet(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        browse(request, response);
+    }
+
+    @ActionPostMethod("request-mentor")
+    public void requestMentor(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
+        if (!requireRole(request, response, "mentee")) return;
+        String userId = getUserId(request);
+
+        String mentorId = request.getParameter("mentorId");
+        String specialization = request.getParameter("specialization");
+
+        matchRequestBean.requestMentor(userId, mentorId, specialization);
+        request.setAttribute("successMessage", "Request sent to mentor successfully!");
+        handleBrowseMentors(request, response, userId);
+    }
+
+    @ActionPostMethod("cancel-request")
+    public void cancelRequest(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
+        if (!requireRole(request, response, "mentee")) return;
+        String userId = getUserId(request);
+
+        String requestId = request.getParameter("requestId");
+        MatchRequest req = matchRequestBean.getMatchRequest(requestId);
+        if (req != null && req.getMenteeId().equals(userId)) {
+            matchRequestBean.rejectMentorRequest(requestId);
+            request.setAttribute("successMessage", "Request cancelled successfully!");
         }
-
-        String userId = String.valueOf(httpSession.getAttribute("userId"));
-        String role = (String) httpSession.getAttribute("role");
-
-        if (!"mentee".equalsIgnoreCase(role)) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN);
-            return;
-        }
-
-        try {
-            if ("request-mentor".equalsIgnoreCase(action)) {
-                String mentorId = request.getParameter("mentorId");
-                String specialization = request.getParameter("specialization");
-
-                matchRequestBean.requestMentor(userId, mentorId, specialization);
-                
-                request.setAttribute("successMessage", "Request sent to mentor successfully!");
-                handleBrowseMentors(request, response, userId);
-            } else if ("cancel-request".equalsIgnoreCase(action)) {
-                String requestId = request.getParameter("requestId");
-                
-                MatchRequest req = matchRequestBean.getMatchRequest(requestId);
-                if (req != null && req.getMenteeId().equals(userId)) {
-                    matchRequestBean.rejectMentorRequest(requestId);
-                    request.setAttribute("successMessage", "Request cancelled successfully!");
-                }
-                handleMyRequests(request, response, userId);
-            }
-        } catch (Exception e) {
-            logger.error("Error processing mentee request", e);
-            request.setAttribute("errorMessage", "An error occurred: " + e.getMessage());
-            request.getRequestDispatcher("/mentee-dashboard.jsp").forward(request, response);
-        }
+        handleMyRequests(request, response, userId);
     }
 
     /**

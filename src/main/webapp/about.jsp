@@ -271,8 +271,8 @@
         </a>
         <div class="nav-links">
             <a href="index">Home</a>
-            <a href="about" class="active">About</a>
-            <a href="login" class="btn-outline">Login</a>
+            <a href="/MentorKE/app/about/" class="active">About</a>
+            <a href="<%= request.getContextPath() %>/app/login/" class="btn-outline">Login</a>
             <a href="register" class="btn-primary">Get started</a>
         </div>
     </nav>
@@ -459,15 +459,15 @@
                 <div class="footer-col">
                     <div class="footer-col-title">Platform</div>
                     <a href="index">Home</a>
-                    <a href="about">About</a>
+                    <a href="/MentorKE/app/about/">About</a>
                     <a href="register">Register</a>
-                    <a href="login">Login</a>
+                    <a href="<%= request.getContextPath() %>/app/login/">Login</a>
                 </div>
                 <div class="footer-col">
                     <div class="footer-col-title">Roles</div>
                     <a href="register">Join as a mentee</a>
                     <a href="register">Join as a mentor</a>
-                    <a href="login">Admin login</a>
+                    <a href="<%= request.getContextPath() %>/app/login/?role=admin">Admin login</a>
                 </div>
             </div>
             <div class="footer-bottom">

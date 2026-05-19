@@ -388,8 +388,8 @@
         </a>
         <div class="nav-links">
             <a href="index">Home</a>
-            <a href="about">About</a>
-            <a href="login" class="btn-nav-outline">Login</a>
+            <a href="/MentorKE/app/about/">About</a>
+            <a href="<%= request.getContextPath() %>/app/login/" class="btn-nav-outline">Login</a>
             <a href="register" class="btn-nav-primary">Get started</a>
         </div>
     </nav>
@@ -407,7 +407,7 @@
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Get started — it's free
             </a>
-            <a href="about" class="btn-hero-outline">
+            <a href="/MentorKE/app/about/" class="btn-hero-outline">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
                 Learn more
             </a>
@@ -582,7 +582,7 @@
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                     Create a free account
                 </a>
-                <a href="login" class="btn-cta-outline">
+                <a href="<%= request.getContextPath() %>/app/login/" class="btn-cta-outline">
                     Already have an account? Login
                 </a>
             </div>
@@ -600,15 +600,15 @@
                 <div class="footer-col">
                     <div class="footer-col-title">Platform</div>
                     <a href="index">Home</a>
-                    <a href="about">About</a>
+                    <a href="/MentorKE/app/about/">About</a>
                     <a href="register">Register</a>
-                    <a href="login">Login</a>
+                    <a href="<%= request.getContextPath() %>/app/login/">Login</a>
                 </div>
                 <div class="footer-col">
                     <div class="footer-col-title">Roles</div>
                     <a href="register">Join as a mentee</a>
                     <a href="register">Join as a mentor</a>
-                    <a href="login">Admin login</a>
+                    <a href="<%= request.getContextPath() %>/app/login/?role=admin">Admin login</a>
                 </div>
             </div>
             <div class="footer-bottom">

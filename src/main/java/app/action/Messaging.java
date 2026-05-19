@@ -4,25 +4,25 @@ import app.bean.MessageBean;
 import app.bean.MentorBean;
 import app.bean.MenteeBean;
 import app.model.Message;
-import app.model.Mentor;
-import app.model.Mentee;
 import jakarta.inject.Inject;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.annotation.WebServlet;
 import app.utility.logging.AppLogger;
 import org.slf4j.Logger;
-
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletException;
 import java.io.IOException;
+import jakarta.enterprise.context.ApplicationScoped;
+import app.framework.Action;
+import app.framework.ActionGetMethod;
+import app.framework.ActionPostMethod;
+
 import java.util.List;
 
 /**
- * Messaging - Handles messaging between mentors and mentees
- * URL: /messaging
- * Actions: conversation, send, mark-read, unread-count
+ * Messaging - framework action handling messaging features.
  */
-@WebServlet(name = "Messaging", urlPatterns = {"/messaging"})
+@ApplicationScoped
+@Action(value = "messaging", label = "Messaging", showLink = false)
 public class Messaging extends BaseAction {
 
     private static final Logger logger = AppLogger.getLogger(Messaging.class);
@@ -36,68 +36,44 @@ public class Messaging extends BaseAction {
     @Inject
     private MenteeBean menteeBean;
 
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) 
-            throws ServletException, IOException {
-        
-        String action = request.getParameter("action");
-
-        if (!isLoggedIn(request)) {
-            redirect(response, "login");
-            return;
-        }
-
+    @ActionGetMethod("conversation")
+    public void conversation(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        if (!isLoggedIn(request)) { redirect(response, "login"); return; }
         String userId = getUserId(request);
-
-        try {
-            if ("conversation".equalsIgnoreCase(action)) {
-                handleConversation(request, response, userId);
-            } else if ("unread-count".equalsIgnoreCase(action)) {
-                handleUnreadCount(request, response, userId);
-            } else if ("list-conversations".equalsIgnoreCase(action)) {
-                handleListConversations(request, response, userId);
-            } else {
-                handleListConversations(request, response, userId);
-            }
-        } catch (Exception e) {
-            logger.error("Error in MessagingAction", e);
-            setAttribute(request, "errorMessage", "An error occurred: " + e.getMessage());
-            try {
-                forward(request, response, "/mentee-dashboard.jsp");
-            } catch (Exception ex) {
-                throw new RuntimeException(ex);
-            }
-        }
+        handleConversation(request, response, userId);
     }
 
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) 
-            throws ServletException, IOException {
-        
-        String action = request.getParameter("action");
-
-        if (!isLoggedIn(request)) {
-            redirect(response, "login");
-            return;
-        }
-
+    @ActionGetMethod("unread-count")
+    public void unreadCount(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        if (!isLoggedIn(request)) { redirect(response, "login"); return; }
         String userId = getUserId(request);
+        handleUnreadCount(request, response, userId);
+    }
 
-        try {
-            if ("send-message".equalsIgnoreCase(action)) {
-                handleSendMessage(request, response, userId);
-            } else if ("mark-read".equalsIgnoreCase(action)) {
-                handleMarkAsRead(request, response, userId);
-            }
-        } catch (Exception e) {
-            logger.error("Error processing messaging action", e);
-            setAttribute(request, "errorMessage", "An error occurred: " + e.getMessage());
-            try {
-                forward(request, response, "/mentee-dashboard.jsp");
-            } catch (Exception ex) {
-                throw new RuntimeException(ex);
-            }
-        }
+    @ActionGetMethod("list-conversations")
+    public void listConversations(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        if (!isLoggedIn(request)) { redirect(response, "login"); return; }
+        String userId = getUserId(request);
+        handleListConversations(request, response, userId);
+    }
+
+    @ActionGetMethod("")
+    public void defaultGet(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        listConversations(request, response);
+    }
+
+    @ActionPostMethod("send-message")
+    public void sendMessage(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        if (!isLoggedIn(request)) { redirect(response, "login"); return; }
+        String userId = getUserId(request);
+        handleSendMessage(request, response, userId);
+    }
+
+    @ActionPostMethod("mark-read")
+    public void markRead(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        if (!isLoggedIn(request)) { redirect(response, "login"); return; }
+        String userId = getUserId(request);
+        handleMarkAsRead(request, response, userId);
     }
 
     /**

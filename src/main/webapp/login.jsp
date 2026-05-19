@@ -267,7 +267,7 @@
         </a>
         <div class="nav-links">
             <a href="<%= request.getContextPath() %>">Home</a>
-            <a href="<%= request.getContextPath() %>/about">About</a>
+            <a href="<%= request.getContextPath() %>/app/about/">About</a>
             <a href="<%= request.getContextPath() %>/register" class="btn-primary">Register</a>
         </div>
     </nav>
@@ -363,7 +363,7 @@
                 </div>
 
                 <!-- Login form -->
-                <form action="<%= request.getContextPath() %>/login" method="post">
+                <form action="<%= request.getContextPath() %>/app/login/" method="post">
 
                     <input type="hidden" name="role" id="hiddenRole" value="mentee">
 

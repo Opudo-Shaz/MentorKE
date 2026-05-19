@@ -276,8 +276,8 @@
         </a>
         <div class="nav-links">
             <a href="index">Home</a>
-            <a href="about">About</a>
-            <a href="login" class="btn-outline">Login</a>
+            <a href="/MentorKE/app/about/">About</a>
+            <a href="<%= request.getContextPath() %>/app/login/" class="btn-outline">Login</a>
         </div>
     </nav>
 
@@ -362,7 +362,7 @@
                     </div>
                 </div>
 
-                <form action="register" method="post">
+                <form action="<%= request.getContextPath() %>/app/register/" method="post">
 
                     <!-- Hidden role field synced with visual selector -->
                     <input type="hidden" name="role" id="hiddenRole" value="mentee">
@@ -507,7 +507,7 @@
                 <div class="divider">or</div>
 
                 <div class="form-footer">
-                    Already have an account? <a href="login">Sign in</a>
+                    Already have an account? <a href="<%= request.getContextPath() %>/app/login/">Sign in</a>
                     &nbsp;·&nbsp;
                     <a href="index">Back to home</a>
                 </div>

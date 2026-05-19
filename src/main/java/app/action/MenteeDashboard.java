@@ -2,39 +2,30 @@ package app.action;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
-import jakarta.servlet.ServletException;
+import jakarta.enterprise.context.ApplicationScoped;
 import java.io.IOException;
-
 import app.model.Mentee;
 import app.model.Mentor;
-import jakarta.servlet.annotation.WebServlet;
 import app.bean.MenteeBean;
 import app.bean.MentorBean;
 import jakarta.inject.Inject;
+import app.framework.Action;
+import app.framework.ActionGetMethod;
 
-@WebServlet(name = "MenteeDashboard", urlPatterns = { "/mentee-dashboard" })
+@ApplicationScoped
+@Action(value = "mentee-dashboard", label = "Mentee Dashboard", showLink = false)
 public class MenteeDashboard extends BaseAction {
 
     @Inject
     private MenteeBean menteeBean;
 
-    @Inject 
+    @Inject
     private MentorBean mentorBean;
 
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws IOException, ServletException {
-
-        HttpSession session = request.getSession(false);
-        if (session == null || !Boolean.TRUE.equals(session.getAttribute("isLoggedIn"))) {
-            response.sendRedirect("login");
-            return;
-        }
-
-        if (!requireRole(request, response, "mentee")) {
-            return;
-        }
+    @ActionGetMethod("")
+    public void get(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
+        if (!requireRole(request, response, "mentee")) return;
 
         try {
             String userId = getUserId(request);
@@ -53,6 +44,6 @@ public class MenteeDashboard extends BaseAction {
             request.setAttribute("error", e.getMessage());
         }
 
-        request.getRequestDispatcher("/mentee-dashboard.jsp").forward(request, response);
+        forward(request, response, "/mentee-dashboard.jsp");
     }
 }
