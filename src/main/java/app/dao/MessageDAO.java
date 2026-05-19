@@ -9,40 +9,7 @@ import java.util.List;
 @Dependent
 public class MessageDAO extends GenericDAO<Message, Long> {
 
-    public MessageDAO() {
-        super(Message.class);
-    }
-
-    // Add message
-    public void addMessage(Message message) {
-        save(message);
-    }
-
-    // Find message by id
-    public Message getMessage(String id) {
-        return findById(Long.parseLong(id));
-    }
-
-    // Find all messages
-    public List<Message> getAllMessages() {
-        return findAll();
-    }
-
-    // Update message
-    public void updateMessage(String id, Message message) {
-        message.setId(Long.parseLong(id));
-        update(message);
-    }
-
-    // Delete message
-    public void deleteMessage(String id) {
-        delete(Long.parseLong(id));
-    }
-
-    // Get total number of messages
-    public int getTotalMessages() {
-        return count();
-    }
+    private static final String USER_ID = "userId";
 
     // Get conversation between two users
     public List<Message> getConversation(String userId1, String userId2) {
@@ -61,7 +28,7 @@ public class MessageDAO extends GenericDAO<Message, Long> {
         String jpql = "SELECT m FROM Message m WHERE m.recipientId = :userId AND m.isRead = false " +
                      "ORDER BY m.createdAt DESC";
         TypedQuery<Message> query = entityManager.createQuery(jpql, Message.class);
-        query.setParameter("userId", userId);
+        query.setParameter(USER_ID, userId);
         return query.getResultList();
     }
 
@@ -69,8 +36,8 @@ public class MessageDAO extends GenericDAO<Message, Long> {
     public int getUnreadMessageCount(String userId) {
         String jpql = "SELECT COUNT(m) FROM Message m WHERE m.recipientId = :userId AND m.isRead = false";
         TypedQuery<Long> query = entityManager.createQuery(jpql, Long.class);
-        query.setParameter("userId", userId);
-        return ((Long) query.getSingleResult()).intValue();
+        query.setParameter(USER_ID, userId);
+        return query.getSingleResult().intValue();
     }
 
     // Mark message as read
@@ -93,7 +60,7 @@ public class MessageDAO extends GenericDAO<Message, Long> {
         String jpql = "SELECT m FROM Message m WHERE m.senderId = :userId OR m.recipientId = :userId " +
                      "ORDER BY m.createdAt DESC";
         TypedQuery<Message> query = entityManager.createQuery(jpql, Message.class);
-        query.setParameter("userId", userId);
+        query.setParameter(USER_ID, userId);
         return query.getResultList();
     }
 }

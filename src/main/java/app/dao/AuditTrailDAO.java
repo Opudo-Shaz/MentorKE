@@ -9,25 +9,6 @@ import java.util.List;
 @Dependent
 public class AuditTrailDAO extends GenericDAO<AuditTrail, Long> {
 
-    public AuditTrailDAO() {
-        super(AuditTrail.class);
-    }
-
-    // Add audit trail
-    public void addAuditTrail(AuditTrail audit) {
-        save(audit);
-    }
-
-    // Get by id
-    public AuditTrail getAuditTrail(String id) {
-        return findById(Long.parseLong(id));
-    }
-
-    // Return audit trail count
-    public int getTotalAuditTrails() {
-        return count();
-    }
-
     // Get all audit trails ordered by timestamp
     public List<AuditTrail> getAllAuditTrails() {
         String jpql = "SELECT a FROM AuditTrail a ORDER BY a.timestamp DESC";

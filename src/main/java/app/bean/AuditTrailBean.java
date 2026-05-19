@@ -42,7 +42,7 @@ public class AuditTrailBean {
         auditTrail.setDetails(detailedInfo);
 
         // Save to database
-        auditTrailDAO.addAuditTrail(auditTrail);
+        auditTrailDAO.save(auditTrail);
         logger.info("Audit recorded to database. ID: {}", auditTrail.getId());
 
         // Send to JMS queue as producer

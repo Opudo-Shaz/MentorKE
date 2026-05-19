@@ -17,7 +17,6 @@ import jakarta.inject.Named;
 import jakarta.ejb.Stateless;
 import org.slf4j.Logger;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,7 +56,7 @@ public class UserBean {
     /**
      * CREATE - Register a new user
      */
-    public void registerUser(User user) throws SQLException {
+    public void registerUser(User user) {
         logger.info("[UserBean] === Starting User Registration ===");
         logger.info("[UserBean] Username: {} , Email: {} , Role: {}", user.getUsername(), user.getEmail(), user.getRole());
 
@@ -85,11 +84,11 @@ public class UserBean {
 
         if ("mentor".equalsIgnoreCase(user.getRole())) {
             Mentor mentor = copyToMentor(user);
-            mentorDAO.addMentor(mentor);
+            mentorDAO.save(mentor);
             user.setId(mentor.getId());
         } else if ("mentee".equalsIgnoreCase(user.getRole())) {
             Mentee mentee = copyToMentee(user);
-            menteeDAO.addMentee(mentee);
+            menteeDAO.save(mentee);
             user.setId(mentee.getId());
         } else {
             throw new IllegalArgumentException("Role '" + user.getRole() + "' is not supported for database registration");
@@ -120,20 +119,20 @@ public class UserBean {
     /**
      * READ - Get user by ID
      */
-    public User getUserById(String userId) throws SQLException {
+    public User getUserById(String userId) {
         logger.debug("[UserBean] Fetching user by ID: {}", userId);
-        Mentor mentor = mentorDAO.getMentor(userId);
+        Mentor mentor = mentorDAO.findById(Long.parseLong(userId));
         if (mentor != null) {
             return mentor;
         }
 
-        return menteeDAO.getMentee(userId);
+        return menteeDAO.findById(Long.parseLong(userId));
     }
 
     /**
      * READ - Get user by username
      */
-    public User getUserByUsername(String username) throws SQLException {
+    public User getUserByUsername(String username) {
         logger.debug("[UserBean] Fetching user by username: {}", username);
         Mentor mentor = mentorDAO.getMentorByUsername(username);
         if (mentor != null) {
@@ -146,18 +145,18 @@ public class UserBean {
     /**
      * READ - Get all users
      */
-    public List<User> getAllUsers() throws SQLException {
+    public List<User> getAllUsers() {
         logger.debug("[UserBean] Fetching all users");
         List<User> users = new ArrayList<>();
-        users.addAll(mentorDAO.getAllMentors());
-        users.addAll(menteeDAO.getAllMentees());
+        users.addAll(mentorDAO.findAll());
+        users.addAll(menteeDAO.findAll());
         return users;
     }
 
     /**
      * UPDATE - Update existing user
      */
-    public void updateUser(String userId, User user) throws SQLException {
+    public void updateUser(String userId, User user) {
     logger.info("[UserBean] === Updating user ===");
     logger.debug("[UserBean] User ID: {}", userId);
 
@@ -198,11 +197,11 @@ public class UserBean {
     if (existingUser instanceof Mentor existingMentor) {
         Mentor mentor = copyToMentor(user);
         mentor.setId(existingMentor.getId());
-        mentorDAO.updateMentor(userId, mentor);
+        mentorDAO.update(mentor);
     } else if (existingUser instanceof Mentee existingMentee) {
         Mentee mentee = copyToMentee(user);
         mentee.setId(existingMentee.getId());
-        menteeDAO.updateMentee(userId, mentee);
+        menteeDAO.update(mentee);
     } else {
         throw new IllegalStateException("Unsupported account type: " + existingUser.getClass().getSimpleName());
     }
@@ -223,7 +222,7 @@ public class UserBean {
     /**
      * DELETE - Delete user
      */
-    public void deleteUser(String userId) throws SQLException {
+    public void deleteUser(String userId) {
         logger.info("[UserBean] === Deleting user ===");
         logger.debug("[UserBean] User ID: {}", userId);
 
@@ -239,9 +238,9 @@ public class UserBean {
         // Step 2: Delete user from database
         logger.debug("[UserBean] Deleting user from database...");
         if (user instanceof Mentor) {
-            mentorDAO.deleteMentor(userId);
+            mentorDAO.delete(Long.parseLong(userId));
         } else if (user instanceof Mentee) {
-            menteeDAO.deleteMentee(userId);
+            menteeDAO.delete(Long.parseLong(userId));
         } else {
             throw new IllegalStateException("Unsupported account type: " + user.getClass().getSimpleName());
         }

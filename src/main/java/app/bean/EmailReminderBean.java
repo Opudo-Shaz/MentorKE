@@ -59,7 +59,7 @@ public class EmailReminderBean {
 
         try {
             // Get all sessions
-            List<Session> allSessions = sessionDAO.getAllSessions();
+            List<Session> allSessions = sessionDAO.findAll();
 
             LocalDateTime currentTime = LocalDateTime.now();
             LocalDateTime twentyFourHoursLater = currentTime.plusHours(24);
@@ -104,8 +104,8 @@ public class EmailReminderBean {
 
         try {
             // Get mentor and mentee
-            Mentor mentor = mentorDAO.getMentor(session.getMentorId());
-            Mentee mentee = menteeDAO.getMentee(session.getMenteeId());
+            Mentor mentor = mentorDAO.findById(Long.parseLong(session.getMentorId()));
+            Mentee mentee = menteeDAO.findById(Long.parseLong(session.getMenteeId()));
 
             if (mentor == null || mentee == null) {
                 logger.warn("Mentor or mentee not found for session: {}", session.getId());
@@ -146,7 +146,7 @@ public class EmailReminderBean {
     public void sendMentorSessionReminder(String sessionId) throws SQLException {
         logger.info("Sending individual mentor reminder for session: {}", sessionId);
 
-        Session session = sessionDAO.getSession(sessionId);
+        Session session = sessionDAO.findById(Long.parseLong(sessionId));
         if (session != null) {
             sendSessionReminderEmails(session);
         }
@@ -158,7 +158,7 @@ public class EmailReminderBean {
     public void sendMenteeSessionReminder(String sessionId) throws SQLException {
         logger.info("Sending individual mentee reminder for session: {}", sessionId);
 
-        Session session = sessionDAO.getSession(sessionId);
+        Session session = sessionDAO.findById(Long.parseLong(sessionId));
         if (session != null) {
             sendSessionReminderEmails(session);
         }
@@ -247,7 +247,7 @@ public class EmailReminderBean {
     public int getUpcomingReminderCount() throws SQLException {
         logger.info("Calculating upcoming reminder count");
 
-        List<Session> allSessions = sessionDAO.getAllSessions();
+        List<Session> allSessions = sessionDAO.findAll();
 
         LocalDateTime currentTime = LocalDateTime.now();
         LocalDateTime twentyFourHoursLater = currentTime.plusHours(24);

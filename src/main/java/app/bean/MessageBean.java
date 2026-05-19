@@ -32,7 +32,7 @@ public class MessageBean {
         logger.info("Sending message from {} to {}", senderId, recipientId);
 
         Message message = new Message(senderId, recipientId, messageText);
-        messageDAO.addMessage(message);
+        messageDAO.save(message);
 
         logger.info("Message sent successfully");
     }
@@ -81,7 +81,7 @@ public class MessageBean {
      * Get a single message by ID
      */
     public Message getMessage(String messageId) throws SQLException {
-        return messageDAO.getMessage(messageId);
+        return messageDAO.findById(Long.parseLong(messageId));
     }
 
     /**
@@ -89,7 +89,7 @@ public class MessageBean {
      */
     public void deleteMessage(String messageId) throws SQLException {
         logger.info("Deleting message: {}", messageId);
-        messageDAO.deleteMessage(messageId);
+        messageDAO.delete(Long.parseLong(messageId));
     }
 
     /**

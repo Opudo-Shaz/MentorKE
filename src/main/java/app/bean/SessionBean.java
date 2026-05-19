@@ -60,7 +60,7 @@ public class SessionBean {
         session.setSessionLink(meetingLink);
         session.setStatus("PENDING");
 
-        sessionDAO.addSession(session);
+        sessionDAO.save(session);
         logger.info("Session created successfully with link: {}", meetingLink);
 
         // Send notifications to both mentor and mentee
@@ -88,8 +88,8 @@ public class SessionBean {
     private void sendSessionScheduledNotifications(String mentorId, String menteeId, 
                                                    LocalDateTime scheduledDate, String meetingLink,
                                                    String topic) throws SQLException {
-        Mentor mentor = mentorDAO.getMentor(mentorId);
-        Mentee mentee = menteeDAO.getMentee(menteeId);
+        Mentor mentor = mentorDAO.findById(Long.parseLong(mentorId));
+        Mentee mentee = menteeDAO.findById(Long.parseLong(menteeId));
 
         if (mentor != null && mentee != null) {
             String mentorEmail = "mentor@example.com"; // Get from User table in production
@@ -126,7 +126,7 @@ public class SessionBean {
      * Get a session by ID
      */
     public Session getSession(String sessionId) throws SQLException {
-        return sessionDAO.getSession(sessionId);
+        return sessionDAO.findById(Long.parseLong(sessionId));
     }
 
     /**
@@ -167,11 +167,11 @@ public class SessionBean {
     public void updateSessionStatus(String sessionId, String status) throws SQLException {
         logger.info("Updating session {} status to: {}", sessionId, status);
 
-        Session session = sessionDAO.getSession(sessionId);
+        Session session = sessionDAO.findById(Long.parseLong(sessionId));
         if (session != null) {
             session.setStatus(status);
             session.setUpdatedAt(LocalDateTime.now());
-            sessionDAO.updateSession(sessionId, session);
+            sessionDAO.update(session);
         }
     }
 
@@ -181,11 +181,11 @@ public class SessionBean {
     public void addSessionNotes(String sessionId, String notes) throws SQLException {
         logger.info("Adding notes to session: {}", sessionId);
 
-        Session session = sessionDAO.getSession(sessionId);
+        Session session = sessionDAO.findById(Long.parseLong(sessionId));
         if (session != null) {
             session.setNotes(notes);
             session.setUpdatedAt(LocalDateTime.now());
-            sessionDAO.updateSession(sessionId, session);
+            sessionDAO.update(session);
         }
     }
 

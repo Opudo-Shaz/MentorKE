@@ -4,54 +4,43 @@ import app.utility.logging.AppLogger;
 import jakarta.enterprise.context.Dependent;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.Query;
+import jakarta.persistence.TypedQuery;
 import org.slf4j.Logger;
 
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.List;
 
 
 @Dependent
-public class GenericDAO<T, ID> {
+public class GenericDAO<T, I> {
 
     private static final Logger logger = AppLogger.getLogger(GenericDAO.class);
 
     @PersistenceContext(unitName = "MentorKEPU")
     protected EntityManager entityManager;
 
-    private final Class<T> entityClass;
-
-
-    public GenericDAO() {
-        this.entityClass = null;
-    }
-
-    public GenericDAO(Class<T> entityClass) {
-        this.entityClass = entityClass;
-    }
-
     /**
      * CREATE - Save a new entity
      */
     public void save(T entity) {
         entityManager.persist(entity);
-        assert entityClass != null;
-        logger.info("[{}DAO] Entity saved successfully", entityClass.getSimpleName());
+        logger.info("[{}DAO] Entity saved successfully", getType().getSimpleName());
     }
 
     /**
      * READ - Find entity by ID
      */
-    public T findById(ID id) {
-        return entityManager.find(entityClass, id);
+    public T findById(I id) {
+        return entityManager.find(getType(), id);
     }
 
     /**
      * READ - Find all entities
      */
-    public List findAll() {
-        assert entityClass != null;
-        String jpql = "SELECT e FROM " + entityClass.getSimpleName() + " e";
-        Query query = entityManager.createQuery(jpql);
+    public List<T> findAll() {
+        String jpql = "SELECT e FROM " + getType().getSimpleName() + " e";
+        TypedQuery<T> query = entityManager.createQuery(jpql, getType());
         return query.getResultList();
     }
 
@@ -60,19 +49,17 @@ public class GenericDAO<T, ID> {
      */
     public void update(T entity) {
         entityManager.merge(entity);
-        assert entityClass != null;
-        logger.info("[{}DAO] Entity updated successfully", entityClass.getSimpleName());
+        logger.info("[{}DAO] Entity updated successfully", getType().getSimpleName());
     }
 
     /**
      * DELETE - Delete entity by ID
      */
-    public void delete(ID id) {
+    public void delete(I id) {
         T entity = findById(id);
         if (entity != null) {
             entityManager.remove(entity);
-            assert entityClass != null;
-            logger.info("[{}DAO] Entity deleted successfully", entityClass.getSimpleName());
+            logger.info("[{}DAO] Entity deleted successfully", getType().getSimpleName());
         }
     }
 
@@ -80,19 +67,30 @@ public class GenericDAO<T, ID> {
      * COUNT - Get total count of entities
      */
     public int count() {
-        assert entityClass != null;
-        String jpql = "SELECT COUNT(e) FROM " + entityClass.getSimpleName() + " e";
-        Query query = entityManager.createQuery(jpql);
-        return ((Number) query.getSingleResult()).intValue();
+        String jpql = "SELECT COUNT(e) FROM " + getType().getSimpleName() + " e";
+        TypedQuery<Long> query = entityManager.createQuery(jpql, Long.class);
+        return query.getSingleResult().intValue();
     }
 
     // Getters
-    public Class<T> getEntityClass() {
-        return entityClass;
-    }
-
     public EntityManager getEntityManager() {
         return entityManager;
+    }
+
+    @SuppressWarnings("unchecked")
+    public Class<T> getType() {
+        Class<?> currentClass = getClass();
+
+        while (currentClass != null && currentClass != Object.class) {
+            Type genericSuperclass = currentClass.getGenericSuperclass();
+            if (genericSuperclass instanceof ParameterizedType parameterizedType) {
+                return (Class<T>) parameterizedType.getActualTypeArguments()[0];
+            }
+
+            currentClass = currentClass.getSuperclass();
+        }
+
+        throw new IllegalStateException("Unable to determine entity type for " + getClass().getName());
     }
 }
 

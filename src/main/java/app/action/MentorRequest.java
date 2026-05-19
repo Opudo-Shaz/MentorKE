@@ -20,7 +20,7 @@ import java.util.List;
 /**
  * MentorRequest - Handles mentor's view of pending match requests
  * URL: /mentor-requests
- * Actions: pending, approve, reject, my-mentees
+ * Actions: pending, approve, reject
  */
 @WebServlet(name = "MentorRequest", urlPatterns = {"/mentor-requests"})
 public class MentorRequest extends BaseAction {
@@ -56,8 +56,6 @@ public class MentorRequest extends BaseAction {
         try {
             if ("pending".equalsIgnoreCase(action)) {
                 handlePendingRequests(request, response, userId);
-            } else if ("my-mentees".equalsIgnoreCase(action)) {
-                handleMyMentees(request, response, userId);
             } else {
                 handlePendingRequests(request, response, userId);
             }
@@ -152,24 +150,4 @@ public class MentorRequest extends BaseAction {
         }
     }
 
-    /**
-     * View all mentees assigned to this mentor
-     */
-    private void handleMyMentees(HttpServletRequest request, HttpServletResponse response, String mentorId) 
-            throws ServletException, IOException {
-        
-        logger.info("Mentor {} viewing their mentees", mentorId);
-
-        try {
-            List<Mentee> mentees = menteeBean.getMenteesByMentorId(mentorId);
-
-            setAttribute(request, "mentees", mentees);
-            setAttribute(request, "menteeCount", mentees.size());
-            forward(request, response, "/mentor-mentees.jsp");
-
-        } catch (Exception e) {
-            logger.error("Error retrieving mentees", e);
-            throw new ServletException(e);
-        }
-    }
 }

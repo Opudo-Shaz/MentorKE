@@ -10,41 +10,6 @@ import java.util.List;
 @Dependent
 public class SessionDAO extends GenericDAO<Session, Long> {
 
-    public SessionDAO() {
-        super(Session.class);
-    }
-
-    // Add session
-    public void addSession(Session session) {
-        save(session);
-    }
-
-    // Find session by id
-    public Session getSession(String id) {
-        return findById(Long.parseLong(id));
-    }
-
-    // Find all sessions
-    public List<Session> getAllSessions() {
-        return findAll();
-    }
-
-    // Update session
-    public void updateSession(String id, Session session) {
-        session.setId(Long.parseLong(id));
-        update(session);
-    }
-
-    // Delete session
-    public void deleteSession(String id) {
-        delete(Long.parseLong(id));
-    }
-
-    // Get total number of sessions
-    public int getTotalSessions() {
-        return count();
-    }
-
     // Get sessions for a mentor
     public List<Session> getSessionsByMentor(String mentorId) {
         String jpql = "SELECT s FROM Session s WHERE s.mentorId = :mentorId ORDER BY s.scheduledDate DESC";

@@ -9,41 +9,6 @@ import java.util.List;
 @Dependent
 public class MatchRequestDAO extends GenericDAO<MatchRequest, Long> {
 
-    public MatchRequestDAO() {
-        super(MatchRequest.class);
-    }
-
-    // Add match request
-    public void addMatchRequest(MatchRequest matchRequest) {
-        save(matchRequest);
-    }
-
-    // Find match request by id
-    public MatchRequest getMatchRequest(Long id) {
-        return findById(id);
-    }
-
-    // Find all match requests
-    public List<MatchRequest> getAllMatchRequests() {
-        return findAll();
-    }
-
-    // Update match request
-    public void updateMatchRequest(Long id, MatchRequest matchRequest) {
-        matchRequest.setId(id);
-        update(matchRequest);
-    }
-
-    // Delete match request
-    public void deleteMatchRequest(Long id) {
-        delete(id);
-    }
-
-    // Get total number of match requests
-    public int getTotalMatchRequests() {
-        return count();
-    }
-
     // Get pending match requests for a mentor
     public List<MatchRequest> getPendingRequestsForMentor(String mentorId) {
         String jpql = "SELECT mr FROM MatchRequest mr WHERE mr.mentorId = :mentorId AND mr.status = 'PENDING' " +

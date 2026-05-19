@@ -10,7 +10,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.slf4j.Logger;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -38,7 +37,7 @@ public class SessionMatchingBean {
     /**
      * Find mentors by specialization
      */
-    public List<Mentor> findMentorsBySpecialization(String specialization) throws SQLException {
+    public List<Mentor> findMentorsBySpecialization(String specialization) {
         logger.info("Finding mentors with specialization: {}", specialization);
 
         List<Mentor> allMentors = mentorDAO.getActiveMentors();
@@ -59,7 +58,7 @@ public class SessionMatchingBean {
      * Find optimal mentor for a mentee based on field of study and experience
      * Returns the mentor with most experience in the field
      */
-    public Mentor findOptimalMentor(Mentee mentee) throws SQLException {
+    public Mentor findOptimalMentor(Mentee mentee) {
         logger.info("Finding optimal mentor for mentee: {}", mentee.getId());
 
         String fieldOfStudy = mentee.getFieldOfStudy();
@@ -87,10 +86,10 @@ public class SessionMatchingBean {
      * Auto-match a mentee with the best available mentor
      * Updates the mentee's mentor_id field
      */
-    public Mentor autoMatchMentee(String menteeId) throws SQLException {
+    public Mentor autoMatchMentee(String menteeId) {
         logger.info("Auto-matching mentee: {}", menteeId);
 
-        Mentee mentee = menteeDAO.getMentee(menteeId);
+        Mentee mentee = menteeDAO.findById(Long.parseLong(menteeId));
         if (mentee == null) {
             logger.warn("Mentee not found: {}", menteeId);
             return null;
@@ -100,7 +99,7 @@ public class SessionMatchingBean {
 
         if (bestMatch != null) {
             mentee.setMentorId(String.valueOf(bestMatch.getId()));
-            menteeDAO.updateMentee(menteeId, mentee);
+            menteeDAO.update(mentee);
             logger.info("Mentee {} successfully matched with mentor {}", menteeId, bestMatch.getId());
             return bestMatch;
         } else {
@@ -113,7 +112,7 @@ public class SessionMatchingBean {
     /**
      * Find top N mentors by specialization
      */
-    public List<Mentor> findTopMentorsBySpecialization(String specialization, int limit) throws SQLException {
+    public List<Mentor> findTopMentorsBySpecialization(String specialization, int limit) {
         logger.info("Finding top {} mentors for specialization: {}", limit, specialization);
 
         List<Mentor> candidates = findMentorsBySpecialization(specialization);
@@ -128,11 +127,11 @@ public class SessionMatchingBean {
     /**
      * Check if mentor and mentee are compatible based on specialization
      */
-    public boolean areMentorMenteeCompatible(String mentorId, String menteeId) throws SQLException {
+    public boolean areMentorMenteeCompatible(String mentorId, String menteeId) {
         logger.info("Checking compatibility between mentor {} and mentee {}", mentorId, menteeId);
 
-        Mentor mentor = mentorDAO.getMentor(mentorId);
-        Mentee mentee = menteeDAO.getMentee(menteeId);
+        Mentor mentor = mentorDAO.findById(Long.parseLong(mentorId));
+        Mentee mentee = menteeDAO.findById(Long.parseLong(menteeId));
 
         if (mentor == null || mentee == null) {
             logger.warn("Mentor or mentee not found");

@@ -15,7 +15,6 @@ import jakarta.ejb.Stateless;
 import app.utility.logging.AppLogger;
 import org.slf4j.Logger;
 
-import java.sql.SQLException;
 import java.util.List;
 
 /**
@@ -54,7 +53,7 @@ public class MenteeBean {
     /**
      * CREATE - Register a new mentee
      */
-    public void registerMentee(Mentee mentee, User user) throws SQLException {
+    public void registerMentee(Mentee mentee, User user) {
         logger.info("=== Starting Mentee Registration ===");
         logger.info("Username: {}, Email: {}, Field of Study: {}", user.getUsername(), user.getEmail(),
                 mentee.getFieldOfStudy());
@@ -77,7 +76,7 @@ public class MenteeBean {
 
         // Step 3: Add mentee to database
         logger.debug("Adding mentee to database...");
-        menteeDAO.addMentee(mentee);
+        menteeDAO.save(mentee);
         logger.info("Mentee added successfully, ID: {}", mentee.getId());
 
         // Step 4: Fire CRUD event for audit trail
@@ -102,32 +101,31 @@ public class MenteeBean {
     /**
      * READ - Get mentee by ID
      */
-    public Mentee getMenteeById(String menteeId) throws SQLException {
+    public Mentee getMenteeById(String menteeId) {
         logger.debug("Fetching mentee by ID: {}", menteeId);
-        return menteeDAO.getMentee(menteeId);
+        return menteeDAO.findById(Long.parseLong(menteeId));
     }
 
     /**
      * READ - Get mentee by user ID
      */
-    public Mentee getMenteeByUserId(String userId) throws SQLException {
+    public Mentee getMenteeByUserId(String userId) {
         logger.debug("Fetching mentee for user ID: {}", userId);
-        return menteeDAO.getMenteeByUserId(userId);
+        return menteeDAO.findById(Long.parseLong(userId));
     }
 
     /**
      * READ - Get all mentees
      */
-    public List<Mentee> getAllMentees() throws SQLException {
+    public List<Mentee> getAllMentees() {
         logger.debug("Fetching all mentees");
-        return menteeDAO.getAllMentees();
+        return menteeDAO.findAll();
     }
 
     /**
      * READ - Get mentees assigned to a mentor
      */
-    public List<Mentee> getMenteesByMentorId(String mentorId)
-            throws SQLException {
+    public List<Mentee> getMenteesByMentorId(String mentorId) {
 
         logger.debug("Fetching mentees for mentor ID: {}", mentorId);
 
@@ -137,13 +135,13 @@ public class MenteeBean {
     /**
      * UPDATE - Update existing mentee
      */
-    public void updateMentee(String menteeId, Mentee mentee) throws SQLException {
+    public void updateMentee(String menteeId, Mentee mentee) {
         logger.info("=== Updating mentee ===");
         logger.info("Mentee ID: {}", menteeId);
 
         // Step 1: Check if mentee exists
         logger.debug("Checking if mentee exists...");
-        Mentee existingMentee = menteeDAO.getMentee(menteeId);
+        Mentee existingMentee = menteeDAO.findById(Long.parseLong(menteeId));
         if (existingMentee == null) {
             logger.error("Mentee not found!");
             throw new IllegalArgumentException("Mentee with ID '" + menteeId + "' not found");
@@ -191,7 +189,7 @@ public class MenteeBean {
 
         // Step 9: Update mentee in database
         logger.debug("Updating mentee in database...");
-        menteeDAO.updateMentee(menteeId, mentee);
+        menteeDAO.update(mentee);
         logger.info("Mentee updated successfully");
 
         // Step 10: Fire CRUD event for audit trail
@@ -208,13 +206,11 @@ public class MenteeBean {
     /**
      * CREATE - Add mentee (admin function, no user registration)
      */
-    public void addMenteeAdmin(Mentee mentee) throws SQLException {
+    public void addMenteeAdmin(Mentee mentee) {
         logger.info("=== Admin Adding Mentee ===");
         logger.info("Username: {}, Email: {}, Field of Study: {}", mentee.getUsername(), mentee.getEmail(), mentee.getFieldOfStudy());
 
         // Step 1: Use the inherited account fields directly
-        User user = mentee;
-
         // Step 2: Validate mentee data
         logger.debug("Validating mentee data...");
         ValidationResult validationResult = menteeValidator.validate(mentee);
@@ -226,7 +222,7 @@ public class MenteeBean {
 
         // Step 3: Add mentee to database
         logger.debug("Adding mentee to database...");
-        menteeDAO.addMentee(mentee);
+        menteeDAO.save(mentee);
         logger.info("Mentee added successfully, ID: {}", mentee.getId());
 
         // Step 4: Fire CRUD event for audit trail
@@ -251,13 +247,13 @@ public class MenteeBean {
     /**
      * DELETE - Delete mentee
      */
-    public void deleteMentee(String menteeId) throws SQLException {
+    public void deleteMentee(String menteeId) {
         logger.info("=== Deleting mentee ===");
         logger.info("Mentee ID: {}", menteeId);
 
         // Step 1: Check if mentee exists
         logger.debug("Checking if mentee exists...");
-        Mentee mentee = menteeDAO.getMentee(menteeId);
+        Mentee mentee = menteeDAO.findById(Long.parseLong(menteeId));
         if (mentee == null) {
             logger.error("Mentee not found!");
             throw new IllegalArgumentException("Mentee with ID '" + menteeId + "' not found");
@@ -266,7 +262,7 @@ public class MenteeBean {
 
         // Step 2: Delete mentee from database
         logger.debug("Deleting mentee from database...");
-        menteeDAO.deleteMentee(menteeId);
+        menteeDAO.delete(Long.parseLong(menteeId));
         logger.info("Mentee deleted successfully");
 
         // Step 3: Fire CRUD event for audit trail

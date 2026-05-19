@@ -73,7 +73,7 @@ public class MentorBean {
 
         // Step 3: Add mentor to database
         logger.debug("Adding mentor to database...");
-        mentorDAO.addMentor(mentor);
+        mentorDAO.save(mentor);
         logger.info("Mentor added successfully, ID: {}", mentor.getId());
 
         // Step 4: Fire CRUD event for audit trail
@@ -104,7 +104,7 @@ public class MentorBean {
      */
     public Mentor getMentorById(String mentorId) throws SQLException {
         logger.debug("Fetching mentor by ID: {}", mentorId);
-        return mentorDAO.getMentor(mentorId);
+        return mentorDAO.findById(Long.parseLong(mentorId));
     }
 
     /**
@@ -112,7 +112,7 @@ public class MentorBean {
      */
     public Mentor getMentorByUserId(String userId) throws SQLException {
         logger.debug("Fetching mentor for user ID: {}", userId);
-        return mentorDAO.getMentorByUserId(userId);
+        return mentorDAO.findById(Long.parseLong(userId));
     }
 
     /**
@@ -120,7 +120,7 @@ public class MentorBean {
      */
     public List<Mentor> getAllMentors() throws SQLException {
         logger.debug("Fetching all mentors");
-        return mentorDAO.getAllMentors();
+        return mentorDAO.findAll();
     }
 
     /**
@@ -132,7 +132,7 @@ public class MentorBean {
 
          // Step 1: Check if mentor exists
          logger.debug("Checking if mentor exists...");
-         Mentor existingMentor = mentorDAO.getMentor(mentorId);
+         Mentor existingMentor = mentorDAO.findById(Long.parseLong(mentorId));
          if (existingMentor == null) {
              logger.error("Mentor not found!");
              throw new IllegalArgumentException("Mentor with ID '" + mentorId + "' not found");
@@ -162,7 +162,7 @@ public class MentorBean {
 
          // Step 6: Update mentor in database
          logger.debug("Updating mentor in database...");
-         mentorDAO.updateMentor(mentorId, mentor);
+         mentorDAO.update(mentor);
          logger.info("Mentor updated successfully");
 
          // Step 7: Fire CRUD event for audit trail
@@ -199,7 +199,7 @@ public class MentorBean {
 
         // Step 3: Add mentor to database
         logger.debug("Adding mentor to database...");
-        mentorDAO.addMentor(mentor);
+        mentorDAO.save(mentor);
         logger.info("Mentor added successfully, ID: {}", mentor.getId());
 
         // Step 4: Fire CRUD event for audit trail
@@ -234,7 +234,7 @@ public class MentorBean {
 
         // Step 1: Check if mentor exists
         logger.debug("Checking if mentor exists...");
-        Mentor mentor = mentorDAO.getMentor(mentorId);
+        Mentor mentor = mentorDAO.findById(Long.parseLong(mentorId));
         if (mentor == null) {
             logger.error("Mentor not found!");
             throw new IllegalArgumentException("Mentor with ID '" + mentorId + "' not found");
@@ -243,7 +243,7 @@ public class MentorBean {
 
         // Step 2: Delete mentor from database
         logger.debug("Deleting mentor from database...");
-        mentorDAO.deleteMentor(mentorId);
+        mentorDAO.delete(Long.parseLong(mentorId));
         logger.info("Mentor deleted successfully");
 
         // Step 3: Fire CRUD event for audit trail

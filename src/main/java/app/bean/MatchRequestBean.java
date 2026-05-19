@@ -52,7 +52,7 @@ public class MatchRequestBean {
 
         MatchRequest request = new MatchRequest(menteeId, mentorId, specialization);
         request.setStatus("PENDING");
-        matchRequestDAO.addMatchRequest(request);
+        matchRequestDAO.save(request);
 
         logger.info("Match request created successfully");
 
@@ -72,7 +72,7 @@ public class MatchRequestBean {
 
         MatchRequest request = new MatchRequest(menteeId, null, specialization);
         request.setStatus("PENDING");
-        matchRequestDAO.addMatchRequest(request);
+        matchRequestDAO.save(request);
 
         logger.info("Auto-match request created successfully");
     }
@@ -83,16 +83,16 @@ public class MatchRequestBean {
     public void approveMentorRequest(String requestId) throws SQLException {
         logger.info("Approving match request: {}", requestId);
 
-        MatchRequest request = matchRequestDAO.getMatchRequest(Long.parseLong(requestId));
+        MatchRequest request = matchRequestDAO.findById(Long.parseLong(requestId));
         if (request != null) {
             request.setStatus("APPROVED");
-            matchRequestDAO.updateMatchRequest(request.getId(), request);
+            matchRequestDAO.update(request);
 
             // Update mentee's mentor_id
-            Mentee mentee = menteeDAO.getMentee(request.getMenteeId());
+            Mentee mentee = menteeDAO.findById(Long.parseLong(request.getMenteeId()));
             if (mentee != null) {
                 mentee.setMentorId(request.getMentorId());
-                menteeDAO.updateMentee(request.getMenteeId(), mentee);
+                menteeDAO.update(mentee);
             }
 
             logger.info("Match request approved and mentee updated");
@@ -105,10 +105,10 @@ public class MatchRequestBean {
     public void rejectMentorRequest(String requestId) throws SQLException {
         logger.info("Rejecting match request: {}", requestId);
 
-        MatchRequest request = matchRequestDAO.getMatchRequest(Long.parseLong(requestId));
+        MatchRequest request = matchRequestDAO.findById(Long.parseLong(requestId));
         if (request != null) {
             request.setStatus("REJECTED");
-            matchRequestDAO.updateMatchRequest(request.getId(), request);
+            matchRequestDAO.update(request);
             logger.info("Match request rejected");
         }
     }
@@ -141,7 +141,7 @@ public class MatchRequestBean {
      * Get a specific match request
      */
     public MatchRequest getMatchRequest(String requestId) throws SQLException {
-        return matchRequestDAO.getMatchRequest(Long.parseLong(requestId));
+        return matchRequestDAO.findById(Long.parseLong(requestId));
     }
 
     /**
@@ -156,24 +156,24 @@ public class MatchRequestBean {
         for (MatchRequest request : pendingRequests) {
             try {
                 // Find optimal mentor based on specialization
-                Mentee mentee = menteeDAO.getMentee(request.getMenteeId());
+                Mentee mentee = menteeDAO.findById(Long.parseLong(request.getMenteeId()));
                 if (mentee != null) {
                     Mentor optimalMentor = sessionMatchingBean.findOptimalMentor(mentee);
                     
                     if (optimalMentor != null) {
                         request.setMentorId(String.valueOf(optimalMentor.getId()));
                         request.setStatus("APPROVED");
-                        matchRequestDAO.updateMatchRequest(request.getId(), request);
+                        matchRequestDAO.update(request);
 
                         // Update mentee
                         mentee.setMentorId(String.valueOf(optimalMentor.getId()));
-                        menteeDAO.updateMentee(request.getMenteeId(), mentee);
+                        menteeDAO.update(mentee);
 
                         logger.info("Auto-matched mentee {} with mentor {}", 
                             request.getMenteeId(), optimalMentor.getId());
                     }
                 }
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 logger.error("Error auto-matching request: {}", request.getId(), e);
             }
         }
@@ -186,7 +186,7 @@ public class MatchRequestBean {
      */
     private void sendMentorRequestNotification(String mentorId, String menteeId, 
                                                String specialization) throws SQLException {
-        Mentor mentor = mentorDAO.getMentor(mentorId);
+        Mentor mentor = mentorDAO.findById(Long.parseLong(mentorId));
         
         if (mentor != null) {
             String mentorEmail = "mentor@example.com"; // Get from User table in production
