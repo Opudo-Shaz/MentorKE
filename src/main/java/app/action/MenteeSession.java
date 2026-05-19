@@ -44,7 +44,7 @@ public class MenteeSession extends HttpServlet {
             return;
         }
 
-        String userId = (String) httpSession.getAttribute("userId");
+        String userId = String.valueOf(httpSession.getAttribute("userId"));
         String role = (String) httpSession.getAttribute("role");
 
         // Verify user is a mentee
@@ -84,7 +84,7 @@ public class MenteeSession extends HttpServlet {
             return;
         }
 
-        String userId = (String) httpSession.getAttribute("userId");
+        String userId = String.valueOf(httpSession.getAttribute("userId"));
         String role = (String) httpSession.getAttribute("role");
 
         if (!"mentee".equalsIgnoreCase(role)) {
