@@ -114,6 +114,14 @@ public class MatchRequestBean {
     }
 
     /**
+     * Delete a match request.
+     */
+    public void deleteMatchRequest(String requestId) throws SQLException {
+        logger.info("Deleting match request: {}", requestId);
+        matchRequestDAO.delete(Long.parseLong(requestId));
+    }
+
+    /**
      * Get pending requests for a mentor
      */
     public List<MatchRequest> getPendingRequestsForMentor(String mentorId) throws SQLException {
