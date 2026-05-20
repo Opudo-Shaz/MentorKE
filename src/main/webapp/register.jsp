@@ -3,6 +3,14 @@
 <%@ page import="java.lang.reflect.Modifier" %>
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="java.util.List" %>
+<%
+    String successMessage = (String) request.getAttribute("successMessage");
+    String errorMessage = (String) request.getAttribute("errorMessage");
+    String registeredUsername = (String) request.getAttribute("username");
+    String registeredRole = (String) request.getAttribute("role");
+    boolean registrationSuccess = successMessage != null && !successMessage.isEmpty();
+    String ctx = request.getContextPath();
+%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -268,16 +276,16 @@
 
     <!-- ══════════ NAVBAR ══════════ -->
     <nav class="navbar">
-        <a href="<%= request.getContextPath() %>/app/home/" class="nav-brand">
+        <a href="<%= ctx %>/app/home/" class="nav-brand">
             <div class="nav-brand-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
             </div>
             <span class="nav-brand-name">MentorKE</span>
         </a>
         <div class="nav-links">
-            <a href="<%= request.getContextPath() %>/app/home/">Home</a>
-            <a href="/MentorKE/app/about/">About</a>
-            <a href="<%= request.getContextPath() %>/app/login/" class="btn-outline">Login</a>
+            <a href="<%= ctx %>/app/home/">Home</a>
+            <a href="<%= ctx %>/app/about/">About</a>
+            <a href="<%= ctx %>/app/login/" class="btn-outline">Login</a>
         </div>
     </nav>
 
@@ -335,6 +343,24 @@
                     <p>Fill in your details to get started — it takes less than 2 minutes.</p>
                 </div>
 
+                <% if (registrationSuccess) { %>
+                <div class="reflection-note" style="margin-top:0; margin-bottom:16px; background:#ecfdf5; border-color:#bbf7d0; color:#166534;">
+                    <strong><%= successMessage %></strong>
+                    <% if (registeredUsername != null && registeredRole != null) { %>
+                    <div style="margin-top:6px;">Account: <%= registeredUsername %> (<%= registeredRole %>)</div>
+                    <% } %>
+                    <div style="margin-top:10px;">
+                        <a href="<%= ctx %>/app/login/" style="color:#166534; font-weight:700; text-decoration:underline;">Go to login</a>
+                    </div>
+                </div>
+                <% } %>
+
+                <% if (errorMessage != null && !errorMessage.isEmpty()) { %>
+                <div class="reflection-note" style="margin-top:0; margin-bottom:16px; background:#fef2f2; border-color:#fecaca; color:#b91c1c;">
+                    <strong><%= errorMessage %></strong>
+                </div>
+                <% } %>
+
                 <!-- Role selection -->
                 <div style="margin-bottom:20px;">
                     <div style="font-size:12px; font-weight:500; color:var(--gray-600); margin-bottom:10px;">I want to join as</div>
@@ -362,7 +388,7 @@
                     </div>
                 </div>
 
-                <form action="<%= request.getContextPath() %>/app/register/" method="post">
+                <form action="<%= ctx %>/app/register/" method="post">
 
                     <!-- Hidden role field synced with visual selector -->
                     <input type="hidden" name="role" id="hiddenRole" value="mentee">
@@ -412,6 +438,7 @@
                                 name="<%= fieldName %>"
                                 id="<%= fieldName %>"
                                 placeholder="<%= label.toLowerCase() %>"
+                                value="<%= request.getParameter(fieldName) != null ? request.getParameter(fieldName) : "" %>"
                                 <%= required ? "required" : "" %>
                             >
                             <% } %>
@@ -436,28 +463,28 @@
                                 <label for="educationLevel">Education Level *</label>
                                 <select name="educationLevel" id="educationLevel" required>
                                     <option value="">Select education level</option>
-                                    <option value="Primary">Primary</option>
-                                    <option value="Secondary">Secondary</option>
-                                    <option value="High School">High School</option>
-                                    <option value="Certificate">Certificate</option>
-                                    <option value="Diploma">Diploma</option>
-                                    <option value="Undergraduate">Undergraduate</option>
-                                    <option value="Postgraduate">Postgraduate</option>
-                                    <option value="PhD">PhD</option>
-                                    <option value="Other">Other</option>
+                                    <option value="Primary" <%= "Primary".equals(request.getParameter("educationLevel")) ? "selected" : "" %>>Primary</option>
+                                    <option value="Secondary" <%= "Secondary".equals(request.getParameter("educationLevel")) ? "selected" : "" %>>Secondary</option>
+                                    <option value="High School" <%= "High School".equals(request.getParameter("educationLevel")) ? "selected" : "" %>>High School</option>
+                                    <option value="Certificate" <%= "Certificate".equals(request.getParameter("educationLevel")) ? "selected" : "" %>>Certificate</option>
+                                    <option value="Diploma" <%= "Diploma".equals(request.getParameter("educationLevel")) ? "selected" : "" %>>Diploma</option>
+                                    <option value="Undergraduate" <%= "Undergraduate".equals(request.getParameter("educationLevel")) ? "selected" : "" %>>Undergraduate</option>
+                                    <option value="Postgraduate" <%= "Postgraduate".equals(request.getParameter("educationLevel")) ? "selected" : "" %>>Postgraduate</option>
+                                    <option value="PhD" <%= "PhD".equals(request.getParameter("educationLevel")) ? "selected" : "" %>>PhD</option>
+                                    <option value="Other" <%= "Other".equals(request.getParameter("educationLevel")) ? "selected" : "" %>>Other</option>
                                 </select>
                             </div>
                             <div class="form-group full">
                                 <label for="fieldOfStudy">Field of Study *</label>
-                                <input type="text" name="fieldOfStudy" id="fieldOfStudy" placeholder="e.g., Software Engineering, Business" required>
+                                <input type="text" name="fieldOfStudy" id="fieldOfStudy" placeholder="e.g., Software Engineering, Business" value="<%= request.getParameter("fieldOfStudy") != null ? request.getParameter("fieldOfStudy") : "" %>" required>
                             </div>
                             <div class="form-group full">
                                 <label for="learningGoals">Learning Goals *</label>
-                                <input type="text" name="learningGoals" id="learningGoals" placeholder="What do you want to achieve?" required>
+                                <input type="text" name="learningGoals" id="learningGoals" placeholder="What do you want to achieve?" value="<%= request.getParameter("learningGoals") != null ? request.getParameter("learningGoals") : "" %>" required>
                             </div>
                             <div class="form-group full">
                                 <label for="phoneNumberMentee">Phone Number</label>
-                                <input type="tel" name="phoneNumber" id="phoneNumberMentee" placeholder="+254...">
+                                <input type="tel" name="phoneNumber" id="phoneNumberMentee" placeholder="+254..." value="<%= request.getParameter("phoneNumber") != null ? request.getParameter("phoneNumber") : "" %>">
                             </div>
                         </div>
                     </div>
@@ -468,27 +495,27 @@
                         <div class="fields-grid">
                             <div class="form-group full">
                                 <label for="specialization">Specialization *</label>
-                                <input type="text" name="specialization" id="specialization" placeholder="e.g., Full-Stack Web Development">
+                                <input type="text" name="specialization" id="specialization" placeholder="e.g., Full-Stack Web Development" value="<%= request.getParameter("specialization") != null ? request.getParameter("specialization") : "" %>">
                             </div>
                             <div class="form-group full">
                                 <label for="expertise">Expertise *</label>
-                                <input type="text" name="expertise" id="expertise" placeholder="Your key skills" required>
+                                <input type="text" name="expertise" id="expertise" placeholder="Your key skills" value="<%= request.getParameter("expertise") != null ? request.getParameter("expertise") : "" %>" required>
                             </div>
                             <div class="form-group">
                                 <label for="yearsOfExperience">Years of Experience *</label>
-                                <input type="number" name="yearsOfExperience" id="yearsOfExperience" placeholder="e.g., 5" min="0" required>
+                                <input type="number" name="yearsOfExperience" id="yearsOfExperience" placeholder="e.g., 5" min="0" value="<%= request.getParameter("yearsOfExperience") != null ? request.getParameter("yearsOfExperience") : "" %>" required>
                             </div>
                             <div class="form-group">
                                 <label for="bio">Bio *</label>
-                                <input type="text" name="bio" id="bio" placeholder="Brief bio" required>
+                                <input type="text" name="bio" id="bio" placeholder="Brief bio" value="<%= request.getParameter("bio") != null ? request.getParameter("bio") : "" %>" required>
                             </div>
                             <div class="form-group full">
                                 <label for="qualifications">Qualifications *</label>
-                                <input type="text" name="qualifications" id="qualifications" placeholder="Your certifications and credentials" required>
+                                <input type="text" name="qualifications" id="qualifications" placeholder="Your certifications and credentials" value="<%= request.getParameter("qualifications") != null ? request.getParameter("qualifications") : "" %>" required>
                             </div>
                             <div class="form-group full">
                                 <label for="phoneNumberMentor">Phone Number</label>
-                                <input type="tel" name="phoneNumber" id="phoneNumberMentor" placeholder="+254...">
+                                <input type="tel" name="phoneNumber" id="phoneNumberMentor" placeholder="+254..." value="<%= request.getParameter("phoneNumber") != null ? request.getParameter("phoneNumber") : "" %>">
                             </div>
                         </div>
                     </div>

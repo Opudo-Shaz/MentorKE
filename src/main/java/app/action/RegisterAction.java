@@ -44,7 +44,7 @@ public class RegisterAction extends BaseAction {
             role == null || role.trim().isEmpty()) {
             logger.warn("Validation failed - missing required fields");
             setAttribute(request, "errorMessage", "All fields are required");
-            forward(request, response, "/register-error.jsp");
+            forward(request, response, "/register.jsp");
             return;
         }
 
@@ -64,16 +64,17 @@ public class RegisterAction extends BaseAction {
             logger.info("User registered successfully: username={}, role={}", username, role);
             setAttribute(request, "username", username);
             setAttribute(request, "role", role);
-            forward(request, response, "/register-success.jsp");
+            setAttribute(request, "successMessage", "Registration successful. You can now continue to your dashboard.");
+            forward(request, response, "/register.jsp");
 
         } catch (IllegalArgumentException e) {
             logger.error("Validation error during registration: {}", e.getMessage());
             setAttribute(request, "errorMessage", "Registration failed: " + e.getMessage());
-            forward(request, response, "/register-error.jsp");
+            forward(request, response, "/register.jsp");
         } catch (java.sql.SQLException e) {
             logger.error("Database error during registration: {}", e.getMessage());
             setAttribute(request, "errorMessage", "Error registering user: " + e.getMessage());
-            forward(request, response, "/register-error.jsp");
+            forward(request, response, "/register.jsp");
         }
     }
 }
