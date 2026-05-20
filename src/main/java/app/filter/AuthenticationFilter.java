@@ -11,12 +11,7 @@ import org.slf4j.Logger;
 import java.io.IOException;
 import java.util.Map;
 
-@WebFilter(
-        filterName = "AuthenticationFilter",
-        urlPatterns = {
-                "/app/*"
-        }
-)
+@WebFilter(filterName = "AuthenticationFilter",urlPatterns = {"/app/*"})
 public class AuthenticationFilter implements Filter {
 
     private static final Logger logger =

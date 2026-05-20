@@ -18,11 +18,10 @@ import java.util.List;
 
 /**
  * MentorRequest - framework action for mentor pending requests.
- * The logic still forwards to the existing JSP so the UI theme stays unchanged.
  */
 @ApplicationScoped
 @Action(value = "mentor-requests", label = "Pending Requests", showLink = false)
-public class MentorRequest extends AbstractAction {
+public class MentorRequest extends BaseAction {
 
     private static final Logger logger = AppLogger.getLogger(MentorRequest.class);
 
@@ -72,7 +71,6 @@ public class MentorRequest extends AbstractAction {
 
     /**
      * View pending mentee requests for this mentor.
-     * This forwards to the existing JSP so the existing theme stays intact.
      */
     private app.framework.ActionResponse renderPendingRequests(HttpServletRequest request, HttpServletResponse response) {
         String mentorId = getUserIdString(request);

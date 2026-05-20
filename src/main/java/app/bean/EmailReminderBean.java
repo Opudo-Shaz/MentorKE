@@ -14,11 +14,7 @@ import jakarta.inject.Named;
 import org.slf4j.Logger;
 
 import java.sql.SQLException;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -99,7 +95,7 @@ public class EmailReminderBean {
     /**
      * Send reminder emails to both mentor and mentee for an upcoming session
      */
-    public void sendSessionReminderEmails(Session session) throws SQLException {
+    public void sendSessionReminderEmails(Session session) {
         logger.info("Sending reminder emails for session: {}", session.getId());
 
         try {
@@ -143,7 +139,7 @@ public class EmailReminderBean {
     /**
      * Send a reminder email to mentor about an upcoming session
      */
-    public void sendMentorSessionReminder(String sessionId) throws SQLException {
+    public void sendMentorSessionReminder(String sessionId) {
         logger.info("Sending individual mentor reminder for session: {}", sessionId);
 
         Session session = sessionDAO.findById(Long.parseLong(sessionId));
@@ -155,7 +151,7 @@ public class EmailReminderBean {
     /**
      * Send a reminder email to mentee about an upcoming session
      */
-    public void sendMenteeSessionReminder(String sessionId) throws SQLException {
+    public void sendMenteeSessionReminder(String sessionId) {
         logger.info("Sending individual mentee reminder for session: {}", sessionId);
 
         Session session = sessionDAO.findById(Long.parseLong(sessionId));
@@ -244,7 +240,7 @@ public class EmailReminderBean {
      * Get count of reminders that will be sent in the next run
      * Useful for monitoring/logging
      */
-    public int getUpcomingReminderCount() throws SQLException {
+    public int getUpcomingReminderCount() {
         logger.info("Calculating upcoming reminder count");
 
         List<Session> allSessions = sessionDAO.findAll();

@@ -2,7 +2,7 @@ package app.api;
 
 import app.bean.SessionBean;
 import app.model.Session;
-import com.fasterxml.jackson.databind.JonNode;
+import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;

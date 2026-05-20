@@ -12,7 +12,7 @@ import java.util.List;
 
 @ApplicationScoped
 @Action(value = "mentee", label = "Mentee", linkPosition = 2)
-public class MenteeAction extends AbstractAction {
+public class MenteeAction extends BaseAction {
 
     @Inject private SessionBean sessionBean;
     @Inject private MenteeBean menteeBean;

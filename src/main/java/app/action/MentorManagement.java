@@ -17,7 +17,7 @@ import java.nio.charset.StandardCharsets;
 
 @ApplicationScoped
 @Action(value = "mentor-management", label = "Mentor Management", showLink = false)
-public class MentorManagement extends AbstractAction {
+public class MentorManagement extends BaseAction {
 
     private static final Logger logger = AppLogger.getLogger(MentorManagement.class);
 
