@@ -75,6 +75,13 @@ public class AuthenticationFilter implements Filter {
                         requestPath = requestPath.substring(4);
                 }
 
+                // normalize: remove trailing slashes (but keep root '/')
+                if (requestPath != null && requestPath.length() > 1 && requestPath.endsWith("/")) {
+                        while (requestPath.endsWith("/") && requestPath.length() > 1) {
+                                requestPath = requestPath.substring(0, requestPath.length() - 1);
+                        }
+                }
+
         if (requestPath != null && PUBLIC_PATHS.contains(requestPath)) {
             chain.doFilter(request, response);
             return;

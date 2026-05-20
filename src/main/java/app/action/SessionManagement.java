@@ -155,7 +155,7 @@ public class SessionManagement extends BaseAction {
 
             if (session == null) {
                 setAttribute(request, "errorMessage", "Session not found");
-                redirect(response, "sessions?action=upcoming");
+                redirect(response, request.getContextPath() + "/app/sessions/upcoming");
                 return;
             }
 
@@ -240,7 +240,7 @@ public class SessionManagement extends BaseAction {
 
             if (session == null) {
                 setAttribute(request, "errorMessage", "Session not found");
-                redirect(response, "sessions?action=upcoming");
+                redirect(response, request.getContextPath() + "/app/sessions/upcoming");
                 return;
             }
 
@@ -251,7 +251,7 @@ public class SessionManagement extends BaseAction {
 
             sessionBean.cancelSession(sessionId);
             setAttribute(request, "successMessage", "Session cancelled successfully.");
-            redirect(response, "sessions?action=upcoming");
+            redirect(response, request.getContextPath() + "/app/sessions/upcoming");
 
         } catch (Exception e) {
             logger.error("Error cancelling session", e);

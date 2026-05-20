@@ -1,12 +1,12 @@
 package app.dao;
 
 import app.model.AuditTrail;
-import jakarta.enterprise.context.Dependent;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.TypedQuery;
 
 import java.util.List;
 
-@Dependent
+@ApplicationScoped
 public class AuditTrailDAO extends GenericDAO<AuditTrail, Long> {
 
     // Get all audit trails ordered by timestamp

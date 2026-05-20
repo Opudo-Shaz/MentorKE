@@ -38,21 +38,21 @@ public class Messaging extends BaseAction {
 
     @ActionGetMethod("conversation")
     public void conversation(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        if (!isLoggedIn(request)) { redirect(response, "login"); return; }
+        if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
         String userId = getUserId(request);
         handleConversation(request, response, userId);
     }
 
     @ActionGetMethod("unread-count")
     public void unreadCount(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        if (!isLoggedIn(request)) { redirect(response, "login"); return; }
+        if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
         String userId = getUserId(request);
         handleUnreadCount(request, response, userId);
     }
 
     @ActionGetMethod("list-conversations")
     public void listConversations(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        if (!isLoggedIn(request)) { redirect(response, "login"); return; }
+        if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
         String userId = getUserId(request);
         handleListConversations(request, response, userId);
     }
@@ -64,14 +64,14 @@ public class Messaging extends BaseAction {
 
     @ActionPostMethod("send-message")
     public void sendMessage(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        if (!isLoggedIn(request)) { redirect(response, "login"); return; }
+        if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
         String userId = getUserId(request);
         handleSendMessage(request, response, userId);
     }
 
     @ActionPostMethod("mark-read")
     public void markRead(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        if (!isLoggedIn(request)) { redirect(response, "login"); return; }
+        if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
         String userId = getUserId(request);
         handleMarkAsRead(request, response, userId);
     }

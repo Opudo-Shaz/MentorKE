@@ -119,9 +119,9 @@ public class LoginAction extends BaseAction {
         if ("admin".equalsIgnoreCase(role)) {
             response.sendRedirect(ctx + "/app/admin/");
         } else if ("mentor".equalsIgnoreCase(role)) {
-            response.sendRedirect(ctx + "/mentor-dashboard");
+            response.sendRedirect(ctx + "/app/mentor-dashboard/");
         } else if ("mentee".equalsIgnoreCase(role)) {
-            response.sendRedirect(ctx + "/mentee-dashboard");
+            response.sendRedirect(ctx + "/app/mentee-dashboard/");
         } else {
             response.sendRedirect(ctx + "/app/login/");
         }

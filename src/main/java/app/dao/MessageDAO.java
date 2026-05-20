@@ -1,12 +1,12 @@
 package app.dao;
 
 import app.model.Message;
-import jakarta.enterprise.context.Dependent;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.TypedQuery;
 
 import java.util.List;
 
-@Dependent
+@ApplicationScoped
 public class MessageDAO extends GenericDAO<Message, Long> {
 
     private static final String USER_ID = "userId";

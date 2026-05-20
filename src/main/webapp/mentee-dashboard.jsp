@@ -465,13 +465,13 @@
 
         <!-- QUICK ACTIONS -->
         <div class="action-grid">
-            <a href="mentee-sessions?action=browse" class="action-card">
+            <a href="<%= request.getContextPath() %>/app/mentee-sessions/browse" class="action-card">
                 <div class="action-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
                 </div>
                 <span class="action-label">Browse<br>Mentors</span>
             </a>
-            <a href="mentee-sessions?action=my-requests" class="action-card">
+            <a href="<%= request.getContextPath() %>/app/mentee-sessions/my-requests" class="action-card">
                 <div class="action-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                 </div>
@@ -743,7 +743,7 @@
  <script>
      /* ── Unread message count polling ── */
      function updateUnreadCount() {
-         fetch('messaging?action=unread-count', { credentials: 'same-origin' })
+         fetch('<%= request.getContextPath() %>/app/messaging/unread-count', { credentials: 'same-origin' })
              .then(response => response.json())
              .then(data => {
                  var badge = document.getElementById('unreadBadge');

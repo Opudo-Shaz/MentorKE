@@ -1,12 +1,12 @@
 package app.dao;
 
 import app.model.User;
-import jakarta.enterprise.context.Dependent;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.TypedQuery;
 
 import java.util.List;
 
-@Dependent
+@ApplicationScoped
 public class UserDAO extends GenericDAO<User, Long> {
 
     // Find user by username

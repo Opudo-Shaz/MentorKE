@@ -1,12 +1,12 @@
 package app.dao;
 
 import app.model.Mentor;
-import jakarta.enterprise.context.Dependent;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.TypedQuery;
 
 import java.util.List;
 
-@Dependent
+@ApplicationScoped
 public class MentorDAO extends GenericDAO<Mentor, Long> {
 
     public Mentor getMentorByUsername(String username) {

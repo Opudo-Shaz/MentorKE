@@ -2,7 +2,9 @@ package app.action;
 
 import app.bean.SessionMatchingBean;
 import app.bean.MatchRequestBean;
+import app.bean.MenteeBean;
 import app.bean.MentorBean;
+import app.model.Mentee;
 import app.model.Mentor;
 import app.model.MatchRequest;
 import jakarta.inject.Inject;
@@ -31,6 +33,9 @@ public class MenteeSession extends BaseAction {
     private MatchRequestBean matchRequestBean;
 
     @Inject
+    private MenteeBean menteeBean;
+
+    @Inject
     private MentorBean mentorBean;
 
     @ActionGetMethod("browse")
@@ -38,7 +43,18 @@ public class MenteeSession extends BaseAction {
         if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
         if (!requireRole(request, response, "mentee")) return;
         String userId = getUserId(request);
-        handleBrowseMentors(request, response, userId);
+        String specialization = request.getParameter("specialization");
+        if (specialization == null || specialization.trim().isEmpty()) {
+            try {
+                Mentee mentee = menteeBean.getMenteeByUserId(userId);
+                if (mentee != null && mentee.getFieldOfStudy() != null && !mentee.getFieldOfStudy().trim().isEmpty()) {
+                    specialization = mentee.getFieldOfStudy();
+                }
+            } catch (Exception e) {
+                logger.warn("Could not load mentee profile for specialization lookup: {}", userId, e);
+            }
+        }
+        handleBrowseMentors(request, response, userId, specialization);
     }
 
     @ActionGetMethod("request")
@@ -80,7 +96,7 @@ public class MenteeSession extends BaseAction {
 
         matchRequestBean.requestMentor(userId, mentorId, specialization);
         request.setAttribute("successMessage", "Request sent to mentor successfully!");
-        handleBrowseMentors(request, response, userId);
+        handleBrowseMentors(request, response, userId, specialization);
     }
 
     @ActionPostMethod("cancel-request")
@@ -101,16 +117,14 @@ public class MenteeSession extends BaseAction {
     /**
      * Browse available mentors
      */
-    private void handleBrowseMentors(HttpServletRequest request, HttpServletResponse response, String userId) 
+    private void handleBrowseMentors(HttpServletRequest request, HttpServletResponse response, String userId, String specialization) 
             throws ServletException, IOException {
         
         logger.info("Mentee {} browsing mentors", userId);
-
-        String specialization = request.getParameter("specialization");
         List<Mentor> mentors;
 
         try {
-            if (specialization != null && !specialization.isEmpty()) {
+            if (specialization != null && !specialization.trim().isEmpty()) {
                 mentors = sessionMatchingBean.findMentorsBySpecialization(specialization);
             } else {
                 mentors = mentorBean.getAllMentors();
@@ -143,7 +157,7 @@ public class MenteeSession extends BaseAction {
                 request.getRequestDispatcher("/request-mentor.jsp").forward(request, response);
             } else {
                 request.setAttribute("errorMessage", "Mentor not found");
-                handleBrowseMentors(request, response, userId);
+                handleBrowseMentors(request, response, userId, request.getParameter("specialization"));
             }
         } catch (Exception e) {
             logger.error("Error viewing mentor request form", e);
@@ -190,7 +204,7 @@ public class MenteeSession extends BaseAction {
                 request.getRequestDispatcher("/mentor-profile.jsp").forward(request, response);
             } else {
                 request.setAttribute("errorMessage", "Mentor not found");
-                response.sendRedirect("mentee-dashboard");
+                response.sendRedirect(request.getContextPath() + "/app/mentee-dashboard/");
             }
         } catch (Exception e) {
             logger.error("Error viewing mentor profile", e);

@@ -2,17 +2,18 @@
 <%
     String username = (String) request.getAttribute("username");
     String role = (String) request.getAttribute("role");
+    String ctx = request.getContextPath();
     String dashboardUrl = "";
     String dashboardName = "";
 
     if ("mentor".equalsIgnoreCase(role)) {
-        dashboardUrl = "mentor-dashboard";
+        dashboardUrl = ctx + "/app/mentor-dashboard/";
         dashboardName = "Mentor Dashboard";
     } else if ("mentee".equalsIgnoreCase(role)) {
-        dashboardUrl = "mentee-dashboard";
+        dashboardUrl = ctx + "/app/mentee-dashboard/";
         dashboardName = "Mentee Dashboard";
     } else if ("admin".equalsIgnoreCase(role)) {
-        dashboardUrl = "admin";
+        dashboardUrl = ctx + "/app/admin/";
         dashboardName = "Admin Dashboard";
     }
 %>

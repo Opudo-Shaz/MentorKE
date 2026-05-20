@@ -1,12 +1,12 @@
 package app.dao;
 
 import app.model.Mentee;
-import jakarta.enterprise.context.Dependent;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.TypedQuery;
 
 import java.util.List;
 
-@Dependent
+@ApplicationScoped
 public class MenteeDAO extends GenericDAO<Mentee, Long> {
 
     public Mentee getMenteeByUsername(String username) {

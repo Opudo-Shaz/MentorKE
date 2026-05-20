@@ -1,12 +1,12 @@
 package app.dao;
 
 import app.model.MatchRequest;
-import jakarta.enterprise.context.Dependent;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.TypedQuery;
 
 import java.util.List;
 
-@Dependent
+@ApplicationScoped
 public class MatchRequestDAO extends GenericDAO<MatchRequest, Long> {
 
     // Get pending match requests for a mentor

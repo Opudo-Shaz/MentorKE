@@ -1,13 +1,13 @@
 package app.dao;
 
 import app.model.Session;
-import jakarta.enterprise.context.Dependent;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.TypedQuery;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Dependent
+@ApplicationScoped
 public class SessionDAO extends GenericDAO<Session, Long> {
 
     // Get sessions for a mentor
