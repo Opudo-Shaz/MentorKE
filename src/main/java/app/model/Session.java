@@ -1,6 +1,7 @@
 package app.model;
 
 import jakarta.persistence.*;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import java.io.Serial;
@@ -9,38 +10,49 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "sessions")
+@Getter
+@Setter
+@NoArgsConstructor
+@ToString(onlyExplicitlyIncluded = true)
 public class Session implements Serializable {
+
     @Serial
     private static final long serialVersionUID = 1L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
+    @ToString.Include
     private Long id;
 
     @Column(name = "mentor_id", length = 50, nullable = false)
+    @ToString.Include
     private String mentorId;
 
     @Column(name = "mentee_id", length = 50, nullable = false)
+    @ToString.Include
     private String menteeId;
 
     @Column(name = "session_link", length = 255)
-    private String sessionLink;
+    private String sessionLink;               
 
     @Column(name = "scheduled_date", nullable = false)
+    @ToString.Include
     private LocalDateTime scheduledDate;
 
     @Column(name = "duration_minutes")
-    private Integer durationMinutes;
+    private Integer durationMinutes;          
 
     @Column(name = "status", length = 50)
+    @ToString.Include
     private String status;
 
     @Column(name = "topic", columnDefinition = "TEXT")
+    @ToString.Include
     private String topic;
 
     @Column(name = "notes", columnDefinition = "TEXT")
-    private String notes;
+    private String notes;                     // excluded — TEXT field, can be large
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false)
@@ -50,9 +62,7 @@ public class Session implements Serializable {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    public Session() {
-    }
-
+    @Builder
     public Session(String mentorId, String menteeId, LocalDateTime scheduledDate,
                    Integer durationMinutes, String topic) {
         this.mentorId = mentorId;
@@ -60,107 +70,6 @@ public class Session implements Serializable {
         this.scheduledDate = scheduledDate;
         this.durationMinutes = durationMinutes;
         this.topic = topic;
-        this.status = "PENDING";
-    }
-
-    // ...existing code...
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getMentorId() {
-        return mentorId;
-    }
-
-    public void setMentorId(String mentorId) {
-        this.mentorId = mentorId;
-    }
-
-    public String getMenteeId() {
-        return menteeId;
-    }
-
-    public void setMenteeId(String menteeId) {
-        this.menteeId = menteeId;
-    }
-
-    public String getSessionLink() {
-        return sessionLink;
-    }
-
-    public void setSessionLink(String sessionLink) {
-        this.sessionLink = sessionLink;
-    }
-
-    public LocalDateTime getScheduledDate() {
-        return scheduledDate;
-    }
-
-    public void setScheduledDate(LocalDateTime scheduledDate) {
-        this.scheduledDate = scheduledDate;
-    }
-
-    public Integer getDurationMinutes() {
-        return durationMinutes;
-    }
-
-    public void setDurationMinutes(Integer durationMinutes) {
-        this.durationMinutes = durationMinutes;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public String getTopic() {
-        return topic;
-    }
-
-    public void setTopic(String topic) {
-        this.topic = topic;
-    }
-
-    public String getNotes() {
-        return notes;
-    }
-
-    public void setNotes(String notes) {
-        this.notes = notes;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    @Override
-    public String toString() {
-        return "Session{" +
-                "id='" + id + '\'' +
-                ", mentorId='" + mentorId + '\'' +
-                ", menteeId='" + menteeId + '\'' +
-                ", scheduledDate=" + scheduledDate +
-                ", status='" + status + '\'' +
-                ", topic='" + topic + '\'' +
-                '}';
+        this.status = "PENDING";              // default preserved
     }
 }

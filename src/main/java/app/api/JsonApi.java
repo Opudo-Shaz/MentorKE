@@ -2,12 +2,16 @@ package app.api;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 public final class JsonApi {
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = new ObjectMapper()
+            .registerModule(new JavaTimeModule())                    // handles LocalDateTime
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // ISO-8601 strings, not arrays
 
     private JsonApi() {
     }
@@ -38,10 +42,15 @@ public final class JsonApi {
 
     private static Response json(Response.ResponseBuilder builder, Object value) {
         try {
-            return builder.type(MediaType.APPLICATION_JSON).entity(MAPPER.writeValueAsString(value)).build();
+            return builder
+                    .type(MediaType.APPLICATION_JSON)
+                    .entity(MAPPER.writeValueAsString(value))
+                    .build();
         } catch (JsonProcessingException e) {
-            return Response.serverError().type(MediaType.APPLICATION_JSON)
-                    .entity("{\"error\":\"Failed to serialize response\"}").build();
+            return Response.serverError()
+                    .type(MediaType.APPLICATION_JSON)
+                    .entity("{\"error\":\"Failed to serialize response\"}")
+                    .build();
         }
     }
 

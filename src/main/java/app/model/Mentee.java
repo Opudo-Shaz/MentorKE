@@ -1,19 +1,19 @@
 package app.model;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import jakarta.validation.constraints.*;
+import lombok.*;
 import java.io.Serial;
 import java.io.Serializable;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "mentees")
+@Getter
+@Setter
+@NoArgsConstructor
+@ToString(onlyExplicitlyIncluded = true, callSuper = false)
 public class Mentee extends User implements Serializable {
+
     @Serial
     private static final long serialVersionUID = 1L;
 
@@ -24,22 +24,27 @@ public class Mentee extends User implements Serializable {
     @NotBlank
     @Size(max = 100)
     @Column(name = "education_level", length = 100)
+    @ToString.Include
     private String educationLevel;
 
     @NotBlank
     @Size(max = 100)
     @Column(name = "field_of_study", length = 100)
+    @ToString.Include
     private String fieldOfStudy;
 
     @Size(max = 5000)
     @Column(name = "learning_goals", columnDefinition = "TEXT")
+    @ToString.Include
     private String learningGoals;
 
     @Pattern(regexp = "^$|^[0-9+()\\-\\s]{7,20}$")
     @Size(max = 20)
     @Column(name = "phone_number", length = 20)
+    @ToString.Include
     private String phoneNumber;
 
+    @Builder
     public Mentee(Long id, Long userId, String educationLevel, String fieldOfStudy,
                   String learningGoals, String phoneNumber, String mentorId, String status) {
         setId(id);
@@ -52,8 +57,7 @@ public class Mentee extends User implements Serializable {
         setStatus(status);
     }
 
-    public Mentee() {
-    }
+    // --- Identity bridge (delegates to inherited id) ---
 
     @Transient
     public Long getUserId() {
@@ -63,6 +67,8 @@ public class Mentee extends User implements Serializable {
     public void setUserId(Long userId) {
         setId(userId);
     }
+
+    // --- User bridge (bulk copy from a detached User object) ---
 
     public User getUser() {
         return this;
@@ -80,7 +86,6 @@ public class Mentee extends User implements Serializable {
             setUpdatedAt(null);
             return;
         }
-
         setId(user.getId());
         setUsername(user.getUsername());
         setPassword(user.getPassword());
@@ -91,49 +96,14 @@ public class Mentee extends User implements Serializable {
         setUpdatedAt(user.getUpdatedAt());
     }
 
-    public String getEducationLevel() {
-        return educationLevel;
-    }
-
-    public void setEducationLevel(String educationLevel) {
-        this.educationLevel = educationLevel;
-    }
-
-    public String getFieldOfStudy() {
-        return fieldOfStudy;
-    }
-
-    public void setFieldOfStudy(String fieldOfStudy) {
-        this.fieldOfStudy = fieldOfStudy;
-    }
-
-    public String getLearningGoals() {
-        return learningGoals;
-    }
-
-    public void setLearningGoals(String learningGoals) {
-        this.learningGoals = learningGoals;
-    }
-
-    public String getPhoneNumber() {
-        return phoneNumber;
-    }
-
-    public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
-    }
-
-    public Mentor getMentor() {
-        return mentor;
-    }
-
-    public void setMentor(Mentor mentor) {
-        this.mentor = mentor;
-    }
+    // --- Mentor FK convenience accessors ---
 
     @Transient
+    @ToString.Include
     public String getMentorId() {
-        return mentor != null && mentor.getId() != null ? String.valueOf(mentor.getId()) : null;
+        return mentor != null && mentor.getId() != null
+                ? String.valueOf(mentor.getId())
+                : null;
     }
 
     public void setMentorId(String mentorId) {
@@ -141,31 +111,8 @@ public class Mentee extends User implements Serializable {
             this.mentor = null;
             return;
         }
-
         Mentor reference = new Mentor();
         reference.setId(Long.parseLong(mentorId));
         this.mentor = reference;
-    }
-
-    public String getStatus() {
-        return super.getStatus();
-    }
-
-    public void setStatus(String status) {
-        super.setStatus(status);
-    }
-
-    @Override
-    public String toString() {
-        return "Mentee{" +
-            "id='" + getId() + '\'' +
-                ", userId='" + getUserId() + '\'' +
-                ", educationLevel='" + educationLevel + '\'' +
-                ", fieldOfStudy='" + fieldOfStudy + '\'' +
-                ", learningGoals='" + learningGoals + '\'' +
-                ", phoneNumber='" + phoneNumber + '\'' +
-                ", mentorId='" + getMentorId() + '\'' +
-            ", status='" + getStatus() + '\'' +
-                '}';
     }
 }
