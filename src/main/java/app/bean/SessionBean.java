@@ -175,6 +175,8 @@ public class SessionBean {
         }
     }
 
+    
+
     /**
      * Add notes to a session (typically after completion)
      */

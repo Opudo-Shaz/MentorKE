@@ -17,7 +17,6 @@ public class MenteeAction extends BaseAction {
     @Inject private SessionBean sessionBean;
     @Inject private MenteeBean menteeBean;
     @Inject private MentorKeFramework framework;
-    @Inject private app.dao.SessionDAO sessionDAO;
 
     @ActionGetMethod("sessions")
     public ActionResponse sessions(HttpServletRequest req) {
@@ -39,8 +38,7 @@ public class MenteeAction extends BaseAction {
     public ActionResponse create(@ActionRequestBody Session session, HttpServletRequest req) {
         String userId = getUserIdString(req);
         session.setMenteeId(userId);
-        // use DAO save directly; bean scheduling uses different signature
-        sessionDAO.save(session);
+        sessionBean.save(session);
         try {
             return new ActionResponse(Session.class, sessionBean.getSessionsByMentee(userId));
         } catch (Exception e) {
@@ -54,7 +52,7 @@ public class MenteeAction extends BaseAction {
         try {
             Session s = sessionBean.getSession(String.valueOf(id));
             if (s != null && userId.equals(s.getMenteeId())) {
-                sessionDAO.delete(id);
+                sessionBean.delete(sessionBean.getSession(String.valueOf(id)));
             }
             return new ActionResponse(Session.class, sessionBean.getSessionsByMentee(userId));
         } catch (Exception e) {

@@ -43,7 +43,7 @@ public class ActionRegistry {
 
             String actionMethodPath = ("/" + actionPath + "/" + methodPath)
                     .replaceAll("//+", "/");
-
+// /mentee/session
             ActionMap actionMap = new ActionMap(clazz, method, httpMethod, actionMethodPath);
             mappings.computeIfAbsent(httpMethod, k -> new ArrayList<>()).add(actionMap);
             System.out.println("Mapped: " + actionMethodPath + " [" + httpMethod + "]");
