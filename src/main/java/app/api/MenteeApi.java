@@ -1,6 +1,8 @@
 package app.api;
 
 import app.bean.MenteeBean;
+import app.dtos.MenteeRequestDto;
+import app.dtos.MenteeResponseDto;
 import app.model.Mentee;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -36,7 +38,7 @@ public class MenteeApi {
         responseCode = "200",
         description = "Mentee found",
         content = @Content(mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = Mentee.class))
+                schema = @Schema(implementation = MenteeResponseDto.class))
     )
     @APIResponse(responseCode = "404", description = "Mentee not found")
     @APIResponse(responseCode = "400", description = "Unexpected error")
@@ -48,7 +50,7 @@ public class MenteeApi {
             if (mentee == null) {
                 return JsonApi.notFound("Mentee not found");
             }
-            return JsonApi.ok(mentee);
+            return JsonApi.ok(MenteeResponseDto.fromEntity(mentee));
         } catch (Exception e) {
             return JsonApi.badRequest(e.getMessage());
         }
@@ -64,14 +66,16 @@ public class MenteeApi {
         responseCode = "200",
         description = "List of mentees",
         content = @Content(mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = Mentee.class))
+                schema = @Schema(implementation = MenteeResponseDto.class))
     )
     @APIResponse(responseCode = "400", description = "Unexpected error")
     public Response menteesByMentor(
         @Parameter(description = "ID of the mentor", required = true)
         @PathParam("mentorId") String mentorId) {
         try {
-            List<Mentee> mentees = menteeBean.getMenteesByMentorId(mentorId);
+            List<MenteeResponseDto> mentees = menteeBean.getMenteesByMentorId(mentorId).stream()
+                    .map(MenteeResponseDto::fromEntity)
+                    .toList();
             return JsonApi.ok(mentees);
         } catch (Exception e) {
             return JsonApi.badRequest(e.getMessage());
@@ -88,13 +92,13 @@ public class MenteeApi {
         description = "Mentee object to create",
         required = true,
         content = @Content(mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = Mentee.class))
+                schema = @Schema(implementation = MenteeRequestDto.class))
     )
     @APIResponse(
         responseCode = "201",
         description = "Mentee created successfully",
         content = @Content(mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = Mentee.class))
+                schema = @Schema(implementation = MenteeResponseDto.class))
     )
     @APIResponse(responseCode = "400", description = "Invalid input or missing body")
     public Response createMentee(String body) {
@@ -102,9 +106,9 @@ public class MenteeApi {
             if (body == null || body.isBlank()) {
                 return JsonApi.badRequest("Request body is required");
             }
-            Mentee mentee = JsonApi.read(body, Mentee.class);
+            Mentee mentee = JsonApi.read(body, MenteeRequestDto.class).toEntity();
             menteeBean.addMenteeAdmin(mentee);
-            return JsonApi.created(mentee);
+            return JsonApi.created(MenteeResponseDto.fromEntity(mentee));
         } catch (Exception e) {
             return JsonApi.badRequest(e.getMessage());
         }
@@ -121,13 +125,13 @@ public class MenteeApi {
         description = "Updated mentee object",
         required = true,
         content = @Content(mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = Mentee.class))
+                schema = @Schema(implementation = MenteeRequestDto.class))
     )
     @APIResponse(
         responseCode = "200",
         description = "Mentee updated successfully",
         content = @Content(mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = Mentee.class))
+                schema = @Schema(implementation = MenteeResponseDto.class))
     )
     @APIResponse(responseCode = "400", description = "Invalid input or missing body")
     public Response updateMentee(
@@ -137,9 +141,9 @@ public class MenteeApi {
             if (body == null || body.isBlank()) {
                 return JsonApi.badRequest("Request body is required");
             }
-            Mentee mentee = JsonApi.read(body, Mentee.class);
+            Mentee mentee = JsonApi.read(body, MenteeRequestDto.class).toEntity();
             menteeBean.updateMentee(menteeId, mentee);
-            return JsonApi.ok(menteeBean.getMenteeById(menteeId));
+            return JsonApi.ok(MenteeResponseDto.fromEntity(menteeBean.getMenteeById(menteeId)));
         } catch (Exception e) {
             return JsonApi.badRequest(e.getMessage());
         }

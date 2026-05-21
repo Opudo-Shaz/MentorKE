@@ -1,5 +1,6 @@
 package app.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
@@ -20,6 +21,7 @@ public class Mentor extends User implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @OneToMany(mappedBy = "mentor")
+    @JsonIgnore
     private List<Mentee> mentees = new ArrayList<>();
 
     @NotBlank

@@ -1,6 +1,10 @@
 package app.api;
 
 import app.bean.SessionBean;
+import app.dtos.SessionCreateRequestDto;
+import app.dtos.SessionCreatedResponseDto;
+import app.dtos.SessionResponseDto;
+import app.dtos.SessionUpdateRequestDto;
 import app.model.Session;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -37,14 +41,16 @@ public class SessionApi {
         responseCode = "200",
         description = "List of upcoming sessions",
         content = @Content(mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = Session.class))
+                schema = @Schema(implementation = SessionResponseDto.class))
     )
     @APIResponse(responseCode = "400", description = "Unexpected error")
     public Response upcoming(
         @Parameter(description = "ID of the mentor or mentee", required = true)
         @PathParam("userId") String userId) {
         try {
-            List<Session> sessions = sessionBean.getUpcomingSessions(userId);
+            List<SessionResponseDto> sessions = sessionBean.getUpcomingSessions(userId).stream()
+                    .map(SessionResponseDto::fromEntity)
+                    .toList();
             return JsonApi.ok(sessions);
         } catch (Exception e) {
             return JsonApi.badRequest(e.getMessage());
@@ -61,14 +67,16 @@ public class SessionApi {
         responseCode = "200",
         description = "List of completed sessions",
         content = @Content(mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = Session.class))
+                schema = @Schema(implementation = SessionResponseDto.class))
     )
     @APIResponse(responseCode = "400", description = "Unexpected error")
     public Response completed(
         @Parameter(description = "ID of the mentor or mentee", required = true)
         @PathParam("userId") String userId) {
         try {
-            List<Session> sessions = sessionBean.getCompletedSessions(userId);
+            List<SessionResponseDto> sessions = sessionBean.getCompletedSessions(userId).stream()
+                    .map(SessionResponseDto::fromEntity)
+                    .toList();
             return JsonApi.ok(sessions);
         } catch (Exception e) {
             return JsonApi.badRequest(e.getMessage());
@@ -85,7 +93,7 @@ public class SessionApi {
         responseCode = "200",
         description = "Session found",
         content = @Content(mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = Session.class))
+                schema = @Schema(implementation = SessionResponseDto.class))
     )
     @APIResponse(responseCode = "404", description = "Session not found")
     @APIResponse(responseCode = "400", description = "Unexpected error")
@@ -97,7 +105,7 @@ public class SessionApi {
             if (session == null) {
                 return JsonApi.notFound("Session not found");
             }
-            return JsonApi.ok(session);
+            return JsonApi.ok(SessionResponseDto.fromEntity(session));
         } catch (Exception e) {
             return JsonApi.badRequest(e.getMessage());
         }
@@ -113,13 +121,13 @@ public class SessionApi {
         description = "Session details — mentorId, menteeId, scheduledDate, and durationMinutes are required",
         required = true,
         content = @Content(mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = SessionCreateRequest.class))
+                schema = @Schema(implementation = SessionCreateRequestDto.class))
     )
     @APIResponse(
         responseCode = "201",
         description = "Session scheduled successfully",
         content = @Content(mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = SessionCreatedResponse.class))
+                schema = @Schema(implementation = SessionCreatedResponseDto.class))
     )
     @APIResponse(responseCode = "400", description = "Missing or invalid fields")
     public Response createSession(String body) {
@@ -127,15 +135,15 @@ public class SessionApi {
             if (body == null || body.isBlank()) {
                 return JsonApi.badRequest("Request body is required");
             }
-            SessionCreateRequest request = JsonApi.read(body, SessionCreateRequest.class);
+            SessionCreateRequestDto request = JsonApi.read(body, SessionCreateRequestDto.class);
             validateSessionCreateRequest(request);
             String sessionId = sessionBean.scheduleSession(
-                    request.mentorId(),
-                    request.menteeId(),
-                    LocalDateTime.parse(request.scheduledDate()),
-                    request.durationMinutes(),
-                    request.topic());
-            return JsonApi.created(new SessionCreatedResponse(sessionId));
+                    request.getMentorId(),
+                    request.getMenteeId(),
+                    LocalDateTime.parse(request.getScheduledDate()),
+                    request.getDurationMinutes(),
+                    request.getTopic());
+            return JsonApi.created(new SessionCreatedResponseDto(sessionId));
         } catch (Exception e) {
             return JsonApi.badRequest(e.getMessage());
         }
@@ -152,13 +160,13 @@ public class SessionApi {
         description = "Fields to update — provide status, notes, or both",
         required = true,
         content = @Content(mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = SessionUpdateRequest.class))
+                schema = @Schema(implementation = SessionUpdateRequestDto.class))
     )
     @APIResponse(
         responseCode = "200",
         description = "Session updated successfully",
         content = @Content(mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = Session.class))
+                schema = @Schema(implementation = SessionResponseDto.class))
     )
     @APIResponse(responseCode = "400", description = "Invalid input or missing body")
     public Response updateSession(
@@ -168,14 +176,14 @@ public class SessionApi {
             if (body == null || body.isBlank()) {
                 return JsonApi.badRequest("Request body is required");
             }
-            SessionUpdateRequest request = JsonApi.read(body, SessionUpdateRequest.class);
-            if (request.status() != null && !request.status().isBlank()) {
-                sessionBean.updateSessionStatus(sessionId, request.status());
+            SessionUpdateRequestDto request = JsonApi.read(body, SessionUpdateRequestDto.class);
+            if (request.getStatus() != null && !request.getStatus().isBlank()) {
+                sessionBean.updateSessionStatus(sessionId, request.getStatus());
             }
-            if (request.notes() != null && !request.notes().isBlank()) {
-                sessionBean.addSessionNotes(sessionId, request.notes());
+            if (request.getNotes() != null && !request.getNotes().isBlank()) {
+                sessionBean.addSessionNotes(sessionId, request.getNotes());
             }
-            return JsonApi.ok(sessionBean.getSession(sessionId));
+            return JsonApi.ok(SessionResponseDto.fromEntity(sessionBean.getSession(sessionId)));
         } catch (Exception e) {
             return JsonApi.badRequest(e.getMessage());
         }
@@ -200,60 +208,21 @@ public class SessionApi {
         }
     }
 
-    private void validateSessionCreateRequest(SessionCreateRequest request) {
+    private void validateSessionCreateRequest(SessionCreateRequestDto request) {
         if (request == null) {
             throw new IllegalArgumentException("Request body is required");
         }
-        if (request.mentorId() == null || request.mentorId().isBlank()) {
+        if (request.getMentorId() == null || request.getMentorId().isBlank()) {
             throw new IllegalArgumentException("mentorId is required");
         }
-        if (request.menteeId() == null || request.menteeId().isBlank()) {
+        if (request.getMenteeId() == null || request.getMenteeId().isBlank()) {
             throw new IllegalArgumentException("menteeId is required");
         }
-        if (request.scheduledDate() == null || request.scheduledDate().isBlank()) {
+        if (request.getScheduledDate() == null || request.getScheduledDate().isBlank()) {
             throw new IllegalArgumentException("scheduledDate is required");
         }
-        if (request.durationMinutes() == null) {
+        if (request.getDurationMinutes() == null) {
             throw new IllegalArgumentException("durationMinutes is required");
         }
     }
-
-    @Schema(description = "Payload for scheduling a new session")
-    public record SessionCreateRequest(
-        @Schema(description = "ID of the mentor", required = true, example = "7")
-        String mentorId,
-
-        @Schema(description = "ID of the mentee", required = true, example = "42")
-        String menteeId,
-
-        @Schema(description = "ISO-8601 datetime for the session", required = true,
-                example = "2025-06-01T10:00:00")
-        String scheduledDate,
-
-        @Schema(description = "Duration of the session in minutes", required = true,
-                example = "60")
-        Integer durationMinutes,
-
-        @Schema(description = "Topic to be covered in the session",
-                example = "Introduction to System Design")
-        String topic
-    ) {}
-
-    @Schema(description = "Payload for updating an existing session")
-    public record SessionUpdateRequest(
-        @Schema(description = "New session status",
-                example = "COMPLETED",
-                enumeration = {"PENDING", "CONFIRMED", "COMPLETED", "CANCELLED"})
-        String status,
-
-        @Schema(description = "Notes or feedback from the session",
-                example = "Covered SOLID principles and reviewed code structure")
-        String notes
-    ) {}
-
-    @Schema(description = "Response returned after a session is scheduled")
-    public record SessionCreatedResponse(
-        @Schema(description = "ID of the newly created session", example = "101")
-        String sessionId
-    ) {}
 }

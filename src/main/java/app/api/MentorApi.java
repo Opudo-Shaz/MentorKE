@@ -1,6 +1,8 @@
 package app.api;
 
 import app.bean.MentorBean;
+import app.dtos.MentorRequestDto;
+import app.dtos.MentorResponseDto;
 import app.model.Mentor;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -35,12 +37,14 @@ public class MentorApi {
         responseCode = "200",
         description = "List of mentors",
         content = @Content(mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = Mentor.class))
+                schema = @Schema(implementation = MentorResponseDto.class))
     )
     @APIResponse(responseCode = "400", description = "Unexpected error")
     public Response listMentors() {
         try {
-            List<Mentor> mentors = mentorBean.getAllMentors();
+            List<MentorResponseDto> mentors = mentorBean.getAllMentors().stream()
+                    .map(MentorResponseDto::fromEntity)
+                    .toList();
             return JsonApi.ok(mentors);
         } catch (Exception e) {
             return JsonApi.badRequest(e.getMessage());
@@ -57,7 +61,7 @@ public class MentorApi {
         responseCode = "200",
         description = "Mentor found",
         content = @Content(mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = Mentor.class))
+                schema = @Schema(implementation = MentorResponseDto.class))
     )
     @APIResponse(responseCode = "404", description = "Mentor not found")
     @APIResponse(responseCode = "400", description = "Unexpected error")
@@ -69,7 +73,7 @@ public class MentorApi {
             if (mentor == null) {
                 return JsonApi.notFound("Mentor not found");
             }
-            return JsonApi.ok(mentor);
+            return JsonApi.ok(MentorResponseDto.fromEntity(mentor));
         } catch (Exception e) {
             return JsonApi.badRequest(e.getMessage());
         }
@@ -85,16 +89,17 @@ public class MentorApi {
         responseCode = "200",
         description = "List of mentors with matching specialization",
         content = @Content(mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = Mentor.class))
+                schema = @Schema(implementation = MentorResponseDto.class))
     )
     @APIResponse(responseCode = "400", description = "Unexpected error")
     public Response mentorsBySpecialization(
         @Parameter(description = "Specialization to filter by e.g. 'Software Engineering'", required = true)
         @PathParam("specialization") String specialization) {
         try {
-            List<Mentor> mentors = mentorBean.getAllMentors().stream()
+            List<MentorResponseDto> mentors = mentorBean.getAllMentors().stream()
                     .filter(mentor -> mentor.getSpecialization() != null
                             && mentor.getSpecialization().equalsIgnoreCase(specialization))
+                .map(MentorResponseDto::fromEntity)
                     .toList();
             return JsonApi.ok(mentors);
         } catch (Exception e) {
@@ -112,13 +117,13 @@ public class MentorApi {
         description = "Mentor object to create",
         required = true,
         content = @Content(mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = Mentor.class))
+                schema = @Schema(implementation = MentorRequestDto.class))
     )
     @APIResponse(
         responseCode = "201",
         description = "Mentor created successfully",
         content = @Content(mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = Mentor.class))
+                schema = @Schema(implementation = MentorResponseDto.class))
     )
     @APIResponse(responseCode = "400", description = "Invalid input or missing body")
     public Response createMentor(String body) {
@@ -126,9 +131,9 @@ public class MentorApi {
             if (body == null || body.isBlank()) {
                 return JsonApi.badRequest("Request body is required");
             }
-            Mentor mentor = JsonApi.read(body, Mentor.class);
+            Mentor mentor = JsonApi.read(body, MentorRequestDto.class).toEntity();
             mentorBean.addMentorAdmin(mentor);
-            return JsonApi.created(mentor);
+            return JsonApi.created(MentorResponseDto.fromEntity(mentor));
         } catch (Exception e) {
             return JsonApi.badRequest(e.getMessage());
         }
@@ -145,13 +150,13 @@ public class MentorApi {
         description = "Updated mentor object",
         required = true,
         content = @Content(mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = Mentor.class))
+                schema = @Schema(implementation = MentorRequestDto.class))
     )
     @APIResponse(
         responseCode = "200",
         description = "Mentor updated successfully",
         content = @Content(mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = Mentor.class))
+                schema = @Schema(implementation = MentorResponseDto.class))
     )
     @APIResponse(responseCode = "400", description = "Invalid input or missing body")
     public Response updateMentor(
@@ -161,9 +166,9 @@ public class MentorApi {
             if (body == null || body.isBlank()) {
                 return JsonApi.badRequest("Request body is required");
             }
-            Mentor mentor = JsonApi.read(body, Mentor.class);
+            Mentor mentor = JsonApi.read(body, MentorRequestDto.class).toEntity();
             mentorBean.updateMentor(mentorId, mentor);
-            return JsonApi.ok(mentorBean.getMentorById(mentorId));
+            return JsonApi.ok(MentorResponseDto.fromEntity(mentorBean.getMentorById(mentorId)));
         } catch (Exception e) {
             return JsonApi.badRequest(e.getMessage());
         }

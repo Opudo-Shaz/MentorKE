@@ -1,6 +1,10 @@
 package app.api;
 
 import app.bean.MatchRequestBean;
+import app.dtos.MatchRequestCreateRequestDto;
+import app.dtos.MatchRequestCreatedResponseDto;
+import app.dtos.MatchRequestResponseDto;
+import app.dtos.MatchRequestUpdateRequestDto;
 import app.model.MatchRequest;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -36,14 +40,16 @@ public class MatchRequestApi {
         responseCode = "200",
         description = "List of match requests for the mentee",
         content = @Content(mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = MatchRequest.class))
+                schema = @Schema(implementation = MatchRequestResponseDto.class))
     )
     @APIResponse(responseCode = "400", description = "Unexpected error")
     public Response requestsByMentee(
         @Parameter(description = "ID of the mentee", required = true)
         @PathParam("menteeId") String menteeId) {
         try {
-            List<MatchRequest> requests = matchRequestBean.getRequestsByMentee(menteeId);
+            List<MatchRequestResponseDto> requests = matchRequestBean.getRequestsByMentee(menteeId).stream()
+                    .map(MatchRequestResponseDto::fromEntity)
+                    .toList();
             return JsonApi.ok(requests);
         } catch (Exception e) {
             return JsonApi.badRequest(e.getMessage());
@@ -60,14 +66,16 @@ public class MatchRequestApi {
         responseCode = "200",
         description = "List of pending match requests for the mentor",
         content = @Content(mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = MatchRequest.class))
+                schema = @Schema(implementation = MatchRequestResponseDto.class))
     )
     @APIResponse(responseCode = "400", description = "Unexpected error")
     public Response pendingForMentor(
         @Parameter(description = "ID of the mentor", required = true)
         @PathParam("mentorId") String mentorId) {
         try {
-            List<MatchRequest> requests = matchRequestBean.getPendingRequestsForMentor(mentorId);
+            List<MatchRequestResponseDto> requests = matchRequestBean.getPendingRequestsForMentor(mentorId).stream()
+                    .map(MatchRequestResponseDto::fromEntity)
+                    .toList();
             return JsonApi.ok(requests);
         } catch (Exception e) {
             return JsonApi.badRequest(e.getMessage());
@@ -84,7 +92,7 @@ public class MatchRequestApi {
         responseCode = "200",
         description = "Match request found",
         content = @Content(mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = MatchRequest.class))
+                schema = @Schema(implementation = MatchRequestResponseDto.class))
     )
     @APIResponse(responseCode = "404", description = "Match request not found")
     @APIResponse(responseCode = "400", description = "Unexpected error")
@@ -96,7 +104,7 @@ public class MatchRequestApi {
             if (request == null) {
                 return JsonApi.notFound("Match request not found");
             }
-            return JsonApi.ok(request);
+            return JsonApi.ok(MatchRequestResponseDto.fromEntity(request));
         } catch (Exception e) {
             return JsonApi.badRequest(e.getMessage());
         }
@@ -112,13 +120,13 @@ public class MatchRequestApi {
         description = "Match request details — menteeId, mentorId, and specialization are all required",
         required = true,
         content = @Content(mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = MatchRequestCreateRequest.class))
+                schema = @Schema(implementation = MatchRequestCreateRequestDto.class))
     )
     @APIResponse(
         responseCode = "201",
         description = "Match request created successfully",
         content = @Content(mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = MatchRequestCreatedResponse.class))
+                schema = @Schema(implementation = MatchRequestCreatedResponseDto.class))
     )
     @APIResponse(responseCode = "400", description = "Missing or invalid fields")
     public Response createRequest(String body) {
@@ -126,10 +134,10 @@ public class MatchRequestApi {
             if (body == null || body.isBlank()) {
                 return JsonApi.badRequest("Request body is required");
             }
-            MatchRequestCreateRequest request = JsonApi.read(body, MatchRequestCreateRequest.class);
+            MatchRequestCreateRequestDto request = JsonApi.read(body, MatchRequestCreateRequestDto.class);
             validateCreateRequest(request);
-            matchRequestBean.requestMentor(request.menteeId(), request.mentorId(), request.specialization());
-            return JsonApi.created(new MatchRequestCreatedResponse("Request created successfully"));
+            matchRequestBean.requestMentor(request.getMenteeId(), request.getMentorId(), request.getSpecialization());
+            return JsonApi.created(new MatchRequestCreatedResponseDto("Request created successfully"));
         } catch (Exception e) {
             return JsonApi.badRequest(e.getMessage());
         }
@@ -146,13 +154,13 @@ public class MatchRequestApi {
         description = "Status update — must be APPROVED or REJECTED",
         required = true,
         content = @Content(mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = MatchRequestUpdateRequest.class))
+                schema = @Schema(implementation = MatchRequestUpdateRequestDto.class))
     )
     @APIResponse(
         responseCode = "200",
         description = "Match request updated successfully",
         content = @Content(mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = MatchRequest.class))
+                schema = @Schema(implementation = MatchRequestResponseDto.class))
     )
     @APIResponse(responseCode = "400", description = "Invalid status value or missing body")
     public Response updateRequest(
@@ -162,8 +170,8 @@ public class MatchRequestApi {
             if (body == null || body.isBlank()) {
                 return JsonApi.badRequest("Request body is required");
             }
-            MatchRequestUpdateRequest request = JsonApi.read(body, MatchRequestUpdateRequest.class);
-            String status = request.status() == null ? "" : request.status().trim().toUpperCase();
+            MatchRequestUpdateRequestDto request = JsonApi.read(body, MatchRequestUpdateRequestDto.class);
+            String status = request.getStatus() == null ? "" : request.getStatus().trim().toUpperCase();
 
             if ("APPROVED".equals(status)) {
                 matchRequestBean.approveMentorRequest(requestId);
@@ -172,7 +180,7 @@ public class MatchRequestApi {
             } else {
                 return JsonApi.badRequest("status must be APPROVED or REJECTED");
             }
-            return JsonApi.ok(matchRequestBean.getMatchRequest(requestId));
+            return JsonApi.ok(MatchRequestResponseDto.fromEntity(matchRequestBean.getMatchRequest(requestId)));
         } catch (Exception e) {
             return JsonApi.badRequest(e.getMessage());
         }
@@ -197,42 +205,18 @@ public class MatchRequestApi {
         }
     }
 
-    private void validateCreateRequest(MatchRequestCreateRequest request) {
+    private void validateCreateRequest(MatchRequestCreateRequestDto request) {
         if (request == null) {
             throw new IllegalArgumentException("Request body is required");
         }
-        if (request.menteeId() == null || request.menteeId().isBlank()) {
+        if (request.getMenteeId() == null || request.getMenteeId().isBlank()) {
             throw new IllegalArgumentException("menteeId is required");
         }
-        if (request.mentorId() == null || request.mentorId().isBlank()) {
+        if (request.getMentorId() == null || request.getMentorId().isBlank()) {
             throw new IllegalArgumentException("mentorId is required");
         }
-        if (request.specialization() == null || request.specialization().isBlank()) {
+        if (request.getSpecialization() == null || request.getSpecialization().isBlank()) {
             throw new IllegalArgumentException("specialization is required");
         }
     }
-
-    @Schema(description = "Payload for creating a new match request")
-    public record MatchRequestCreateRequest(
-        @Schema(description = "ID of the mentee making the request", required = true, example = "42")
-        String menteeId,
-        @Schema(description = "ID of the desired mentor", required = true, example = "7")
-        String mentorId,
-        @Schema(description = "Desired specialization area", required = true, example = "Software Engineering")
-        String specialization
-    ) {}
-
-    @Schema(description = "Payload for updating a match request status")
-    public record MatchRequestUpdateRequest(
-        @Schema(description = "New status — must be APPROVED or REJECTED",
-                required = true, example = "APPROVED",
-                enumeration = {"APPROVED", "REJECTED"})
-        String status
-    ) {}
-
-    @Schema(description = "Response returned after a match request is created")
-    public record MatchRequestCreatedResponse(
-        @Schema(description = "Confirmation message", example = "Request created successfully")
-        String message
-    ) {}
 }
