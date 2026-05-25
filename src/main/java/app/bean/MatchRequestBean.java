@@ -15,15 +15,12 @@ import org.slf4j.Logger;
 import java.sql.SQLException;
 import java.util.List;
 
-/**
- * MatchRequestBean - EJB Stateless bean for managing match requests
- * Handles mentee requests to be matched with mentors, approvals, and rejections
- */
 @Stateless
 @Named("matchRequestBean")
 public class MatchRequestBean {
 
-    private static final Logger logger = AppLogger.getLogger(MatchRequestBean.class);
+    private static final Logger logger =
+            AppLogger.getLogger(MatchRequestBean.class);
 
     @Inject
     private MatchRequestDAO matchRequestDAO;
@@ -38,16 +35,35 @@ public class MatchRequestBean {
     private SessionMatchingBean sessionMatchingBean;
 
     @Inject
-    private EmailBean emailBean;
+    private EmailReminderBean emailBean;
 
     public MatchRequestBean() {
         logger.debug("CDI Bean initialized with default constructor");
     }
 
-    /**
-     * Create a new match request from a mentee to a specific mentor
-     */
-    public void requestMentor(String menteeId, String mentorId, String specialization) throws SQLException {
+
+    public List<MatchRequest> getAllMatchRequests() {
+        return matchRequestDAO.findAll();
+    }
+
+    public MatchRequest createMatchRequest(
+            String menteeId,
+            String mentorId,
+            String specialization
+    ) throws SQLException {
+
+        MatchRequest request =
+                new MatchRequest(menteeId, mentorId, specialization);
+
+        request.setStatus("PENDING");
+
+        matchRequestDAO.save(request);
+
+        return request;
+    }
+
+
+    public void requestMentor(String menteeId, String mentorId, String specialization) {
         logger.info("Mentee {} requesting mentor {}", menteeId, mentorId);
 
         MatchRequest request = new MatchRequest(menteeId, mentorId, specialization);
@@ -56,7 +72,6 @@ public class MatchRequestBean {
 
         logger.info("Match request created successfully");
 
-        // Send notification to mentor
         try {
             sendMentorRequestNotification(mentorId, menteeId, specialization);
         } catch (Exception e) {
@@ -64,10 +79,7 @@ public class MatchRequestBean {
         }
     }
 
-    /**
-     * Create a match request without specifying a mentor (for auto-matching later)
-     */
-    public void requestAutoMatch(String menteeId, String specialization) throws SQLException {
+    public void requestAutoMatch(String menteeId, String specialization) {
         logger.info("Mentee {} requesting auto-match for specialization: {}", menteeId, specialization);
 
         MatchRequest request = new MatchRequest(menteeId, null, specialization);
@@ -77,10 +89,7 @@ public class MatchRequestBean {
         logger.info("Auto-match request created successfully");
     }
 
-    /**
-     * Approve a match request (mentor accepts)
-     */
-    public void approveMentorRequest(String requestId) throws SQLException {
+    public void approveMentorRequest(String requestId) {
         logger.info("Approving match request: {}", requestId);
 
         MatchRequest request = matchRequestDAO.findById(Long.parseLong(requestId));
@@ -88,125 +97,88 @@ public class MatchRequestBean {
             request.setStatus("APPROVED");
             matchRequestDAO.update(request);
 
-            // Update mentee's mentor_id
             Mentee mentee = menteeDAO.findById(Long.parseLong(request.getMenteeId()));
             if (mentee != null) {
                 mentee.setMentorId(request.getMentorId());
                 menteeDAO.update(mentee);
             }
-
-            logger.info("Match request approved and mentee updated");
         }
     }
 
-    /**
-     * Reject a match request
-     */
-    public void rejectMentorRequest(String requestId) throws SQLException {
+    public void rejectMentorRequest(String requestId) {
         logger.info("Rejecting match request: {}", requestId);
 
         MatchRequest request = matchRequestDAO.findById(Long.parseLong(requestId));
         if (request != null) {
             request.setStatus("REJECTED");
             matchRequestDAO.update(request);
-            logger.info("Match request rejected");
         }
     }
 
-    /**
-     * Delete a match request.
-     */
-    public void deleteMatchRequest(String requestId) throws SQLException {
+    public void deleteMatchRequest(String requestId) {
         logger.info("Deleting match request: {}", requestId);
         matchRequestDAO.delete(Long.parseLong(requestId));
     }
 
-    /**
-     * Get pending requests for a mentor
-     */
-    public List<MatchRequest> getPendingRequestsForMentor(String mentorId) throws SQLException {
-        logger.info("Getting pending requests for mentor: {}", mentorId);
+    public List<MatchRequest> getPendingRequestsForMentor(String mentorId) {
         return matchRequestDAO.getPendingRequestsForMentor(mentorId);
     }
 
-    /**
-     * Get all requests by a mentee
-     */
-    public List<MatchRequest> getRequestsByMentee(String menteeId) throws SQLException {
-        logger.info("Getting requests by mentee: {}", menteeId);
+    public List<MatchRequest> getRequestsByMentee(String menteeId) {
         return matchRequestDAO.getRequestsByMentee(menteeId);
     }
 
-    /**
-     * Get approved/matched request for a mentee
-     */
-    public MatchRequest getApprovedMatchForMentee(String menteeId) throws SQLException {
-        logger.info("Getting approved match for mentee: {}", menteeId);
+    public MatchRequest getApprovedMatchForMentee(String menteeId) {
         return matchRequestDAO.getApprovedMatchForMentee(menteeId);
     }
 
-    /**
-     * Get a specific match request
-     */
-    public MatchRequest getMatchRequest(String requestId) throws SQLException {
+    public MatchRequest getMatchRequest(String requestId) {
         return matchRequestDAO.findById(Long.parseLong(requestId));
     }
 
-    /**
-     * Auto-match unassigned requests with available mentors
-     * This would typically run as a scheduled job
-     */
-    public void autoMatchPendingRequests() throws SQLException {
+    public void autoMatchPendingRequests() {
         logger.info("Running auto-match for pending requests");
 
         List<MatchRequest> pendingRequests = matchRequestDAO.getPendingUnassignedRequests();
 
         for (MatchRequest request : pendingRequests) {
             try {
-                // Find optimal mentor based on specialization
                 Mentee mentee = menteeDAO.findById(Long.parseLong(request.getMenteeId()));
                 if (mentee != null) {
                     Mentor optimalMentor = sessionMatchingBean.findOptimalMentor(mentee);
-                    
+
                     if (optimalMentor != null) {
                         request.setMentorId(String.valueOf(optimalMentor.getId()));
                         request.setStatus("APPROVED");
                         matchRequestDAO.update(request);
 
-                        // Update mentee
                         mentee.setMentorId(String.valueOf(optimalMentor.getId()));
                         menteeDAO.update(mentee);
-
-                        logger.info("Auto-matched mentee {} with mentor {}", 
-                            request.getMenteeId(), optimalMentor.getId());
                     }
                 }
             } catch (Exception e) {
                 logger.error("Error auto-matching request: {}", request.getId(), e);
             }
         }
-
-        logger.info("Auto-match process completed");
     }
 
-    /**
-     * Send notification to mentor about a new request
-     */
-    private void sendMentorRequestNotification(String mentorId, String menteeId, 
-                                               String specialization) throws SQLException {
+
+    private void sendMentorRequestNotification(String mentorId, String menteeId,
+                                               String specialization) {
+
         Mentor mentor = mentorDAO.findById(Long.parseLong(mentorId));
-        
+
         if (mentor != null) {
-            String mentorEmail = "mentor@example.com"; // Get from User table in production
+            String mentorEmail = "mentor@example.com";
             String subject = "New Mentee Request - " + specialization;
+
             String body = "<html><body>" +
-                         "<h2>You have a new mentee request!</h2>" +
-                         "<p>A mentee is interested in being mentored in: " + specialization + "</p>" +
-                         "<p>Please review and approve or reject this request.</p>" +
-                         "</body></html>";
+                    "<h2>You have a new mentee request!</h2>" +
+                    "<p>A mentee is interested in being mentored in: " + specialization + "</p>" +
+                    "<p>Please review and approve or reject this request.</p>" +
+                    "</body></html>";
 
             emailBean.sendEmail(mentorEmail, subject, body);
-            logger.info("Mentor request notification sent to {}", mentorId);
         }
     }
 }

@@ -3,19 +3,21 @@ package app.action;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.inject.Inject;
-import java.io.IOException;
+import jakarta.annotation.security.RolesAllowed;
+
 import java.util.List;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import app.bean.MenteeBean;
 import app.bean.MentorBean;
+import app.security.MentorKeSecurity;
 import app.model.Mentee;
 import app.model.Mentor;
 import app.framework.Action;
 import app.framework.ActionGetMethod;
 
 @ApplicationScoped
-@Action(value = "mentor-dashboard", label = "Mentor Dashboard", showLink = false)
+@Action(value = "mentor-dashboard", label = "Mentor Dashboard")
 public class MentorDashboard extends BaseAction {
     @Inject
     private MentorBean mentorBean;
@@ -23,10 +25,13 @@ public class MentorDashboard extends BaseAction {
     @Inject
     private MenteeBean menteeBean;
 
+    @Inject
+    private MentorKeSecurity security;
+
     @ActionGetMethod("")
+    @RolesAllowed({"mentor"})
     public void get(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
-        if (!requireRole(request, response, "mentor")) return;
+        security.requireRole("mentor");
 
         try {
             String userId = getUserId(request);

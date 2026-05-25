@@ -8,7 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 @ApplicationScoped
-@Action(value = "about", label = "About", showLink = false)
+@Action(value = "about", label = "About")
 public class AboutAction {
 
     @ActionGetMethod("")

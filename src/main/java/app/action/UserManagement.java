@@ -6,9 +6,11 @@ import app.bean.MenteeBean;
 import app.model.Mentor;
 import app.model.Mentee;
 import app.model.User;
+import app.security.MentorKeSecurity;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.inject.Inject;
+import jakarta.annotation.security.RolesAllowed;
 import java.io.IOException;
 import app.utility.logging.AppLogger;
 import org.slf4j.Logger;
@@ -17,7 +19,7 @@ import app.framework.Action;
 import app.framework.ActionPostMethod;
 
 @ApplicationScoped
-@Action(value = "user-management", label = "User Management", showLink = false)
+@Action(value = "user-management", label = "User Management")
 public class UserManagement extends BaseAction {
 
     private static final Logger logger = AppLogger.getLogger(UserManagement.class);
@@ -31,11 +33,14 @@ public class UserManagement extends BaseAction {
     @Inject
     private MenteeBean menteeBean;
 
+    @Inject
+    private MentorKeSecurity security;
+
     @ActionPostMethod("add")
+    @RolesAllowed({"admin"})
     public void add(HttpServletRequest request, HttpServletResponse response) throws IOException {
         logger.info("=== HTTP POST add user ===");
-        if (!isLoggedIn(request)) { redirect(response, "login"); return; }
-        if (!requireRole(request, response, "admin")) return;
+        security.requireRole("admin");
 
         try {
             String redirectParam = handleAddUser(request);
@@ -52,7 +57,7 @@ public class UserManagement extends BaseAction {
     public void update(HttpServletRequest request, HttpServletResponse response) throws IOException {
         logger.info("=== HTTP POST update user ===");
         if (!isLoggedIn(request)) { redirect(response, "login"); return; }
-        if (!requireRole(request, response, "admin")) return;
+        if (requireRole(request, response, "admin")) return;
 
         try {
             String redirectParam = handleUpdateUser(request);
@@ -69,7 +74,7 @@ public class UserManagement extends BaseAction {
     public void delete(HttpServletRequest request, HttpServletResponse response) throws IOException {
         logger.info("=== HTTP POST delete user ===");
         if (!isLoggedIn(request)) { redirect(response, "login"); return; }
-        if (!requireRole(request, response, "admin")) return;
+        if (requireRole(request, response, "admin")) return;
 
         try {
             String redirectParam = handleDeleteUser(request);

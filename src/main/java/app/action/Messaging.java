@@ -4,7 +4,9 @@ import app.bean.MessageBean;
 import app.bean.MentorBean;
 import app.bean.MenteeBean;
 import app.model.Message;
+import app.security.MentorKeSecurity;
 import jakarta.inject.Inject;
+import jakarta.annotation.security.RolesAllowed;
 import app.utility.logging.AppLogger;
 import org.slf4j.Logger;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,11 +20,8 @@ import app.framework.ActionPostMethod;
 
 import java.util.List;
 
-/**
- * Messaging - framework action handling messaging features.
- */
 @ApplicationScoped
-@Action(value = "messaging", label = "Messaging", showLink = false)
+@Action(value = "messaging", label = "Messaging")
 public class Messaging extends BaseAction {
 
     private static final Logger logger = AppLogger.getLogger(Messaging.class);
@@ -36,28 +35,35 @@ public class Messaging extends BaseAction {
     @Inject
     private MenteeBean menteeBean;
 
+    @Inject
+    private MentorKeSecurity security;
+
     @ActionGetMethod("conversation")
+    @RolesAllowed({"mentor", "mentee"})
     public void conversation(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
+        security.requireAuthentication();
         String userId = getUserId(request);
         handleConversation(request, response, userId);
     }
 
     @ActionGetMethod("unread-count")
+    @RolesAllowed({"mentor", "mentee"})
     public void unreadCount(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
+        security.requireAuthentication();
         String userId = getUserId(request);
         handleUnreadCount(request, response, userId);
     }
 
     @ActionGetMethod("list-conversations")
+    @RolesAllowed({"mentor", "mentee"})
     public void listConversations(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
+        security.requireAuthentication();
         String userId = getUserId(request);
         handleListConversations(request, response, userId);
     }
 
     @ActionGetMethod("")
+    @RolesAllowed({"mentor", "mentee"})
     public void defaultGet(HttpServletRequest request, HttpServletResponse response) throws Exception {
         listConversations(request, response);
     }

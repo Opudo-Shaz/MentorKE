@@ -6,7 +6,9 @@ import app.bean.MenteeBean;
 import app.model.Session;
 import app.model.Mentor;
 import app.model.Mentee;
+import app.security.MentorKeSecurity;
 import jakarta.inject.Inject;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -22,7 +24,7 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 
 @ApplicationScoped
-@Action(value = "sessions", label = "Sessions", showLink = false)
+@Action(value = "sessions", label = "Sessions")
 public class SessionManagement extends BaseAction {
 
     private static final Logger logger = AppLogger.getLogger(SessionManagement.class);
@@ -36,23 +38,29 @@ public class SessionManagement extends BaseAction {
     @Inject
     private MenteeBean menteeBean;
 
+    @Inject
+    private MentorKeSecurity security;
+
     @ActionGetMethod("upcoming")
+    @RolesAllowed({"mentor", "mentee"})
     public void upcoming(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
+        security.requireAuthentication();
         String userId = getUserId(request);
         handleUpcomingSessions(request, response, userId);
     }
 
     @ActionGetMethod("completed")
+    @RolesAllowed({"mentor", "mentee"})
     public void completed(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
+        security.requireAuthentication();
         String userId = getUserId(request);
         handleCompletedSessions(request, response, userId);
     }
 
     @ActionGetMethod("view")
+    @RolesAllowed({"mentor", "mentee"})
     public void view(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
+        security.requireAuthentication();
         String userId = getUserId(request);
         handleViewSession(request, response, userId);
     }

@@ -3,11 +3,15 @@ package app.framework;
 import app.utility.helper.ClassScanner;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Setter
+@Getter
 @ApplicationScoped
 public class MentorKeFramework {
 
@@ -186,19 +190,12 @@ public class MentorKeFramework {
         return ClassScanner.scanForAction("app.action").stream()
             .map(clazz -> clazz.getAnnotation(Action.class))
             .filter(Objects::nonNull)
-            .filter(Action::showLink)
-            .sorted(Comparator.comparingInt(Action::linkPosition))
             .map(a -> "<a href='" + ActionMap.APP_PATH + a.value() + "/" + a.pageLink() + "'>"
                 + a.label() + "</a>")
             .collect(Collectors.joining("\n"));
     }
 
     // ─── FORM SELECTIONS ─────────────────────────────────────────────────────
-
-    public Map<String, List<SelectBox>> getFormSelections() { return formSelections; }
-    public void setFormSelections(Map<String, List<SelectBox>> formSelections) {
-        this.formSelections = formSelections;
-    }
 
     public void resetFormSelections() {
         formSelections = new HashMap<>();

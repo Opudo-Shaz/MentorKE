@@ -2,7 +2,9 @@ package app.action;
 
 import app.bean.MenteeBean;
 import app.model.Mentee;
+import app.security.MentorKeSecurity;
 import jakarta.inject.Inject;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -13,7 +15,7 @@ import app.framework.Action;
 import app.framework.ActionPostMethod;
 
 @ApplicationScoped
-@Action(value = "mentee-management", label = "Mentee Management", showLink = false)
+@Action(value = "mentee-management", label = "Mentee Management")
 public class MenteeManagement extends BaseAction {
 
     private static final Logger logger = AppLogger.getLogger(MenteeManagement.class);
@@ -21,10 +23,13 @@ public class MenteeManagement extends BaseAction {
     @Inject
     private MenteeBean menteeBean;
 
+    @Inject
+    private MentorKeSecurity security;
+
     @ActionPostMethod("add")
+    @RolesAllowed({"admin"})
     public void add(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        if (!isLoggedIn(request)) { redirect(response, "login"); return; }
-        if (!requireRole(request, response, "admin")) return;
+        security.requireRole("admin");
 
         try {
             String redirectParam = handleAddMentee(request);
@@ -38,9 +43,9 @@ public class MenteeManagement extends BaseAction {
     }
 
     @ActionPostMethod("update")
+    @RolesAllowed({"admin"})
     public void update(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        if (!isLoggedIn(request)) { redirect(response, "login"); return; }
-        if (!requireRole(request, response, "admin")) return;
+        security.requireRole("admin");
 
         try {
             String redirectParam = handleUpdateMentee(request);
@@ -54,9 +59,9 @@ public class MenteeManagement extends BaseAction {
     }
 
     @ActionPostMethod("delete")
+    @RolesAllowed({"admin"})
     public void delete(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        if (!isLoggedIn(request)) { redirect(response, "login"); return; }
-        if (!requireRole(request, response, "admin")) return;
+        security.requireRole("admin");
 
         try {
             String redirectParam = handleDeleteMentee(request);
@@ -159,6 +164,7 @@ public class MenteeManagement extends BaseAction {
      * Utility to safely extract string parameters
      */
     private String safe(String value) {
+
         return value == null ? "" : value.trim();
     }
 }

@@ -2,12 +2,14 @@ package app.action;
 
 import app.bean.MentorBean;
 import app.model.Mentor;
+import app.security.MentorKeSecurity;
 import app.utility.logging.AppLogger;
 import app.framework.Action;
 import app.framework.ActionPostMethod;
 import app.framework.ActionResponse;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
@@ -16,7 +18,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 @ApplicationScoped
-@Action(value = "mentor-management", label = "Mentor Management", showLink = false)
+@Action(value = "mentor-management", label = "Mentor Management")
 public class MentorManagement extends BaseAction {
 
     private static final Logger logger = AppLogger.getLogger(MentorManagement.class);
@@ -24,18 +26,26 @@ public class MentorManagement extends BaseAction {
     @Inject
     private MentorBean mentorBean;
 
+    @Inject
+    private MentorKeSecurity security;
+
     @ActionPostMethod("add")
+    @RolesAllowed({"admin"})
     public ActionResponse add(HttpServletRequest request, HttpServletResponse response) {
+        security.requireRole("admin");
         return handleMentorMutation(request, response, "add");
     }
 
     @ActionPostMethod("update")
+    @RolesAllowed({"admin", "mentor"})
     public ActionResponse update(HttpServletRequest request, HttpServletResponse response) {
         return handleMentorMutation(request, response, "update");
     }
 
     @ActionPostMethod("delete")
+    @RolesAllowed({"admin"})
     public ActionResponse delete(HttpServletRequest request, HttpServletResponse response) {
+        security.requireRole("admin");
         return handleMentorMutation(request, response, "delete");
     }
 

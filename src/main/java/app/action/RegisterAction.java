@@ -12,7 +12,7 @@ import app.utility.logging.AppLogger;
 import org.slf4j.Logger;
 
 @ApplicationScoped
-@Action(value = "register", label = "Register", showLink = false)
+@Action(value = "register", label = "Register")
 public class RegisterAction extends BaseAction {
 
     private static final Logger logger = AppLogger.getLogger(RegisterAction.class);

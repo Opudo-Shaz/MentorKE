@@ -1,14 +1,14 @@
 package app.framework;
 
+import lombok.Getter;
+
+@Getter
 public class SelectBox {
 
     private String value;
     private String name;
 
     private SelectBox() {}
-
-    public String getValue() { return value; }
-    public String getName()  { return name; }
 
     // Enforces value → name → build order at compile time
     public static ValueStep builder() {

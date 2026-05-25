@@ -7,6 +7,7 @@ import app.model.AuditTrail;
 import app.model.Mentee;
 import app.model.Mentor;
 import app.model.User;
+import app.utility.helper.PasswordUtil;
 import app.utility.logging.AppLogger;
 import app.utility.validation.ValidationResult;
 import app.utility.validation.Validator;
@@ -43,13 +44,6 @@ public class UserBean {
     @ValidatorQualifier(ValidatorQualifier.ValidationChoice.USER)
     private Validator<User> userValidator;
 
-    // CONSTRUCTOR INJECTION (alternative)
-    @Inject
-    public UserBean(MentorDAO mentorDAO, MenteeDAO menteeDAO) {
-        this.mentorDAO = mentorDAO;
-        this.menteeDAO = menteeDAO;
-        logger.debug("[UserBean] CDI Bean initialized with constructor injection");
-    }
 
     public UserBean(){}
 
@@ -61,26 +55,30 @@ public class UserBean {
         logger.info("[UserBean] Username: {} , Email: {} , Role: {}", user.getUsername(), user.getEmail(), user.getRole());
 
         // Step 1: Check if username already exists
-        logger.debug("[UserBean] Checking if username exists...");
+        logger.debug(" Checking if username exists...");
         User existingUser = getUserByUsername(user.getUsername());
         if (existingUser != null) {
-            logger.warn("[UserBean] Username already exists!");
+            logger.warn("Username already exists!");
             throw new IllegalArgumentException("Username '" + user.getUsername() + "' already exists");
         }
-        logger.debug("[UserBean] Username check passed ✓");
+        logger.debug("Username check passed ✓");
 
         // Step 2: Validate user data
-        logger.debug("[UserBean] Validating user data...");
         ValidationResult validationResult = userValidator.validate(user);
         if (!validationResult.isValid()) {
-            logger.error("[UserBean] Validation failed!");
             throw new IllegalArgumentException("User validation failed: " + validationResult.getErrorMessages());
         }
-        logger.debug("[UserBean] Validation passed ✓");
+        logger.debug("Validation passed ");
 
         // Step 3: Add account to the appropriate table
         logger.debug("[UserBean] Adding user to database...");
         user.setStatus("Active");
+
+        // Hash password if needed
+        if (PasswordUtil.needsHashing(user.getPassword())) {
+            logger.debug(" Hashing password with BCrypt...");
+            user.setPassword(PasswordUtil.hashPassword(user.getPassword()));
+        }
 
         if ("mentor".equalsIgnoreCase(user.getRole())) {
             Mentor mentor = copyToMentor(user);
@@ -106,7 +104,7 @@ public class UserBean {
         ));
 
         // Step 5: Fire email event (will be handled asynchronously by EmailObserverBean)
-        logger.debug("[UserBean] Firing email registration event...");
+        logger.debug(" Firing email registration event...");
         userRegisteredEvent.fire(new UserRegisteredEvent(
             user.getEmail(),
             user.getUsername(),
@@ -161,7 +159,6 @@ public class UserBean {
     logger.debug("[UserBean] User ID: {}", userId);
 
     // Step 1: Check if user exists
-    logger.debug("[UserBean] Checking if user exists...");
     User existingUser = getUserById(userId);
     if (existingUser == null) {
         logger.error("[UserBean] User not found!");
@@ -173,6 +170,12 @@ public class UserBean {
     if (user.getPassword() == null || user.getPassword().isEmpty()) {
         logger.debug("[UserBean] No new password provided, keeping existing password");
         user.setPassword(existingUser.getPassword());
+    } else {
+        // Hash new password if needed
+        if (PasswordUtil.needsHashing(user.getPassword())) {
+            logger.debug(" Hashing new password with BCrypt...");
+            user.setPassword(PasswordUtil.hashPassword(user.getPassword()));
+        }
     }
 
     // Step 3: Set ID (important for validator context)
@@ -184,10 +187,10 @@ public class UserBean {
     }
 
     // Step 5: Validate AFTER fixing missing fields
-    logger.debug("[UserBean] Validating user data...");
+    logger.debug("Validating user data...");
     ValidationResult validationResult = userValidator.validate(user);
     if (!validationResult.isValid()) {
-        logger.error("[UserBean] Validation failed!");
+        logger.error(" Validation failed!");
         throw new IllegalArgumentException("User validation failed: " + validationResult.getErrorMessages());
     }
     logger.debug("[UserBean] Validation passed ✓");

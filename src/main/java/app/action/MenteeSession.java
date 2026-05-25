@@ -21,7 +21,7 @@ import app.framework.ActionGetMethod;
 import app.framework.ActionPostMethod;
 
 @ApplicationScoped
-@Action(value = "mentee-sessions", label = "Mentee Sessions", showLink = false)
+@Action(value = "mentee-sessions", label = "Mentee Sessions")
 public class MenteeSession extends BaseAction {
 
     private static final Logger logger = AppLogger.getLogger(MenteeSession.class);
@@ -41,7 +41,7 @@ public class MenteeSession extends BaseAction {
     @ActionGetMethod("browse")
     public void browse(HttpServletRequest request, HttpServletResponse response) throws Exception {
         if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
-        if (!requireRole(request, response, "mentee")) return;
+        if (requireRole(request, response, "mentee")) return;
         String userId = getUserId(request);
         String specialization = request.getParameter("specialization");
         if (specialization == null || specialization.trim().isEmpty()) {
@@ -60,7 +60,7 @@ public class MenteeSession extends BaseAction {
     @ActionGetMethod("request")
     public void requestForm(HttpServletRequest request, HttpServletResponse response) throws Exception {
         if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
-        if (!requireRole(request, response, "mentee")) return;
+        if (requireRole(request, response, "mentee")) return;
         String userId = getUserId(request);
         handleRequestMentor(request, response, userId);
     }
@@ -68,7 +68,7 @@ public class MenteeSession extends BaseAction {
     @ActionGetMethod("my-requests")
     public void myRequests(HttpServletRequest request, HttpServletResponse response) throws Exception {
         if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
-        if (!requireRole(request, response, "mentee")) return;
+        if (requireRole(request, response, "mentee")) return;
         String userId = getUserId(request);
         handleMyRequests(request, response, userId);
     }
@@ -76,7 +76,7 @@ public class MenteeSession extends BaseAction {
     @ActionGetMethod("view-mentor")
     public void viewMentor(HttpServletRequest request, HttpServletResponse response) throws Exception {
         if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
-        if (!requireRole(request, response, "mentee")) return;
+        if (requireRole(request, response, "mentee")) return;
         handleViewMentor(request, response);
     }
 
@@ -88,7 +88,7 @@ public class MenteeSession extends BaseAction {
     @ActionPostMethod("request-mentor")
     public void requestMentor(HttpServletRequest request, HttpServletResponse response) throws Exception {
         if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
-        if (!requireRole(request, response, "mentee")) return;
+        if (requireRole(request, response, "mentee")) return;
         String userId = getUserId(request);
 
         String mentorId = request.getParameter("mentorId");
@@ -102,7 +102,7 @@ public class MenteeSession extends BaseAction {
     @ActionPostMethod("cancel-request")
     public void cancelRequest(HttpServletRequest request, HttpServletResponse response) throws Exception {
         if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
-        if (!requireRole(request, response, "mentee")) return;
+        if (requireRole(request, response, "mentee")) return;
         String userId = getUserId(request);
 
         String requestId = request.getParameter("requestId");

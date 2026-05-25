@@ -39,15 +39,8 @@ public class MentorBean {
     @ValidatorQualifier(ValidatorQualifier.ValidationChoice.MENTOR)
     private Validator<Mentor> mentorValidator;
 
-    // PUBLIC NO-ARG CONSTRUCTOR (required by CDI/EJB)
     public MentorBean() {}
 
-    // CONSTRUCTOR INJECTION (alternative)
-    @Inject
-    public MentorBean(MentorDAO mentorDAO) {
-        this.mentorDAO = mentorDAO;
-        logger.debug("CDI Bean initialized with constructor injection");
-    }
 
     public void registerMentor(Mentor mentor, User user) throws SQLException {
         logger.info("=== Starting Mentor Registration ===");
@@ -137,8 +130,6 @@ public class MentorBean {
          }
          logger.debug("Mentor found ✓");
 
-         // Step 2: Validate that user still exists
-         // Step 2: Preserve immutable account identity
          mentor.setUser(existingMentor);
 
          // Step 3: Set ID (important for validator context)

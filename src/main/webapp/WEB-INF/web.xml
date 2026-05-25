@@ -1,9 +1,12 @@
-<!DOCTYPE web-app PUBLIC
- "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
- "http://java.sun.com/dtd/web-app_2_3.dtd" >
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee
+         https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
+         version="6.0">
 
-<web-app>
-  <display-name>Archetype Created Web Application</display-name>
+  <display-name>MentorKE - Mentorship Platform</display-name>
+
   <context-param>
     <param-name>app.admin.username</param-name>
     <param-value>admin</param-value>
@@ -12,5 +15,94 @@
     <param-name>app.admin.password</param-name>
     <param-value>12345</param-value>
   </context-param>
+
+  <!-- SOAP ENDPOINT - NO SECURITY -->
+  <security-constraint>
+    <display-name>SOAP WebService - Open Access</display-name>
+    <web-resource-collection>
+      <web-resource-name>SOAP Endpoint</web-resource-name>
+      <url-pattern>/UserWebService</url-pattern>
+      <url-pattern>/UserWebService/*</url-pattern>
+    </web-resource-collection>
+    <user-data-constraint>
+      <transport-guarantee>NONE</transport-guarantee>
+    </user-data-constraint>
+  </security-constraint>
+
+  <!-- MENTOR AREA -->
+  <security-constraint>
+    <display-name>Mentor Protected Area</display-name>
+    <web-resource-collection>
+      <web-resource-name>Mentor Resources</web-resource-name>
+      <url-pattern>/app/mentor-*</url-pattern>
+      <url-pattern>/app/sessions/*</url-pattern>
+      <http-method>GET</http-method>
+      <http-method>POST</http-method>
+    </web-resource-collection>
+    <auth-constraint>
+      <role-name>mentor</role-name>
+      <role-name>admin</role-name>
+    </auth-constraint>
+    <user-data-constraint>
+      <transport-guarantee>NONE</transport-guarantee>
+    </user-data-constraint>
+  </security-constraint>
+
+  <!-- MENTEE AREA -->
+  <security-constraint>
+    <display-name>Mentee Protected Area</display-name>
+    <web-resource-collection>
+      <web-resource-name>Mentee Resources</web-resource-name>
+      <url-pattern>/app/mentee-*</url-pattern>
+      <url-pattern>/app/sessions/*</url-pattern>
+      <http-method>GET</http-method>
+      <http-method>POST</http-method>
+    </web-resource-collection>
+    <auth-constraint>
+      <role-name>mentee</role-name>
+      <role-name>admin</role-name>
+    </auth-constraint>
+    <user-data-constraint>
+      <transport-guarantee>NONE</transport-guarantee>
+    </user-data-constraint>
+  </security-constraint>
+
+  <!-- ADMIN AREA -->
+  <security-constraint>
+    <display-name>Admin Protected Area</display-name>
+    <web-resource-collection>
+      <web-resource-name>Admin Resources</web-resource-name>
+      <url-pattern>/admin/*</url-pattern>
+      <url-pattern>/app/admin*</url-pattern>
+      <http-method>GET</http-method>
+      <http-method>POST</http-method>
+    </web-resource-collection>
+    <auth-constraint>
+      <role-name>admin</role-name>
+    </auth-constraint>
+    <user-data-constraint>
+      <transport-guarantee>NONE</transport-guarantee>
+    </user-data-constraint>
+  </security-constraint>
+
+  <!-- LOGIN CONFIG -->
+  <login-config>
+    <auth-method>FORM</auth-method>
+    <form-login-config>
+      <form-login-page>/login.jsp</form-login-page>
+      <form-error-page>/login.jsp?error=true</form-error-page>
+    </form-login-config>
+  </login-config>
+
+  <!-- SECURITY ROLES -->
+  <security-role>
+    <role-name>admin</role-name>
+  </security-role>
+  <security-role>
+    <role-name>mentor</role-name>
+  </security-role>
+  <security-role>
+    <role-name>mentee</role-name>
+  </security-role>
 
 </web-app>

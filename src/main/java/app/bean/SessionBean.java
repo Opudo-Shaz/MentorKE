@@ -39,11 +39,9 @@ public class SessionBean {
     private MenteeDAO menteeDAO;
 
     @Inject
-    private EmailBean emailBean;
+    private EmailReminderBean emailBean;
 
-    public SessionBean() {
-        logger.debug("CDI Bean initialized with default constructor");
-    }
+    public SessionBean() {}
 
     /**
      * Schedule a new session between mentor and mentee
@@ -75,7 +73,6 @@ public class SessionBean {
 
     /**
      * Generate a unique meeting link using Jitsi Meet
-     * Format: https://meet.jit.si/roomname
      */
     private String generateMeetingLink(String mentorId, String menteeId) {
         String roomName = "mentorke-" + mentorId + "-" + menteeId + "-" + UUID.randomUUID().toString().substring(0, 8);
@@ -92,8 +89,8 @@ public class SessionBean {
         Mentee mentee = menteeDAO.findById(Long.parseLong(menteeId));
 
         if (mentor != null && mentee != null) {
-            String mentorEmail = "mentor@example.com"; // Get from User table in production
-            String menteeEmail = "mentee@example.com"; // Get from User table in production
+            String mentorEmail = "mentor@example.com";
+            String menteeEmail = "mentee@example.com";
 
             String subject = "Session Scheduled - " + topic;
             String body = buildSessionNotificationBody(topic, scheduledDate, meetingLink);
@@ -102,6 +99,28 @@ public class SessionBean {
             emailBean.sendEmail(menteeEmail, subject, body);
 
             logger.info("Session notifications sent for mentor {} and mentee {}", mentorId, menteeId);
+        }
+    }
+
+    /**
+     * Book a session directly (used by mentee action)
+     */
+    public void bookSession(Session session) throws SQLException {
+        logger.info("Booking session for mentee: {}", session.getMenteeId());
+        sessionDAO.save(session);
+    }
+
+    /**
+     * Delete a session only if the requesting user owns it
+     */
+    public void deleteSessionIfOwned(Long sessionId, String menteeId) throws SQLException {
+        logger.info("Attempting to delete session: {} for mentee: {}", sessionId, menteeId);
+        Session s = sessionDAO.findById(sessionId);
+        if (s != null && menteeId.equals(s.getMenteeId())) {
+            sessionDAO.delete(sessionId);
+            logger.info("Session {} deleted successfully", sessionId);
+        } else {
+            logger.warn("Delete rejected - session {} not owned by mentee {}", sessionId, menteeId);
         }
     }
 
@@ -160,6 +179,9 @@ public class SessionBean {
         logger.info("Getting sessions for mentee: {}", menteeId);
         return sessionDAO.getSessionsByMentee(menteeId);
     }
+
+
+    
 
     /**
      * Update session status

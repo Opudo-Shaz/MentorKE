@@ -12,7 +12,6 @@ import java.io.IOException;
 
 public abstract class BaseAction {
 
-    // ─── SESSION HELPERS ─────────────────────────────────────────────────────
 
     protected boolean isLoggedIn(HttpServletRequest req) {
         HttpSession session = req.getSession(false);
@@ -38,20 +37,6 @@ public abstract class BaseAction {
         return (String) session.getAttribute("username");
     }
 
-    protected String getUserActualName(HttpServletRequest req) {
-        HttpSession session = req.getSession(false);
-        if (session == null) return null;
-        return (String) session.getAttribute("UserActualName");
-    }
-
-    protected long getUserIdLong(HttpServletRequest req) {
-        HttpSession session = req.getSession(false);
-        if (session == null) throw new RuntimeException("Unauthenticated");
-        Object userId = session.getAttribute("userId");
-        if (userId == null) throw new RuntimeException("Unauthenticated");
-        return Long.parseLong(String.valueOf(userId));
-    }
-
     protected String getUserIdString(HttpServletRequest req) {
         HttpSession session = req.getSession(false);
         if (session == null) return null;
@@ -59,16 +44,6 @@ public abstract class BaseAction {
         return userId != null ? String.valueOf(userId) : null;
     }
 
-    // ─── AUTH GUARD HELPERS ───────────────────────────────────────────────────
-
-    // Returns a redirect response if not logged in, null if authenticated
-    protected ActionResponse requireLogin(HttpServletRequest req) {
-        if (!isLoggedIn(req))
-            return new ActionResponse(
-                "<script>window.location='" + ActionMap.APP_PATH + "login/index'</script>"
-            );
-        return null;
-    }
 
     // Returns a 403 response if role doesn't match, null if authorized
     protected ActionResponse requireRole(HttpServletRequest req, String requiredRole) {
@@ -90,11 +65,11 @@ public abstract class BaseAction {
             throws IOException {
         ActionResponse denied = requireRole(req, requiredRole);
         if (denied == null) {
-            return true;
+            return false;
         }
         resp.setContentType("text/html;charset=UTF-8");
         resp.getWriter().write(denied.getResponseText());
-        return false;
+        return true;
     }
 
     protected void forward(HttpServletRequest req, HttpServletResponse resp, String path)
@@ -108,6 +83,7 @@ public abstract class BaseAction {
     }
 
     protected void setAttribute(HttpServletRequest req, String name, Object value) {
+
         req.setAttribute(name, value);
     }
 }

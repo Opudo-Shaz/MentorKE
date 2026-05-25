@@ -2,6 +2,7 @@ package app.action;
 
 import app.bean.MatchRequestBean;
 import app.bean.MenteeBean;
+import app.security.MentorKeSecurity;
 import app.framework.Action;
 import app.framework.ActionGetMethod;
 import app.framework.ActionPostMethod;
@@ -10,17 +11,16 @@ import app.model.Mentee;
 import app.utility.logging.AppLogger;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 
 import java.util.List;
 
-/**
- * MentorRequest - framework action for mentor pending requests.
- */
+
 @ApplicationScoped
-@Action(value = "mentor-requests", label = "Pending Requests", showLink = false)
+@Action(value = "mentor-requests", label = "Pending Requests")
 public class MentorRequest extends BaseAction {
 
     private static final Logger logger = AppLogger.getLogger(MentorRequest.class);
@@ -31,18 +31,27 @@ public class MentorRequest extends BaseAction {
     @Inject
     private MenteeBean menteeBean;
 
+    @Inject
+    private MentorKeSecurity security;
+
     @ActionGetMethod("pending")
+    @RolesAllowed({"mentor"})
     public app.framework.ActionResponse pending(HttpServletRequest request, HttpServletResponse response) {
+        security.requireRole("mentor");
         return renderPendingRequests(request, response);
     }
 
     @ActionPostMethod("approve")
+    @RolesAllowed({"mentor"})
     public app.framework.ActionResponse approve(HttpServletRequest request, HttpServletResponse response) {
+        security.requireRole("mentor");
         return processDecision(request, response, "APPROVED");
     }
 
     @ActionPostMethod("reject")
+    @RolesAllowed({"mentor"})
     public app.framework.ActionResponse reject(HttpServletRequest request, HttpServletResponse response) {
+        security.requireRole("mentor");
         return processDecision(request, response, "REJECTED");
     }
 
@@ -69,9 +78,9 @@ public class MentorRequest extends BaseAction {
         return renderPendingRequests(request, response);
     }
 
-    /**
-     * View pending mentee requests for this mentor.
-     */
+
+     // View pending mentee requests for this mentor.
+
     private app.framework.ActionResponse renderPendingRequests(HttpServletRequest request, HttpServletResponse response) {
         String mentorId = getUserIdString(request);
 

@@ -17,17 +17,16 @@ import org.slf4j.Logger;
 
 import java.util.List;
 
-/**
- * MenteeBean - EJB Stateless bean that handles mentee CRUD operations
- * Manages mentees with full validation and audit trail integration
- */
+
 @Stateless
 @Named("menteeBean")
 public class MenteeBean {
 
     private static final Logger logger = AppLogger.getLogger(MenteeBean.class);
 
+    @Inject
     private MenteeDAO menteeDAO;
+
     @Inject
     private Event<AuditTrail> auditTrailEvent;
 
@@ -43,7 +42,7 @@ public class MenteeBean {
         logger.debug("CDI Bean initialized with default constructor");
     }
 
-    // CONSTRUCTOR INJECTION (alternative)
+    // CONSTRUCTOR INJECTION
     @Inject
     public MenteeBean(MenteeDAO menteeDAO) {
         this.menteeDAO = menteeDAO;

@@ -9,11 +9,7 @@ public @interface Action {
 
     String label() default "";
 
-    boolean showLink() default true;
-
     String pageLink() default "list";
-
-    int linkPosition() default 0;
 
     String icon() default "";
 

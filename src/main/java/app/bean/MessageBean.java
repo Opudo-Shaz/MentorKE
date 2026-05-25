@@ -21,9 +21,7 @@ public class MessageBean {
     @Inject
     private MessageDAO messageDAO;
 
-    public MessageBean() {
-        logger.debug("CDI Bean initialized with default constructor");
-    }
+    public MessageBean() {}
 
     /**
      * Send a message from one user to another

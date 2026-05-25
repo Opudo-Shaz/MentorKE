@@ -27,6 +27,7 @@ public class RegistrationService {
     private MenteeBean menteeBean;
 
     public RegistrationService() {
+
         logger.debug("[RegistrationService] Initialized");
     }
 
