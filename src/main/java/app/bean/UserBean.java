@@ -70,8 +70,7 @@ public class UserBean {
         }
         logger.debug("Validation passed ");
 
-        // Step 3: Add account to the appropriate table
-        logger.debug("[UserBean] Adding user to database...");
+    
         user.setStatus("Active");
 
         // Hash password if needed

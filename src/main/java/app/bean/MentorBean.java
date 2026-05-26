@@ -99,14 +99,6 @@ public class MentorBean {
     }
 
     /**
-     * READ - Get mentor by user ID
-     */
-    public Mentor getMentorByUserId(String userId) throws SQLException {
-        logger.debug("Fetching mentor for user ID: {}", userId);
-        return mentorDAO.findById(Long.parseLong(userId));
-    }
-
-    /**
      * READ - Get all mentors
      */
     public List<Mentor> getAllMentors() throws SQLException {

@@ -27,12 +27,29 @@ public class MentorKeSecurity {
         try {
             if (securityContext != null && securityContext.getCallerPrincipal() != null) {
                 String username = securityContext.getCallerPrincipal().getName();
-                logger.debug("Current user: {}", username);
+                logger.debug("Current user (SecurityContext): {}", username);
                 return username;
             }
         } catch (Exception e) {
-            logger.debug(" Error getting current user", e);
+            logger.debug("Error getting current user from SecurityContext", e);
         }
+
+        // Fallback to session-based username
+        try {
+            HttpSession session = request.getSession(false);
+            if (session != null) {
+                String username = (String) session.getAttribute("username");
+                if (username != null) {
+                    logger.debug("Current user (Session): {}", username);
+                    return username;
+                }
+            } else {
+                logger.debug("Session is null - user not authenticated or session expired");
+            }
+        } catch (Exception e) {
+            logger.debug("Error getting current user from session", e);
+        }
+
         return null;
     }
 

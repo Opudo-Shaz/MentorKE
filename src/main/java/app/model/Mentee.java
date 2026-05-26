@@ -70,34 +70,6 @@ public class Mentee extends User implements Serializable {
         setId(userId);
     }
 
-    // --- User bridge (bulk copy from a detached User object) ---
-
-    public User getUser() {
-        return this;
-    }
-
-    public void setUser(User user) {
-        if (user == null) {
-            setId(null);
-            setUsername(null);
-            setPassword(null);
-            setRole(null);
-            setEmail(null);
-            setStatus(null);
-            setCreatedAt(null);
-            setUpdatedAt(null);
-            return;
-        }
-        setId(user.getId());
-        setUsername(user.getUsername());
-        setPassword(user.getPassword());
-        setRole(user.getRole());
-        setEmail(user.getEmail());
-        setStatus(user.getStatus());
-        setCreatedAt(user.getCreatedAt());
-        setUpdatedAt(user.getUpdatedAt());
-    }
-
     // --- Mentor FK convenience accessors ---
 
     @Transient

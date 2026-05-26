@@ -105,13 +105,6 @@ public class MenteeBean {
         return menteeDAO.findById(Long.parseLong(menteeId));
     }
 
-    /**
-     * READ - Get mentee by user ID
-     */
-    public Mentee getMenteeByUserId(String userId) {
-        logger.debug("Fetching mentee for user ID: {}", userId);
-        return menteeDAO.findById(Long.parseLong(userId));
-    }
 
     /**
      * READ - Get all mentees

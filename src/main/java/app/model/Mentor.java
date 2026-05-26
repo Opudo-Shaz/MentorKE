@@ -88,31 +88,4 @@ public class Mentor extends User implements Serializable {
         setId(Long.parseLong(userId));
     }
 
-    // --- User bridge ---
-
-    public User getUser() {
-        return this;
-    }
-
-    public void setUser(User user) {
-        if (user == null) {
-            setId(null);
-            setUsername(null);
-            setPassword(null);
-            setRole(null);
-            setEmail(null);
-            setStatus(null);
-            setCreatedAt(null);
-            setUpdatedAt(null);
-            return;
-        }
-        setId(user.getId());
-        setUsername(user.getUsername());
-        setPassword(user.getPassword());
-        setRole(user.getRole());
-        setEmail(user.getEmail());
-        setStatus(user.getStatus());
-        setCreatedAt(user.getCreatedAt());
-        setUpdatedAt(user.getUpdatedAt());
-    }
 }
