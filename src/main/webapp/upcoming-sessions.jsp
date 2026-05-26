@@ -6,7 +6,8 @@
     String ctx = request.getContextPath();
     HttpSession currentSession = request.getSession(false);
     String role     = currentSession != null ? (String) currentSession.getAttribute("role")     : null;
-    String userId   = currentSession != null ? (String) currentSession.getAttribute("userId")   : null;
+    Object userIdObj = currentSession != null ? currentSession.getAttribute("userId") : null;
+    String userId   = userIdObj != null ? String.valueOf(userIdObj) : null;
     String username = currentSession != null ? (String) currentSession.getAttribute("username") : "User";
     if (username == null) username = "User";
     boolean isMentor = "mentor".equalsIgnoreCase(role);
