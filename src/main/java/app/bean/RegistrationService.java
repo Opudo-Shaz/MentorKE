@@ -2,6 +2,7 @@ package app.bean;
 
 import app.model.Mentee;
 import app.model.Mentor;
+import app.utility.helper.PasswordUtil;
 import app.utility.logging.AppLogger;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
@@ -55,7 +56,7 @@ public class RegistrationService {
         
         Mentor mentor = new Mentor();
         mentor.setUsername(username);
-        mentor.setPassword(password);
+        mentor.setPassword(preparePassword(password));
         mentor.setEmail(email);
         mentor.setRole("mentor");
         mentor.setStatus("Active");
@@ -90,7 +91,7 @@ public class RegistrationService {
         
         Mentee mentee = new Mentee();
         mentee.setUsername(username);
-        mentee.setPassword(password);
+        mentee.setPassword(preparePassword(password));
         mentee.setEmail(email);
         mentee.setRole("mentee");
         mentee.setStatus("Active");
@@ -127,5 +128,13 @@ public class RegistrationService {
         
         logger.debug("[RegistrationService] Extracted {} role-specific parameters", roleData.size());
         return roleData;
+    }
+
+    private String preparePassword(String password) {
+        if (PasswordUtil.needsHashing(password)) {
+            return PasswordUtil.hashPassword(password);
+        }
+
+        return password;
     }
 }

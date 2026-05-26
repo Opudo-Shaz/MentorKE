@@ -72,12 +72,6 @@ public class UserBean {
     
         user.setStatus("Active");
 
-        // Hash password if needed
-        if (PasswordUtil.needsHashing(user.getPassword())) {
-            logger.debug(" Hashing password with BCrypt...");
-            user.setPassword(PasswordUtil.hashPassword(user.getPassword()));
-        }
-
         // Delegate to RegistrationService which will create the subtype and persist it
         try {
             registrationService.registerUser(user.getUsername(), user.getPassword(), user.getEmail(), user.getRole(), new java.util.HashMap<>());
