@@ -1,19 +1,11 @@
 package app.utility.validation;
 
 import app.model.Mentor;
-import app.model.User;
 import jakarta.enterprise.context.Dependent;
 
 import java.util.regex.Pattern;
 
-/**
- * MentorValidator - Validates Mentor entities
- *
- * Uses @Dependent scope since:
- * - Validator is stateless
- * - All validations are method-level
- * - Avoids Weld proxy issues
- */
+
 @Dependent
 @ValidatorQualifier(ValidatorQualifier.ValidationChoice.MENTOR)
 public class MentorValidator implements Validator<Mentor> {
