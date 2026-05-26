@@ -1,9 +1,15 @@
 package app.restapi;
 
 import app.bean.UserBean;
+import app.bean.MentorBean;
+import app.bean.MenteeBean;
 import app.dtos.LoginRequestDto;
 import app.dtos.LoginResponseDto;
+import app.dtos.MentorRequestDto;
+import app.dtos.MenteeRequestDto;
 import app.model.User;
+import app.model.Mentor;
+import app.model.Mentee;
 import app.security.jwt.JwtUtil;
 import app.utility.logging.AppLogger;
 import at.favre.lib.crypto.bcrypt.BCrypt;
@@ -64,12 +70,21 @@ public class AuthApi {
                         .build();
             }
 
-            // 4. Verify bcrypt password
-            BCrypt.Result result = BCrypt.verifyer()
-                    .verify(request.getPassword().toCharArray(),
-                            user.getPassword());
+            // 4. Verify password (bcrypt or plain text for backward compatibility)
+            boolean passwordValid = false;
+            
+            // Try bcrypt first (new format)
+            if (user.getPassword() != null && user.getPassword().startsWith("$2")) {
+                BCrypt.Result result = BCrypt.verifyer()
+                        .verify(request.getPassword().toCharArray(),
+                                user.getPassword());
+                passwordValid = result.verified;
+            } else {
+                // Fallback to plain text comparison (existing data)
+                passwordValid = request.getPassword().equals(user.getPassword());
+            }
 
-            if (!result.verified) {
+            if (!passwordValid) {
                 logger.warn("[AuthApi] Wrong password for: {}", request.getUsername());
                 return Response.status(Response.Status.UNAUTHORIZED)
                         .entity("{\"error\":\"Invalid username or password\"}")
@@ -95,6 +110,36 @@ public class AuthApi {
 
         } catch (Exception e) {
             logger.error(" Login error", e);
+            return JsonApi.badRequest(e.getMessage());
+        }
+    }
+
+    /**
+     * DEBUG: Check if user exists and password format
+     * GET /api/auth/debug/{username}
+     */
+    @GET
+    @Path("/debug/{username}")
+    public Response debugUser(@PathParam("username") String username) {
+        try {
+            User user = userBean.getUserByUsername(username);
+            if (user == null) {
+                return JsonApi.ok(new Object() {
+                    public String status = "User not found";
+                    public String username_param = username;
+                });
+            }
+
+            return JsonApi.ok(new Object() {
+                public String status = "User found";
+                public String username = user.getUsername();
+                public String role = user.getRole();
+                public String account_status = user.getStatus();
+                public String password_hash_start = user.getPassword() != null ? 
+                    user.getPassword().substring(0, Math.min(20, user.getPassword().length())) : "null";
+                public String is_bcrypt_hash = user.getPassword() != null && user.getPassword().startsWith("$2") ? "YES" : "NO";
+            });
+        } catch (Exception e) {
             return JsonApi.badRequest(e.getMessage());
         }
     }

@@ -124,6 +124,10 @@ public class MatchRequestBean {
         return matchRequestDAO.getPendingRequestsForMentor(mentorId);
     }
 
+    public List<MatchRequest> getRequestsByMentor(String mentorId) {
+        return matchRequestDAO.getRequestsByMentor(mentorId);
+    }
+
     public List<MatchRequest> getRequestsByMentee(String menteeId) {
         return matchRequestDAO.getRequestsByMentee(menteeId);
     }

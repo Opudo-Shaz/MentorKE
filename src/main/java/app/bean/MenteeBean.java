@@ -4,6 +4,7 @@ import app.bean.event.UserRegisteredEvent;
 import app.dao.MenteeDAO;
 import app.model.AuditTrail;
 import app.model.Mentee;
+import app.utility.helper.PasswordUtil;
 import app.utility.validation.ValidationResult;
 import app.utility.validation.Validator;
 import app.utility.validation.ValidatorQualifier;
@@ -201,6 +202,10 @@ public class MenteeBean {
     public void addAdmin(Mentee mentee) {
         logger.info("=== Admin Adding Mentee ===");
         logger.info("Username: {}, Email: {}, Field of Study: {}", mentee.getUsername(), mentee.getEmail(), mentee.getFieldOfStudy());
+
+            if (PasswordUtil.needsHashing(mentee.getPassword())) {
+                mentee.setPassword(PasswordUtil.hashPassword(mentee.getPassword()));
+            }
 
         //  Validate mentee data
         logger.debug("Validating mentee data...");

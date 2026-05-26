@@ -4,6 +4,7 @@ import app.bean.event.UserRegisteredEvent;
 import app.dao.MentorDAO;
 import app.model.AuditTrail;
 import app.model.Mentor;
+import app.utility.helper.PasswordUtil;
 import app.utility.validation.ValidationResult;
 import app.utility.validation.Validator;
 import app.utility.validation.ValidatorQualifier;
@@ -44,6 +45,10 @@ public class MentorBean {
     public void add(Mentor mentor) throws SQLException {
         logger.info("=== Starting Mentor Registration ===");
         logger.info("Username: {}, Email: {}, Specialization: {}", mentor.getUsername(), mentor.getEmail(), mentor.getSpecialization());
+
+        if (PasswordUtil.needsHashing(mentor.getPassword())) {
+            mentor.setPassword(PasswordUtil.hashPassword(mentor.getPassword()));
+        }
 
         // Step 1: Ensure inherited account fields are set on the mentor record
         mentor.setRole("mentor");
@@ -175,6 +180,10 @@ public class MentorBean {
     public void addAdmin(Mentor mentor) throws SQLException {
         logger.info("=== Admin Adding Mentor ===");
         logger.info("Username: {}, Email: {}, Specialization: {}", mentor.getUsername(), mentor.getEmail(), mentor.getSpecialization());
+
+        if (PasswordUtil.needsHashing(mentor.getPassword())) {
+            mentor.setPassword(PasswordUtil.hashPassword(mentor.getPassword()));
+        }
 
         mentor.setRole("mentor");
 

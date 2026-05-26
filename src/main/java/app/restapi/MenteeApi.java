@@ -4,6 +4,7 @@ import app.bean.MenteeBean;
 import app.dtos.MenteeRequestDto;
 import app.dtos.MenteeResponseDto;
 import app.model.Mentee;
+import app.security.jwt.JwtSecured;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
@@ -15,6 +16,7 @@ import java.util.List;
 @Path("/mentees")
 @ApplicationScoped
 @Produces(MediaType.APPLICATION_JSON)
+@JwtSecured
 public class MenteeApi {
 
     @Inject

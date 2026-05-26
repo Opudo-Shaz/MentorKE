@@ -4,6 +4,7 @@ import app.bean.SessionBean;
 import app.dtos.SessionCreateRequestDto;
 import app.dtos.SessionResponseDto;
 import app.model.Session;
+import app.security.jwt.JwtSecured;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
@@ -15,6 +16,7 @@ import java.util.List;
 @Path("/sessions")
 @ApplicationScoped
 @Produces(MediaType.APPLICATION_JSON)
+@JwtSecured
 public class SessionApi {
 
     @Inject

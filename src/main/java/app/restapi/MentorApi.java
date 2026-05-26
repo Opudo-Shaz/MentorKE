@@ -4,6 +4,7 @@ import app.bean.MentorBean;
 import app.dtos.MentorRequestDto;
 import app.dtos.MentorResponseDto;
 import app.model.Mentor;
+import app.security.jwt.JwtSecured;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
@@ -15,6 +16,7 @@ import java.util.List;
 @Path("/mentors")
 @ApplicationScoped
 @Produces(MediaType.APPLICATION_JSON)
+@JwtSecured
 public class MentorApi {
 
     @Inject

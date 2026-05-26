@@ -18,6 +18,14 @@ public class MatchRequestDAO extends GenericDAO<MatchRequest, Long> {
         return query.getResultList();
     }
 
+    // Get all match requests for a mentor
+    public List<MatchRequest> getRequestsByMentor(String mentorId) {
+        String jpql = "SELECT mr FROM MatchRequest mr WHERE mr.mentorId = :mentorId ORDER BY mr.createdAt DESC";
+        TypedQuery<MatchRequest> query = entityManager.createQuery(jpql, MatchRequest.class);
+        query.setParameter("mentorId", mentorId);
+        return query.getResultList();
+    }
+
     // Get match requests by mentee
     public List<MatchRequest> getRequestsByMentee(String menteeId) {
         String jpql = "SELECT mr FROM MatchRequest mr WHERE mr.menteeId = :menteeId ORDER BY mr.createdAt DESC";

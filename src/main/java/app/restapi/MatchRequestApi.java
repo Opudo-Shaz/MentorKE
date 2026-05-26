@@ -4,6 +4,7 @@ import app.bean.MatchRequestBean;
 import app.dtos.MatchRequestCreateRequestDto;
 import app.dtos.MatchRequestResponseDto;
 import app.model.MatchRequest;
+import app.security.jwt.JwtSecured;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
@@ -15,6 +16,7 @@ import java.util.List;
 @Path("/match-requests")
 @ApplicationScoped
 @Produces(MediaType.APPLICATION_JSON)
+@JwtSecured
 public class MatchRequestApi {
 
     @Inject
@@ -24,6 +26,23 @@ public class MatchRequestApi {
     public Response getAllMatchRequests() {
         try {
             List<MatchRequestResponseDto> requests = matchRequestBean.getAllMatchRequests().stream()
+                    .map(MatchRequestResponseDto::fromEntity)
+                    .toList();
+            return JsonApi.ok(requests);
+        } catch (Exception e) {
+            return JsonApi.badRequest(e.getMessage());
+        }
+    }
+
+    @GET
+    @Path("/mentor/{mentorId}")
+    public Response getRequestsByMentor(@PathParam("mentorId") String mentorId) {
+        try {
+            if (mentorId == null || mentorId.isBlank()) {
+                return JsonApi.badRequest("mentorId is required");
+            }
+
+            List<MatchRequestResponseDto> requests = matchRequestBean.getRequestsByMentor(mentorId).stream()
                     .map(MatchRequestResponseDto::fromEntity)
                     .toList();
             return JsonApi.ok(requests);

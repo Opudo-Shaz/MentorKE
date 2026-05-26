@@ -1,5 +1,7 @@
 package app.dtos;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import app.model.Mentor;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -10,6 +12,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class MentorRequestDto {
 
     private String userId;

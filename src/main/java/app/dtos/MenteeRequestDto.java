@@ -1,7 +1,8 @@
 package app.dtos;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import app.model.Mentee;
-import app.model.Mentor;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,6 +12,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class MenteeRequestDto {
 
     private Long userId;
