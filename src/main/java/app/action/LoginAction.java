@@ -11,8 +11,6 @@ import jakarta.inject.Inject;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import jakarta.security.enterprise.AuthenticationStatus;
-import jakarta.security.enterprise.authentication.mechanism.http.HttpAuthenticationMechanism;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -92,8 +90,8 @@ public class LoginAction extends BaseAction {
             if (PasswordUtil.isBcryptHash(user.getPassword())) {
                 passwordValid = PasswordUtil.verifyPassword(password, user.getPassword());
             } else {
+                
                 // Fallback to plain text comparison for backwards compatibility
-                // TODO: Migrate existing passwords to BCrypt
                 passwordValid = password.equals(user.getPassword());
             }
 
@@ -116,14 +114,13 @@ public class LoginAction extends BaseAction {
             }
 
             // Establish the security principal using request.login()
-            // This is required for the container to recognize the authenticated user
-            // NOTE: Currently disabled as session-based authentication is sufficient
-            // try {
-            //     request.login(username, password);
-            // } catch (jakarta.servlet.ServletException e) {
-            //     Logger.getLogger(LoginAction.class.getName()).log(Level.WARNING, "Failed to establish security context for user: " + username, e);
-            //     // Note: This might fail if IdentityStore has issues, but continue to set session anyway
-            // }
+            // This is required for the container to recognize the authenticated user for @RolesAllowed checks
+            try {
+                request.login(username, password);
+            } catch (jakarta.servlet.ServletException e) {
+                Logger.getLogger(LoginAction.class.getName()).log(Level.WARNING, "Failed to establish security context for user: " + username, e);
+                // Continue to set session attributes even if container login fails
+            }
 
             // Set session attributes for legacy session-based authorization
             HttpSession session = request.getSession(true);

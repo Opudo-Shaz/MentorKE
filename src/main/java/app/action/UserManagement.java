@@ -20,6 +20,7 @@ import app.framework.ActionPostMethod;
 
 @ApplicationScoped
 @Action(value = "user-management", label = "User Management")
+@RolesAllowed({"mentor","mentee","admin"})
 public class UserManagement extends BaseAction {
 
     private static final Logger logger = AppLogger.getLogger(UserManagement.class);

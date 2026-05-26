@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 
 @ApplicationScoped
 @Action(value = "admin", label = "Admin Dashboard")
+@RolesAllowed({"mentor","mentee","admin"})
 public class AdminDashboard extends BaseAction {
 
     private static final Logger logger = AppLogger.getLogger(AdminDashboard.class);

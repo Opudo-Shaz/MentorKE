@@ -18,6 +18,7 @@ import app.framework.ActionPostMethod;
 
 @ApplicationScoped
 @Action(value = "mentee-management", label = "Mentee Management")
+@RolesAllowed({"mentor","mentee","admin"})
 public class MenteeManagement extends BaseAction {
 
     private static final Logger logger = AppLogger.getLogger(MenteeManagement.class);

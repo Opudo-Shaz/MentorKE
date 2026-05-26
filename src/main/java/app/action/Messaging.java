@@ -22,6 +22,7 @@ import java.util.List;
 
 @ApplicationScoped
 @Action(value = "messaging", label = "Messaging")
+@RolesAllowed({"mentor","mentee","admin"})
 public class Messaging extends BaseAction {
 
     private static final Logger logger = AppLogger.getLogger(Messaging.class);

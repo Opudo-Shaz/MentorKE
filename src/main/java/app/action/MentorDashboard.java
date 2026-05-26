@@ -18,6 +18,7 @@ import app.framework.ActionGetMethod;
 
 @ApplicationScoped
 @Action(value = "mentor-dashboard", label = "Mentor Dashboard")
+@RolesAllowed({"mentor","mentee","admin"})
 public class MentorDashboard extends BaseAction {
     @Inject
     private MentorBean mentorBean;

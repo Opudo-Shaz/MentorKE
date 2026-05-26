@@ -21,6 +21,7 @@ import java.util.List;
 
 @ApplicationScoped
 @Action(value = "mentor-requests", label = "Pending Requests")
+@RolesAllowed({"mentor","mentee","admin"})
 public class MentorRequest extends BaseAction {
 
     private static final Logger logger = AppLogger.getLogger(MentorRequest.class);

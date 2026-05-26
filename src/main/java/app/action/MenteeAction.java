@@ -7,12 +7,14 @@ import app.model.Session;
 import jakarta.inject.Inject;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.annotation.security.RolesAllowed;
 
 import java.sql.SQLException;
 import java.util.List;
 
 @ApplicationScoped
 @Action(value = "mentee", label = "Mentee")
+@RolesAllowed({"mentor","mentee","admin"})
 public class MenteeAction extends BaseAction {
 
     @Inject

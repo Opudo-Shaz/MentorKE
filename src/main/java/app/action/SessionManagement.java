@@ -25,6 +25,7 @@ import java.util.List;
 
 @ApplicationScoped
 @Action(value = "sessions", label = "Sessions")
+@RolesAllowed({"mentor","mentee","admin"})
 public class SessionManagement extends BaseAction {
 
     private static final Logger logger = AppLogger.getLogger(SessionManagement.class);

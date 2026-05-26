@@ -15,6 +15,7 @@ import app.framework.ActionGetMethod;
 
 @ApplicationScoped
 @Action(value = "mentee-dashboard", label = "Mentee Dashboard")
+@RolesAllowed({"mentor","mentee","admin"})
 public class MenteeDashboard extends BaseAction {
 
     @Inject

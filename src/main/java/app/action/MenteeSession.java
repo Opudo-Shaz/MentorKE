@@ -19,9 +19,11 @@ import java.util.List;
 import app.framework.Action;
 import app.framework.ActionGetMethod;
 import app.framework.ActionPostMethod;
+import jakarta.annotation.security.RolesAllowed;
 
 @ApplicationScoped
 @Action(value = "mentee-sessions", label = "Mentee Sessions")
+@RolesAllowed({"mentor","mentee","admin"})
 public class MenteeSession extends BaseAction {
 
     private static final Logger logger = AppLogger.getLogger(MenteeSession.class);

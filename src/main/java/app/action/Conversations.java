@@ -13,6 +13,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.annotation.security.RolesAllowed;
 import org.slf4j.Logger;
 
 import java.io.PrintWriter;
@@ -24,6 +25,7 @@ import java.util.Map;
 
 @ApplicationScoped
 @Action(value = "conversations", label = "Conversations API")
+@RolesAllowed({"mentor","mentee","admin"})
 public class Conversations extends BaseAction {
 
     private static final Logger logger = AppLogger.getLogger(Conversations.class);

@@ -21,6 +21,7 @@ import java.util.List;
 
 @ApplicationScoped
 @Action(value = "mentor-management", label = "Mentor Management")
+@RolesAllowed({"mentor","mentee","admin"})
 public class MentorManagement extends BaseAction {
 
     private static final Logger logger = AppLogger.getLogger(MentorManagement.class);
