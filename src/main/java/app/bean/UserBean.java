@@ -1,6 +1,5 @@
 package app.bean;
 
-import app.bean.event.UserRegisteredEvent;
 import app.dao.MenteeDAO;
 import app.dao.MentorDAO;
 import app.model.AuditTrail;
@@ -37,13 +36,13 @@ public class UserBean {
     @Inject
     private Event<AuditTrail> auditTrailEvent;
 
-    @Inject
-    private Event<UserRegisteredEvent> userRegisteredEvent;
 
     @Inject
     @ValidatorQualifier(ValidatorQualifier.ValidationChoice.USER)
     private Validator<User> userValidator;
 
+    @Inject
+    private RegistrationService registrationService;
 
     public UserBean(){}
 
@@ -54,7 +53,7 @@ public class UserBean {
         logger.info("[UserBean] === Starting User Registration ===");
         logger.info("[UserBean] Username: {} , Email: {} , Role: {}", user.getUsername(), user.getEmail(), user.getRole());
 
-        // Step 1: Check if username already exists
+        //  Check if username already exists
         logger.debug(" Checking if username exists...");
         User existingUser = getUserByUsername(user.getUsername());
         if (existingUser != null) {
@@ -63,7 +62,7 @@ public class UserBean {
         }
         logger.debug("Username check passed ✓");
 
-        // Step 2: Validate user data
+        //  Validate user data
         ValidationResult validationResult = userValidator.validate(user);
         if (!validationResult.isValid()) {
             throw new IllegalArgumentException("User validation failed: " + validationResult.getErrorMessages());
@@ -79,38 +78,30 @@ public class UserBean {
             user.setPassword(PasswordUtil.hashPassword(user.getPassword()));
         }
 
-        if ("mentor".equalsIgnoreCase(user.getRole())) {
-            Mentor mentor = copyToMentor(user);
-            mentorDAO.save(mentor);
-            user.setId(mentor.getId());
-        } else if ("mentee".equalsIgnoreCase(user.getRole())) {
-            Mentee mentee = copyToMentee(user);
-            menteeDAO.save(mentee);
-            user.setId(mentee.getId());
-        } else {
-            throw new IllegalArgumentException("Role '" + user.getRole() + "' is not supported for database registration");
+        // Delegate to RegistrationService which will create the subtype and persist it
+        try {
+            registrationService.registerUser(user.getUsername(), user.getPassword(), user.getEmail(), user.getRole(), new java.util.HashMap<>());
+        } catch (java.sql.SQLException e) {
+            throw new RuntimeException("Registration failed", e);
         }
 
-        logger.info("[UserBean] User registered successfully, ID: {}", user.getId());
+        // After delegation, resolve the created entity and set the id back on the supplied User
+        Mentor createdMentor = mentorDAO.getMentorByUsername(user.getUsername());
+        if (createdMentor != null) {
+            user.setId(createdMentor.getId());
+            logger.info("[UserBean] User registered successfully as Mentor, ID: {}", user.getId());
+            return;
+        }
 
-        // Step 4: Fire CRUD event for audit trail
-        auditTrailEvent.fire(new AuditTrail(
-            "User",
-            String.valueOf(user.getId()),
-            "CREATE",
-            "SYSTEM",
-            "User registered: " + user.getUsername()
-        ));
+        Mentee createdMentee = menteeDAO.getMenteeByUsername(user.getUsername());
+        if (createdMentee != null) {
+            user.setId(createdMentee.getId());
+            logger.info("[UserBean] User registered successfully as Mentee, ID: {}", user.getId());
+            return;
+        }
 
-        // Step 5: Fire email event (will be handled asynchronously by EmailObserverBean)
-        logger.debug(" Firing email registration event...");
-        userRegisteredEvent.fire(new UserRegisteredEvent(
-            user.getEmail(),
-            user.getUsername(),
-            user.getRole()
-        ));
-
-        logger.info("[UserBean] === User Registration Completed Successfully ===");
+        // If we reach here something unexpected happened
+        throw new IllegalStateException("User registration succeeded but created entity not found for username: " + user.getUsername());
     }
 
     /**
@@ -157,7 +148,7 @@ public class UserBean {
     logger.info("[UserBean] === Updating user ===");
     logger.debug("[UserBean] User ID: {}", userId);
 
-    // Step 1: Check if user exists
+    //  Check if user exists
     User existingUser = getUserById(userId);
     if (existingUser == null) {
         logger.error("[UserBean] User not found!");
@@ -165,7 +156,7 @@ public class UserBean {
     }
     logger.debug("[UserBean] User found ✓");
 
-    // Step 2: Preserve existing password BEFORE validation
+    // Preserve existing password BEFORE validation
     if (user.getPassword() == null || user.getPassword().isEmpty()) {
         logger.debug("[UserBean] No new password provided, keeping existing password");
         user.setPassword(existingUser.getPassword());
@@ -177,15 +168,13 @@ public class UserBean {
         }
     }
 
-    // Step 3: Set ID (important for validator context)
     user.setId(Long.parseLong(userId));
 
-    // Step 4: Set default status if needed
+    // Set default status
     if (user.getStatus() == null || user.getStatus().isEmpty()) {
         user.setStatus("Active");
     }
 
-    // Step 5: Validate AFTER fixing missing fields
     logger.debug("Validating user data...");
     ValidationResult validationResult = userValidator.validate(user);
     if (!validationResult.isValid()) {
@@ -194,22 +183,36 @@ public class UserBean {
     }
     logger.debug("[UserBean] Validation passed ✓");
 
-    // Step 6: Update user in database
+    //  Update user in database
     logger.debug("[UserBean] Updating user in database...");
     if (existingUser instanceof Mentor existingMentor) {
-        Mentor mentor = copyToMentor(user);
+        Mentor mentor = new Mentor();
         mentor.setId(existingMentor.getId());
+        mentor.setUsername(user.getUsername());
+        mentor.setPassword(user.getPassword());
+        mentor.setRole(user.getRole());
+        mentor.setEmail(user.getEmail());
+        mentor.setStatus(user.getStatus());
+        mentor.setCreatedAt(user.getCreatedAt());
+        mentor.setUpdatedAt(user.getUpdatedAt());
         mentorDAO.update(mentor);
     } else if (existingUser instanceof Mentee existingMentee) {
-        Mentee mentee = copyToMentee(user);
+        Mentee mentee = new Mentee();
         mentee.setId(existingMentee.getId());
+        mentee.setUsername(user.getUsername());
+        mentee.setPassword(user.getPassword());
+        mentee.setRole(user.getRole());
+        mentee.setEmail(user.getEmail());
+        mentee.setStatus(user.getStatus());
+        mentee.setCreatedAt(user.getCreatedAt());
+        mentee.setUpdatedAt(user.getUpdatedAt());
         menteeDAO.update(mentee);
     } else {
         throw new IllegalStateException("Unsupported account type: " + existingUser.getClass().getSimpleName());
     }
     logger.info("[UserBean] User updated successfully");
 
-    // Step 7: Fire CRUD event
+    // Fire CRUD event
         auditTrailEvent.fire(new AuditTrail(
         "User",
         userId,
@@ -228,7 +231,7 @@ public class UserBean {
         logger.info("[UserBean] === Deleting user ===");
         logger.debug("[UserBean] User ID: {}", userId);
 
-        // Step 1: Check if user exists
+        // Check if user exists
         logger.debug("[UserBean] Checking if user exists...");
         User user = getUserById(userId);
         if (user == null) {
@@ -237,7 +240,7 @@ public class UserBean {
         }
         logger.debug("[UserBean] User found ✓");
 
-        // Step 2: Delete user from database
+        // Delete user from database
         logger.debug("[UserBean] Deleting user from database...");
         if (user instanceof Mentor) {
             mentorDAO.delete(Long.parseLong(userId));
@@ -248,7 +251,7 @@ public class UserBean {
         }
         logger.info("[UserBean] User deleted successfully");
 
-        // Step 3: Fire CRUD event for audit trail
+        // Fire CRUD event for audit trail
         auditTrailEvent.fire(new AuditTrail(
             "User",
             userId,
@@ -257,32 +260,7 @@ public class UserBean {
             "User deleted: " + user.getUsername()
         ));
 
-        logger.info("[UserBean] === User Deletion Completed Successfully ===");
+        logger.info("=== User Deletion Completed Successfully ===");
     }
 
-    private Mentor copyToMentor(User user) {
-        Mentor mentor = new Mentor();
-        mentor.setId(user.getId());
-        mentor.setUsername(user.getUsername());
-        mentor.setPassword(user.getPassword());
-        mentor.setRole(user.getRole());
-        mentor.setEmail(user.getEmail());
-        mentor.setStatus(user.getStatus());
-        mentor.setCreatedAt(user.getCreatedAt());
-        mentor.setUpdatedAt(user.getUpdatedAt());
-        return mentor;
-    }
-
-    private Mentee copyToMentee(User user) {
-        Mentee mentee = new Mentee();
-        mentee.setId(user.getId());
-        mentee.setUsername(user.getUsername());
-        mentee.setPassword(user.getPassword());
-        mentee.setRole(user.getRole());
-        mentee.setEmail(user.getEmail());
-        mentee.setStatus(user.getStatus());
-        mentee.setCreatedAt(user.getCreatedAt());
-        mentee.setUpdatedAt(user.getUpdatedAt());
-        return mentee;
-    }
 }

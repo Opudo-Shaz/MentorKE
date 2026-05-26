@@ -8,10 +8,12 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.List;
 import app.utility.logging.AppLogger;
 import org.slf4j.Logger;
 import jakarta.enterprise.context.ApplicationScoped;
 import app.framework.Action;
+import app.framework.ActionGetMethod;
 import app.framework.ActionPostMethod;
 
 @ApplicationScoped
@@ -26,6 +28,23 @@ public class MenteeManagement extends BaseAction {
     @Inject
     private MentorKeSecurity security;
 
+    @ActionGetMethod("admin")
+    @RolesAllowed({"admin"})
+    public void admin(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        security.requireRole("admin");
+        
+        try {
+            List<Mentee> mentees = menteeBean.findAll();
+            setAttribute(request, "mentees", mentees);
+            setAttribute(request, "view", "mentees");
+            forward(request, response, "/admin-dashboard.jsp");
+        } catch (Exception e) {
+            logger.error("Error loading mentees for admin view", e);
+            setAttribute(request, "errorMessage", "Error loading mentees: " + e.getMessage());
+            forward(request, response, "/admin-dashboard.jsp");
+        }
+    }
+
     @ActionPostMethod("add")
     @RolesAllowed({"admin"})
     public void add(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -33,12 +52,12 @@ public class MenteeManagement extends BaseAction {
 
         try {
             String redirectParam = handleAddMentee(request);
-            redirect(response, "admin?view=mentees&" + redirectParam);
+            redirect(response, request.getContextPath() + "/app/mentee-management/admin?" + redirectParam);
         } catch (IllegalArgumentException e) {
             String errorMsg = e.getMessage().replace("Mentee validation failed: ", "");
-            redirect(response, "admin?view=mentees&error=" + java.net.URLEncoder.encode(errorMsg, "UTF-8"));
+            redirect(response, request.getContextPath() + "/app/mentee-management/admin?error=" + java.net.URLEncoder.encode(errorMsg, "UTF-8"));
         } catch (Exception e) {
-            redirect(response, "admin?view=mentees&error=" + java.net.URLEncoder.encode(e.getMessage(), "UTF-8"));
+            redirect(response, request.getContextPath() + "/app/mentee-management/admin?error=" + java.net.URLEncoder.encode(e.getMessage(), "UTF-8"));
         }
     }
 
@@ -49,12 +68,12 @@ public class MenteeManagement extends BaseAction {
 
         try {
             String redirectParam = handleUpdateMentee(request);
-            redirect(response, "admin?view=mentees&" + redirectParam);
+            redirect(response, request.getContextPath() + "/app/mentee-management/admin?" + redirectParam);
         } catch (IllegalArgumentException e) {
             String errorMsg = e.getMessage().replace("Mentee validation failed: ", "");
-            redirect(response, "admin?view=mentees&error=" + java.net.URLEncoder.encode(errorMsg, "UTF-8"));
+            redirect(response, request.getContextPath() + "/app/mentee-management/admin?error=" + java.net.URLEncoder.encode(errorMsg, "UTF-8"));
         } catch (Exception e) {
-            redirect(response, "admin?view=mentees&error=" + java.net.URLEncoder.encode(e.getMessage(), "UTF-8"));
+            redirect(response, request.getContextPath() + "/app/mentee-management/admin?error=" + java.net.URLEncoder.encode(e.getMessage(), "UTF-8"));
         }
     }
 
@@ -65,12 +84,12 @@ public class MenteeManagement extends BaseAction {
 
         try {
             String redirectParam = handleDeleteMentee(request);
-            redirect(response, "admin?view=mentees&" + redirectParam);
+            redirect(response, request.getContextPath() + "/app/mentee-management/admin?" + redirectParam);
         } catch (IllegalArgumentException e) {
             String errorMsg = e.getMessage().replace("Mentee validation failed: ", "");
-            redirect(response, "admin?view=mentees&error=" + java.net.URLEncoder.encode(errorMsg, "UTF-8"));
+            redirect(response, request.getContextPath() + "/app/mentee-management/admin?error=" + java.net.URLEncoder.encode(errorMsg, "UTF-8"));
         } catch (Exception e) {
-            redirect(response, "admin?view=mentees&error=" + java.net.URLEncoder.encode(e.getMessage(), "UTF-8"));
+            redirect(response, request.getContextPath() + "/app/mentee-management/admin?error=" + java.net.URLEncoder.encode(e.getMessage(), "UTF-8"));
         }
     }
 

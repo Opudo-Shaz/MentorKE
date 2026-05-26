@@ -51,7 +51,6 @@ public class MentorKeIdentityStoreImpl implements IdentityStore, MentorKeIdentit
                 }
             } else {
                 // Fallback to plain text comparison for backwards compatibility during transition
-                // TODO: Migrate existing passwords to BCrypt
                 if (!password.equals(user.getPassword())) {
                     logger.warn("Invalid password for user: {}", username);
                     return CredentialValidationResult.INVALID_RESULT;

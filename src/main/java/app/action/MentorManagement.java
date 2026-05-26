@@ -5,6 +5,7 @@ import app.model.Mentor;
 import app.security.MentorKeSecurity;
 import app.utility.logging.AppLogger;
 import app.framework.Action;
+import app.framework.ActionGetMethod;
 import app.framework.ActionPostMethod;
 import app.framework.ActionResponse;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -16,6 +17,7 @@ import org.slf4j.Logger;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 @ApplicationScoped
 @Action(value = "mentor-management", label = "Mentor Management")
@@ -28,6 +30,23 @@ public class MentorManagement extends BaseAction {
 
     @Inject
     private MentorKeSecurity security;
+
+    @ActionGetMethod("admin")
+    @RolesAllowed({"admin"})
+    public void admin(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        security.requireRole("admin");
+        
+        try {
+            List<Mentor> mentors = mentorBean.findAll();
+            setAttribute(request, "mentors", mentors);
+            setAttribute(request, "view", "mentors");
+            forward(request, response, "/admin-dashboard.jsp");
+        } catch (Exception e) {
+            logger.error("Error loading mentors for admin view", e);
+            setAttribute(request, "errorMessage", "Error loading mentors: " + e.getMessage());
+            forward(request, response, "/admin-dashboard.jsp");
+        }
+    }
 
     @ActionPostMethod("add")
     @RolesAllowed({"admin"})
@@ -59,19 +78,19 @@ public class MentorManagement extends BaseAction {
             } else if ("delete".equalsIgnoreCase(action)) {
                 redirectParam = handleDeleteMentor(request);
             } else {
-                response.sendRedirect("/MentorKE/app/admin/?view=mentors");
+                response.sendRedirect(request.getContextPath() + "/app/mentor-management/admin");
                 return null;
             }
 
-            response.sendRedirect("/MentorKE/app/admin/?view=mentors&" + redirectParam);
+            response.sendRedirect(request.getContextPath() + "/app/mentor-management/admin?" + redirectParam);
             return null;
         } catch (IllegalArgumentException e) {
             logger.error("Validation error: {}", e.getMessage());
-            sendRedirectWithError(response, e.getMessage().replace("Mentor validation failed: ", ""));
+            sendRedirectWithError(response, request, e.getMessage().replace("Mentor validation failed: ", ""));
             return null;
         } catch (Exception e) {
             logger.error("Error: {}", e.getMessage());
-            sendRedirectWithError(response, e.getMessage());
+            sendRedirectWithError(response, request, e.getMessage());
             return null;
         }
     }
@@ -145,9 +164,9 @@ public class MentorManagement extends BaseAction {
         return "success=mentor_deleted";
     }
 
-    private void sendRedirectWithError(HttpServletResponse response, String message) {
+    private void sendRedirectWithError(HttpServletResponse response, HttpServletRequest request, String message) {
         try {
-            response.sendRedirect("/MentorKE/app/admin/?view=mentors&error=" + URLEncoder.encode(message, StandardCharsets.UTF_8));
+            response.sendRedirect(request.getContextPath() + "/app/mentor-management/admin?error=" + URLEncoder.encode(message, StandardCharsets.UTF_8));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

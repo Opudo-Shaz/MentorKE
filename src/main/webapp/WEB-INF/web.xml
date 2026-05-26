@@ -35,7 +35,6 @@
     <web-resource-collection>
       <web-resource-name>Mentor Resources</web-resource-name>
       <url-pattern>/app/mentor-*</url-pattern>
-      <url-pattern>/app/sessions/*</url-pattern>
       <http-method>GET</http-method>
       <http-method>POST</http-method>
     </web-resource-collection>
@@ -54,7 +53,6 @@
     <web-resource-collection>
       <web-resource-name>Mentee Resources</web-resource-name>
       <url-pattern>/app/mentee-*</url-pattern>
-      <url-pattern>/app/sessions/*</url-pattern>
       <http-method>GET</http-method>
       <http-method>POST</http-method>
     </web-resource-collection>

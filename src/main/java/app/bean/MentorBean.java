@@ -135,7 +135,7 @@ public class MentorBean {
          mentor.setCreatedAt(existingMentor.getCreatedAt());
          mentor.setUpdatedAt(existingMentor.getUpdatedAt());
 
-         // Step 3: Set ID (important for validator context)
+         // set mentor id
         mentor.setId(Long.parseLong(mentorId));
 
          // Step 4: Set default status if needed
@@ -143,7 +143,7 @@ public class MentorBean {
              mentor.setStatus("Active");
          }
 
-         // Step 5: Validate AFTER fixing missing fields
+        
          logger.debug("Validating mentor data...");
          ValidationResult validationResult = mentorValidator.validate(mentor);
          if (!validationResult.isValid()) {
@@ -152,12 +152,12 @@ public class MentorBean {
          }
          logger.debug("Validation passed ✓");
 
-         // Step 6: Update mentor in database
+         //  Update mentor in database
          logger.debug("Updating mentor in database...");
          mentorDAO.update(mentor);
          logger.info("Mentor updated successfully");
 
-         // Step 7: Fire CRUD event for audit trail
+         //  Fire CRUD event for audit trail
          auditTrailEvent.fire(new AuditTrail(
              "Mentor",
              mentorId,
@@ -170,7 +170,7 @@ public class MentorBean {
      }
 
     /**
-     * CREATE - Add mentor (admin function, no user registration)
+     * CREATE - Add mentor by Admin
      */
     public void addAdmin(Mentor mentor) throws SQLException {
         logger.info("=== Admin Adding Mentor ===");
@@ -178,7 +178,7 @@ public class MentorBean {
 
         mentor.setRole("mentor");
 
-        // Step 2: Validate mentor data
+        //  Validate mentor data
         logger.debug("Validating mentor data...");
         ValidationResult validationResult = mentorValidator.validate(mentor);
         if (!validationResult.isValid()) {
@@ -187,12 +187,12 @@ public class MentorBean {
         }
         logger.debug("Validation passed ✓");
 
-        // Step 3: Add mentor to database
+        //  Add mentor to database
         logger.debug("Adding mentor to database...");
         mentorDAO.save(mentor);
         logger.info("Mentor added successfully, ID: {}", mentor.getId());
 
-        // Step 4: Fire CRUD event for audit trail
+        // Fire CRUD event for audit trail
         auditTrailEvent.fire(new AuditTrail(
             "Mentor",
             String.valueOf(mentor.getId()),
@@ -201,7 +201,7 @@ public class MentorBean {
             "Mentor added by admin: " + mentor.getUsername() + ", Specialization: " + mentor.getSpecialization()
         ));
 
-        // Step 5: Fire email event to notify user they're now a mentor
+        //  Fire email event to notify user they're now a mentor
         logger.debug("Firing email for newly assigned mentor...");
         userRegisteredEvent.fire(
             new UserRegisteredEvent(
@@ -222,7 +222,7 @@ public class MentorBean {
         logger.info("=== Deleting mentor ===");
         logger.info("Mentor ID: {}", mentorId);
 
-        // Step 1: Check if mentor exists
+        // Check if mentor exists
         logger.debug("Checking if mentor exists...");
         Mentor mentor = mentorDAO.findById(Long.parseLong(mentorId));
         if (mentor == null) {

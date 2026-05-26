@@ -277,7 +277,6 @@
             padding: 8px 16px;
             border-radius: var(--radius-md);
             font-size: 13px; font-weight: 500;
-            font-family: 'DM Sans', sans-serif;
             cursor: pointer; border: none; transition: background 0.15s, opacity 0.15s;
         }
         .btn svg { width: 16px; height: 16px; }
@@ -285,7 +284,6 @@
         .btn-primary:hover { background: var(--blue-700); }
         .btn-outline {
             background: var(--white); color: var(--gray-600);
-            border: 1px solid var(--gray-200);
         }
         .btn-outline:hover { background: var(--gray-100); }
         .btn-edit {
@@ -1031,7 +1029,7 @@
                             <td><%= mentee.getUserId() %></td>
                             <td><%= mentee.getEducationLevel() %></td>
                             <td><%= mentee.getFieldOfStudy() %></td>
-                            <td><%= mentee.getPhoneNumber() %></td>
+                            <td><%= mentee.getPhoneNumber() != null ? mentee.getPhoneNumber() : "—" %></td>
                             <td>
                                 <span class="pill <%= "Active".equals(mentee.getStatus()) ? "pill-active" : "pill-inactive" %>">
                                     <%= mentee.getStatus() %>
@@ -1039,7 +1037,7 @@
                             </td>
                             <td>
                                 <div class="td-actions">
-                                    <button class="btn btn-edit" onclick="openEditModal('Mentee','<%= mentee.getId() %>',{educationLevel:'<%= mentee.getEducationLevel() %>',fieldOfStudy:'<%= mentee.getFieldOfStudy() %>',learningGoals:'<%= mentee.getLearningGoals() %>',phoneNumber:'<%= mentee.getPhoneNumber() %>',mentorId:'<%= mentee.getMentorId() != null ? mentee.getMentorId() : "" %>',status:'<%= mentee.getStatus() %>'})">
+                                    <button class="btn btn-edit" onclick="openEditModal('Mentee','<%= mentee.getId() %>',{username:'<%= mentee.getUsername() != null ? mentee.getUsername() : "" %>',email:'<%= mentee.getEmail() != null ? mentee.getEmail() : "" %>',educationLevel:'<%= mentee.getEducationLevel() != null ? mentee.getEducationLevel() : "" %>',fieldOfStudy:'<%= mentee.getFieldOfStudy() != null ? mentee.getFieldOfStudy() : "" %>',learningGoals:'<%= mentee.getLearningGoals() != null ? mentee.getLearningGoals() : "" %>',phoneNumber:'<%= mentee.getPhoneNumber() != null ? mentee.getPhoneNumber() : "" %>',mentorId:'<%= mentee.getMentorId() != null ? mentee.getMentorId() : "" %>',status:'<%= mentee.getStatus() %>'})">
                                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                         Edit
                                     </button>
@@ -1158,6 +1156,14 @@
                 <!-- Mentee fields -->
                 <div id="menteeFields" class="hidden">
                     <div class="form-grid" style="margin-bottom:12px">
+                            <div class="form-group">
+                                <label for="editMenteeUsername">Username</label>
+                                <input type="text" name="username" id="editMenteeUsername" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label for="editMenteeEmail">Email</label>
+                                <input type="email" name="email" id="editMenteeEmail" readonly>
+                            </div>
                         <div class="form-group">
                             <label for="editEducationLevel">Education level</label>
                             <select name="educationLevel" id="editEducationLevel">
@@ -1256,6 +1262,8 @@
             setVal('editMentorId', data.mentorId);
             setVal('editStatusMentee', data.status);
             setVal('editLearningGoals', data.learningGoals);
+                setVal('editMenteeUsername', data.username);
+                setVal('editMenteeEmail', data.email);
         }
 
         modal.classList.add('open');

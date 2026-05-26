@@ -268,7 +268,7 @@
         <div class="nav-links">
             <a href="<%= request.getContextPath() %>">Home</a>
             <a href="<%= request.getContextPath() %>/app/about/">About</a>
-            <a href="<%= request.getContextPath() %>/register" class="btn-primary">Register</a>
+            <a href="<%= request.getContextPath() %>/app/register/" class="btn-primary">Register</a>
         </div>
     </nav>
 
@@ -415,7 +415,7 @@
                 <div class="divider">or</div>
 
                 <div class="form-footer">
-                    Don't have an account? <a href="<%= request.getContextPath() %>/register">Create one free</a>
+                    Don't have an account? <a href="<%= request.getContextPath() %>/app/register/">Create one free</a>
                     &nbsp;·&nbsp;
                     <a href="<%= request.getContextPath() %>">Back to home</a>
                 </div>
