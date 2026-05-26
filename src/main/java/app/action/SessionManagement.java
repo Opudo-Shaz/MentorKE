@@ -69,6 +69,21 @@ public class SessionManagement extends BaseAction {
     @ActionGetMethod("schedule-form")
     public void scheduleForm(HttpServletRequest request, HttpServletResponse response) throws Exception {
         if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
+        String userId = getUserId(request);
+        // If mentorId not provided, default to current user when mentor
+        String mentorId = request.getParameter("mentorId");
+        if ((mentorId == null || mentorId.isEmpty()) && isLoggedIn(request)) {
+            mentorId = userId;
+        }
+        request.setAttribute("mentorId", mentorId);
+        // Provide mentee list for mentor selection
+        try {
+            if (mentorId != null && !mentorId.isEmpty()) {
+                request.setAttribute("mentees", menteeBean.findByMentorId(mentorId));
+            }
+        } catch (Exception e) {
+            logger.warn("Could not load mentees for mentor {}", mentorId, e);
+        }
         handleScheduleForm(request, response);
     }
 
@@ -80,6 +95,7 @@ public class SessionManagement extends BaseAction {
     }
 
     @ActionPostMethod("create-session")
+    @RolesAllowed({"mentor"})
     public void createSession(HttpServletRequest request, HttpServletResponse response) throws Exception {
         if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
         String userId = getUserId(request);

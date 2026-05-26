@@ -26,13 +26,14 @@ public class MessageBean {
     /**
      * Send a message from one user to another
      */
-    public void sendMessage(String senderId, String recipientId, String messageText) throws SQLException {
+    public Message sendMessage(String senderId, String recipientId, String messageText) throws SQLException {
         logger.info("Sending message from {} to {}", senderId, recipientId);
 
         Message message = new Message(senderId, recipientId, messageText);
         messageDAO.save(message);
 
         logger.info("Message sent successfully");
+        return message;
     }
 
     /**

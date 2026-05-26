@@ -1,6 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="jakarta.servlet.http.HttpSession" %>
 <%@ page import="java.util.List" %>
+<%@ page import="java.util.Map" %>
 <%@ page import="app.model.Message" %>
 <%
     String ctx = request.getContextPath();
@@ -13,10 +14,23 @@
     String dashboardUrl = isMentor ? ctx + "/app/mentor-dashboard/" : ctx + "/app/mentee-dashboard/";
 
     List<Message> conversations = (List<Message>) request.getAttribute("conversations");
+    List<Map<String, Object>> conversationSummaries = (List<Map<String, Object>>) request.getAttribute("conversationSummaries");
+        List<Message> selectedMessages = (List<Message>) request.getAttribute("messages");
     Integer unreadCount = (Integer) request.getAttribute("unreadCount");
     String errorMessage = (String) request.getAttribute("errorMessage");
+        String selectedPartnerId = (String) request.getAttribute("selectedPartnerId");
+        String selectedPartnerName = (String) request.getAttribute("selectedPartnerName");
+        String selectedPartnerRole = (String) request.getAttribute("selectedPartnerRole");
+        String roomId = (String) request.getAttribute("roomId");
     int unread = unreadCount != null ? unreadCount : 0;
     int convCount = conversations != null ? conversations.size() : 0;
+        boolean hasChatPartner = selectedPartnerId != null && !selectedPartnerId.trim().isEmpty();
+        String chatTitle = selectedPartnerName != null && !selectedPartnerName.isEmpty()
+            ? selectedPartnerName
+            : (hasChatPartner ? "User #" + selectedPartnerId : "Choose a conversation");
+        String chatSubtitle = selectedPartnerRole != null && !selectedPartnerRole.isEmpty()
+            ? selectedPartnerRole.substring(0, 1).toUpperCase() + selectedPartnerRole.substring(1)
+            : (hasChatPartner ? "Conversation partner" : "Live chat will appear here");
 %>
 <!DOCTYPE html>
 <html lang="en">
@@ -138,6 +152,70 @@
         .empty-state svg { width: 40px; height: 40px; margin: 0 auto 12px; display: block; opacity: 0.3; }
         .empty-state h3 { font-size: 16px; font-weight: 600; color: var(--gray-600); margin-bottom: 6px; }
         .empty-state p  { font-size: 14px; }
+
+        .chat-card { margin-top: 18px; }
+        .chat-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .chat-meta { display: flex; flex-direction: column; gap: 3px; }
+        .chat-meta h3 { font-size: 16px; font-weight: 600; color: var(--gray-800); }
+        .chat-meta p { font-size: 12px; color: var(--gray-400); }
+        .chat-room-tag { font-size: 12px; font-weight: 600; color: var(--blue-800); background: var(--blue-50); border: 1px solid var(--blue-100); padding: 4px 10px; border-radius: 999px; }
+        .chat-body { display: grid; gap: 14px; padding: 18px 20px 20px; }
+        .chat-stream {
+            min-height: 320px;
+            max-height: 55vh;
+            overflow-y: auto;
+            padding: 14px;
+            background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+        }
+        .chat-empty { display: grid; place-items: center; min-height: 240px; text-align: center; color: var(--gray-400); }
+        .chat-empty h3 { font-size: 16px; color: var(--gray-600); margin-bottom: 6px; }
+        .chat-empty p { font-size: 14px; max-width: 420px; line-height: 1.5; }
+        .message-row { display: flex; margin-bottom: 10px; }
+        .message-row.mine { justify-content: flex-end; }
+        .bubble {
+            max-width: min(78%, 560px);
+            padding: 11px 14px;
+            border-radius: 16px;
+            border: 1px solid transparent;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+            line-height: 1.45;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .bubble.mine { background: var(--blue-800); color: var(--white); border-top-right-radius: 6px; }
+        .bubble.theirs { background: var(--white); color: var(--gray-800); border-color: var(--gray-200); border-top-left-radius: 6px; }
+        .bubble-meta { margin-top: 6px; font-size: 11px; opacity: 0.75; display: flex; gap: 8px; flex-wrap: wrap; }
+        .message-composer { display: flex; gap: 10px; align-items: flex-end; }
+        .message-input {
+            flex: 1;
+            min-height: 48px;
+            max-height: 120px;
+            resize: vertical;
+            padding: 12px 14px;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            font: inherit;
+            color: var(--gray-800);
+            background: var(--white);
+            outline: none;
+        }
+        .message-input:focus { border-color: var(--blue-200); box-shadow: 0 0 0 3px rgba(13, 71, 161, 0.08); }
+        .send-btn {
+            padding: 12px 18px;
+            border: 0;
+            border-radius: var(--radius-md);
+            background: var(--blue-800);
+            color: var(--white);
+            font: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            min-width: 110px;
+        }
+        .send-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+        .thread-active td { background: rgba(13, 71, 161, 0.05); }
     </style>
 </head>
 <body>
@@ -252,7 +330,49 @@
                         </tr>
                     </thead>
                     <tbody>
-                    <% if (conversations != null && !conversations.isEmpty() && userId != null) {
+                    <% if (conversationSummaries != null && !conversationSummaries.isEmpty() && userId != null) {
+                           for (Map<String, Object> summary : conversationSummaries) {
+                               String partnerId = String.valueOf(summary.get("partnerId"));
+                               String partnerName = String.valueOf(summary.get("partnerName"));
+                               String partnerRole = String.valueOf(summary.get("partnerRole"));
+                               String snippet = summary.get("lastMessage") != null ? String.valueOf(summary.get("lastMessage")) : null;
+                               Object createdAtValue = summary.get("createdAt");
+                               String createdAt = createdAtValue != null ? String.valueOf(createdAtValue) : "—";
+                               boolean selected = Boolean.TRUE.equals(summary.get("selected"));
+                               String partnerInitial = partnerName != null && !partnerName.isEmpty()
+                                   ? partnerName.substring(0, 1).toUpperCase() : "?";
+                    %>
+                        <tr class="<%= selected ? "thread-active" : "" %>"
+                            onclick="window.location='<%= ctx %>/app/messaging/list-conversations?partnerId=<%= partnerId %>'"
+                            style="cursor:pointer;">
+                            <td>
+                                <div class="partner-cell">
+                                    <div class="partner-avatar"><%= partnerInitial %></div>
+                                    <div>
+                                        <div class="partner-name"><%= partnerName %></div>
+                                        <div class="partner-id"><%= partnerRole != null ? partnerRole.substring(0, 1).toUpperCase() + partnerRole.substring(1) : "Partner" %></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="snippet-cell">
+                                <% if (snippet != null && !snippet.isEmpty()) { %>
+                                    <%= snippet.length() > 100 ? snippet.substring(0, 100) + "…" : snippet %>
+                                <% } else { %>
+                                    <span class="snippet-empty">No messages yet</span>
+                                <% } %>
+                            </td>
+                            <td class="time-cell"><%= createdAt %></td>
+                            <td>
+                                <a class="btn-open"
+                                              href="<%= ctx %>/app/messaging/list-conversations?partnerId=<%= partnerId %>"
+                                   onclick="event.stopPropagation();">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                    Open
+                                </a>
+                            </td>
+                        </tr>
+                    <%   }
+                       } else if (conversations != null && !conversations.isEmpty() && userId != null) {
                            for (Message message : conversations) {
                                Object partnerIdRaw = userId.equals(String.valueOf(message.getSenderId()))
                                    ? message.getRecipientId() : message.getSenderId();
@@ -265,7 +385,8 @@
                                        : message.getMessage())
                                    : null;
                     %>
-                        <tr onclick="window.location='<%= ctx %>/app/messaging/conversation?userId=<%= partnerId %>'"
+                        <tr class="<%= partnerId.equals(selectedPartnerId) ? "thread-active" : "" %>"
+                            onclick="window.location='<%= ctx %>/app/messaging/list-conversations?partnerId=<%= partnerId %>'"
                             style="cursor:pointer;">
                             <td>
                                 <div class="partner-cell">
@@ -286,7 +407,7 @@
                             <td class="time-cell"><%= message.getCreatedAt() != null ? message.getCreatedAt() : "—" %></td>
                             <td>
                                 <a class="btn-open"
-                                   href="<%= ctx %>/app/messaging/conversation?userId=<%= partnerId %>"
+                                              href="<%= ctx %>/app/messaging/list-conversations?partnerId=<%= partnerId %>"
                                    onclick="event.stopPropagation();">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                                     Open
@@ -310,8 +431,205 @@
             </div>
         </div>
 
+        <div class="card chat-card">
+            <div class="card-header chat-header">
+                <div class="chat-meta">
+                    <h2>Live chat</h2>
+                    <p><%= hasChatPartner ? chatSubtitle + " chat with " + chatTitle : "Select a mentor or mentee to start chatting" %></p>
+                </div>
+                <% if (hasChatPartner) { %>
+                <span class="chat-room-tag">Room <%= roomId != null ? roomId : "pending" %></span>
+                <% } %>
+            </div>
+
+            <div class="chat-body">
+                <% if (hasChatPartner) { %>
+                <div id="chatStream" class="chat-stream" data-room-id="<%= roomId != null ? roomId : "" %>" data-user-id="<%= userId %>" data-user-name="<%= username %>" data-partner-id="<%= selectedPartnerId %>">
+                    <% if (selectedMessages != null && !selectedMessages.isEmpty()) {
+                           for (Message message : selectedMessages) {
+                               boolean mine = userId != null && userId.equals(String.valueOf(message.getSenderId()));
+                    %>
+                    <div class="message-row <%= mine ? "mine" : "theirs" %>">
+                        <div class="bubble <%= mine ? "mine" : "theirs" %>">
+                            <%= message.getMessage() %>
+                            <div class="bubble-meta">
+                                <span><%= mine ? "You" : (selectedPartnerName != null ? selectedPartnerName : "Partner") %></span>
+                                <span><%= message.getCreatedAt() != null ? message.getCreatedAt() : "Just now" %></span>
+                            </div>
+                        </div>
+                    </div>
+                    <%   }
+                       } else { %>
+                    <div class="chat-empty">
+                        <div>
+                            <h3>No messages yet</h3>
+                            <p>Start the conversation below. This live chat will save messages to the database and stream them instantly to both sides through websocket updates.</p>
+                        </div>
+                    </div>
+                    <% } %>
+                </div>
+
+                <form id="chatForm" class="message-composer" data-send-url="<%= ctx %>/app/messaging/send-message">
+                    <input type="hidden" name="recipientId" value="<%= selectedPartnerId %>">
+                    <textarea id="chatMessage" name="message" class="message-input" rows="2" placeholder="Write a message to <%= chatTitle %>..." required></textarea>
+                    <button id="sendButton" type="submit" class="send-btn">Send</button>
+                </form>
+                <% } else { %>
+                <div class="chat-empty">
+                    <div>
+                        <h3>Pick a conversation</h3>
+                        <p>Choose a thread from the left side to open a live websocket chat and continue the conversation here.</p>
+                    </div>
+                </div>
+                <% } %>
+            </div>
+        </div>
+
     </div><!-- /content -->
 </div><!-- /main -->
+
+<script>
+(() => {
+    const chatStream = document.getElementById('chatStream');
+    const chatForm = document.getElementById('chatForm');
+    const chatMessage = document.getElementById('chatMessage');
+    const sendButton = document.getElementById('sendButton');
+
+    if (!chatStream || !chatForm || !chatMessage || !sendButton) {
+        return;
+    }
+
+    const roomId = chatStream.dataset.roomId || '';
+    const userId = chatStream.dataset.userId || '';
+    const userName = chatStream.dataset.userName || 'You';
+    const partnerId = chatStream.dataset.partnerId || '';
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = wsProtocol + '//' + window.location.host + '<%= ctx %>/chat/' + roomId;
+
+    let socket = null;
+
+    function scrollToBottom() {
+        chatStream.scrollTop = chatStream.scrollHeight;
+    }
+
+    function createBubble(messageData, mine) {
+        const row = document.createElement('div');
+        row.className = `message-row ${mine ? 'mine' : 'theirs'}`;
+
+        const bubble = document.createElement('div');
+        bubble.className = `bubble ${mine ? 'mine' : 'theirs'}`;
+        bubble.textContent = messageData.message || '';
+
+        const meta = document.createElement('div');
+        meta.className = 'bubble-meta';
+        const author = document.createElement('span');
+        author.textContent = messageData.senderName || (mine ? userName : '<%= selectedPartnerName != null ? selectedPartnerName.replace("'", "\\'") : "Partner" %>');
+        const time = document.createElement('span');
+        time.textContent = messageData.createdAt || 'Just now';
+
+        meta.appendChild(author);
+        meta.appendChild(time);
+        bubble.appendChild(meta);
+        row.appendChild(bubble);
+        return row;
+    }
+
+    function appendMessage(messageData, mine) {
+        const emptyState = chatStream.querySelector('.chat-empty');
+        if (emptyState) {
+            emptyState.remove();
+        }
+
+        chatStream.appendChild(createBubble(messageData, mine));
+        scrollToBottom();
+    }
+
+    if (roomId) {
+        try {
+            socket = new WebSocket(wsUrl);
+
+            socket.onmessage = (event) => {
+                try {
+                    const payload = JSON.parse(event.data);
+                    const messageData = payload.message || payload;
+                    if (!messageData || messageData.senderId === userId) {
+                        return;
+                    }
+                    if (payload.roomId && payload.roomId !== roomId) {
+                        return;
+                    }
+                    appendMessage(messageData, false);
+                } catch (error) {
+                    appendMessage({
+                        message: event.data,
+                        createdAt: 'Just now',
+                        senderName: '<%= selectedPartnerName != null ? selectedPartnerName.replace("'", "\\'") : "Partner" %>'
+                    }, false);
+                }
+            };
+        } catch (error) {
+            console.warn('WebSocket unavailable', error);
+        }
+    }
+
+    chatForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const text = chatMessage.value.trim();
+        if (!text || !partnerId) {
+            return;
+        }
+
+        sendButton.disabled = true;
+
+        try {
+            const response = await fetch(chatForm.dataset.sendUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+                body: new URLSearchParams({ recipientId: partnerId, message: text })
+            });
+
+            const payload = await response.json();
+            if (!response.ok || !payload.success) {
+                throw new Error(payload.error || 'Unable to send message');
+            }
+
+            const savedMessage = payload.message || {
+                senderId: userId,
+                recipientId: partnerId,
+                senderName: userName,
+                message: text,
+                createdAt: new Date().toISOString()
+            };
+
+            appendMessage(savedMessage, true);
+
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                    roomId: payload.roomId || roomId,
+                    message: {
+                        senderId: userId,
+                        senderName: userName,
+                        recipientId: partnerId,
+                        message: text,
+                        createdAt: savedMessage.createdAt || new Date().toISOString()
+                    }
+                }));
+            }
+
+            chatMessage.value = '';
+            chatMessage.focus();
+        } catch (error) {
+            console.error(error);
+            alert(error.message || 'Failed to send message');
+        } finally {
+            sendButton.disabled = false;
+        }
+    });
+
+    scrollToBottom();
+})();
+</script>
 
 </body>
 </html>

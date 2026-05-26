@@ -6,6 +6,7 @@
     String ctx = request.getContextPath();
     HttpSession currentSession = request.getSession(false);
     String role     = currentSession != null ? (String) currentSession.getAttribute("role")     : null;
+    String userId   = currentSession != null ? (String) currentSession.getAttribute("userId")   : null;
     String username = currentSession != null ? (String) currentSession.getAttribute("username") : "User";
     if (username == null) username = "User";
     boolean isMentor = "mentor".equalsIgnoreCase(role);
@@ -244,7 +245,7 @@
             <h1>Upcoming Sessions</h1>
             <p>Sessions scheduled with your mentorship match</p>
         </div>
-        <div class="topbar-actions">
+            <div class="topbar-actions">
             <a href="<%= dashboardUrl %>" class="btn-outline">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
                 Back to dashboard
@@ -253,6 +254,12 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                 Completed sessions
             </a>
+            <% if (isMentor) { %>
+            <a href="<%= ctx %>/app/sessions/schedule-form?mentorId=<%= userId %>" class="btn-primary" style="margin-left:8px;background:var(--green-700);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                Add session
+            </a>
+            <% } %>
         </div>
     </div>
 
