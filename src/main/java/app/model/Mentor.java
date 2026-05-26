@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import java.io.Serial;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,7 +14,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @ToString(onlyExplicitlyIncluded = true, callSuper = false)
-public class Mentor extends User implements Serializable {
+public class Mentor extends User {
 
     @Serial
     private static final long serialVersionUID = 1L;

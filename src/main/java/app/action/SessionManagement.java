@@ -309,8 +309,8 @@ public class SessionManagement extends BaseAction {
      */
     private void enrichSessionDetails(Session session) {
         try {
-            Mentor mentor = mentorBean.getMentorById(session.getMentorId());
-            Mentee mentee = menteeBean.getMenteeById(session.getMenteeId());
+            Mentor mentor = mentorBean.getById(session.getMentorId());
+            Mentee mentee = menteeBean.getById(session.getMenteeId());
             
             if (mentor != null) {
                 session.getTopic();

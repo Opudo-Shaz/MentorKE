@@ -103,9 +103,9 @@ public class Messaging extends BaseAction {
 
             Object otherUser = null;
             try {
-                otherUser = mentorBean.getMentorById(otherUserId);
+                otherUser = mentorBean.getById(otherUserId);
                 if (otherUser == null) {
-                    otherUser = menteeBean.getMenteeById(otherUserId);
+                    otherUser = menteeBean.getById(otherUserId);
                 }
             } catch (Exception e) {
                 logger.warn("Could not load other user details");

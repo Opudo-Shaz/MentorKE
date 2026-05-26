@@ -103,7 +103,7 @@ public class MentorManagement extends BaseAction {
         newMentor.setPhoneNumber(phoneNumber);
         newMentor.setStatus(status.isEmpty() ? "Active" : status);
 
-        mentorBean.addMentorAdmin(newMentor);
+        mentorBean.addAdmin(newMentor);
         return "success=mentor_added";
     }
 
@@ -135,13 +135,13 @@ public class MentorManagement extends BaseAction {
         mentor.setPhoneNumber(phoneNumber);
         mentor.setStatus(status.isEmpty() ? "Active" : status);
 
-        mentorBean.updateMentor(mentorId, mentor);
+        mentorBean.update(mentorId, mentor);
         return "success=mentor_updated";
     }
 
     private String handleDeleteMentor(HttpServletRequest request) throws Exception {
         String mentorId = safe(request.getParameter("mentorId"));
-        mentorBean.deleteMentor(mentorId);
+        mentorBean.delete(mentorId);
         return "success=mentor_deleted";
     }
 

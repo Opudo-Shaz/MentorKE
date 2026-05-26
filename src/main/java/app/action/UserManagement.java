@@ -116,7 +116,7 @@ public class UserManagement extends BaseAction {
             mentor.setQualifications(safe(request.getParameter("qualifications")));
             mentor.setPhoneNumber(safe(request.getParameter("phoneNumber")));
 
-            mentorBean.addMentorAdmin(mentor);
+            mentorBean.addAdmin(mentor);
             return "success=mentor_added";
         }
 
@@ -136,7 +136,7 @@ public class UserManagement extends BaseAction {
                 mentee.setMentorId(mentorId);
             }
 
-            menteeBean.addMenteeAdmin(mentee);
+            menteeBean.addAdmin(mentee);
             return "success=mentee_added";
         }
 

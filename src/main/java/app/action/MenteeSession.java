@@ -46,7 +46,7 @@ public class MenteeSession extends BaseAction {
         String specialization = request.getParameter("specialization");
         if (specialization == null || specialization.trim().isEmpty()) {
             try {
-                Mentee mentee = menteeBean.getMenteeByUserId(userId);
+                Mentee mentee = menteeBean.getByUserId(userId);
                 if (mentee != null && mentee.getFieldOfStudy() != null && !mentee.getFieldOfStudy().trim().isEmpty()) {
                     specialization = mentee.getFieldOfStudy();
                 }
@@ -127,7 +127,7 @@ public class MenteeSession extends BaseAction {
             if (specialization != null && !specialization.trim().isEmpty()) {
                 mentors = sessionMatchingBean.findMentorsBySpecialization(specialization);
             } else {
-                mentors = mentorBean.getAllMentors();
+                mentors = mentorBean.findAll();
             }
 
             request.setAttribute("mentors", mentors);
@@ -150,7 +150,7 @@ public class MenteeSession extends BaseAction {
         logger.info("Mentee {} requesting mentor {}", userId, mentorId);
 
         try {
-            Mentor mentor = mentorBean.getMentorById(mentorId);
+            Mentor mentor = mentorBean.getById(mentorId);
             
             if (mentor != null) {
                 request.setAttribute("mentor", mentor);
@@ -197,7 +197,7 @@ public class MenteeSession extends BaseAction {
         logger.info("Viewing mentor profile: {}", mentorId);
 
         try {
-            Mentor mentor = mentorBean.getMentorById(mentorId);
+            Mentor mentor = mentorBean.getById(mentorId);
 
             if (mentor != null) {
                 request.setAttribute("mentor", mentor);

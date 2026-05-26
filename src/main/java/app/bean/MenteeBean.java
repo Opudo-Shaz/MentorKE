@@ -4,7 +4,6 @@ import app.bean.event.UserRegisteredEvent;
 import app.dao.MenteeDAO;
 import app.model.AuditTrail;
 import app.model.Mentee;
-import app.model.User;
 import app.utility.validation.ValidationResult;
 import app.utility.validation.Validator;
 import app.utility.validation.ValidatorQualifier;
@@ -52,13 +51,12 @@ public class MenteeBean {
     /**
      * CREATE - Register a new mentee
      */
-    public void registerMentee(Mentee mentee, User user) {
+    public void add(Mentee mentee) {
         logger.info("=== Starting Mentee Registration ===");
-        logger.info("Username: {}, Email: {}, Field of Study: {}", user.getUsername(), user.getEmail(),
+        logger.info("Username: {}, Email: {}, Field of Study: {}", mentee.getUsername(), mentee.getEmail(),
                 mentee.getFieldOfStudy());
 
-        // Step 1: Copy shared account fields onto the mentee record
-        mentee.setUser(user);
+        // Step 1: Ensure inherited account fields are set on the mentee record
         mentee.setRole("mentee");
         if (mentee.getStatus() == null || mentee.getStatus().isEmpty()) {
             mentee.setStatus("Active");
@@ -84,14 +82,14 @@ public class MenteeBean {
             String.valueOf(mentee.getId()),
             "CREATE",
             String.valueOf(mentee.getId()),
-            "Mentee registered: " + user.getUsername() + ", Field: " + mentee.getFieldOfStudy()));
+            "Mentee registered: " + mentee.getUsername() + ", Field: " + mentee.getFieldOfStudy()));
 
         // Step 5: Fire email event for mentees
         logger.debug("Firing email registration event for mentee...");
         userRegisteredEvent.fire(
                 new UserRegisteredEvent(
-                        user.getEmail(),
-                        user.getUsername(),
+                mentee.getEmail(),
+                mentee.getUsername(),
                         "MENTEE"));
 
         logger.info("=== Mentee Registration Completed Successfully ===");
@@ -100,7 +98,7 @@ public class MenteeBean {
     /**
      * READ - Get mentee by ID
      */
-    public Mentee getMenteeById(String menteeId) {
+    public Mentee getById(String menteeId) {
         logger.debug("Fetching mentee by ID: {}", menteeId);
         return menteeDAO.findById(Long.parseLong(menteeId));
     }
@@ -109,7 +107,7 @@ public class MenteeBean {
     /**
      * READ - Get all mentees
      */
-    public List<Mentee> getAllMentees() {
+    public List<Mentee> findAll() {
         logger.debug("Fetching all mentees");
         return menteeDAO.findAll();
     }
@@ -117,7 +115,7 @@ public class MenteeBean {
     /**
      * READ - Get mentees assigned to a mentor
      */
-    public List<Mentee> getMenteesByMentorId(String mentorId) {
+    public List<Mentee> findByMentorId(String mentorId) {
 
         logger.debug("Fetching mentees for mentor ID: {}", mentorId);
 
@@ -125,9 +123,17 @@ public class MenteeBean {
     }
 
     /**
+     * READ - Get mentee by user ID
+     */
+    public Mentee getByUserId(String userId) {
+        logger.debug("Fetching mentee by user ID: {}", userId);
+        return menteeDAO.findById(Long.parseLong(userId));
+    }
+
+    /**
      * UPDATE - Update existing mentee
      */
-    public void updateMentee(String menteeId, Mentee mentee) {
+    public void update(String menteeId, Mentee mentee) {
         logger.info("=== Updating mentee ===");
         logger.info("Mentee ID: {}", menteeId);
 
@@ -148,7 +154,12 @@ public class MenteeBean {
         }
 
         // Step 3: Preserve immutable account identity
-        mentee.setUser(existingMentee);
+        mentee.setUsername(existingMentee.getUsername());
+        mentee.setPassword(existingMentee.getPassword());
+        mentee.setEmail(existingMentee.getEmail());
+        mentee.setRole(existingMentee.getRole());
+        mentee.setCreatedAt(existingMentee.getCreatedAt());
+        mentee.setUpdatedAt(existingMentee.getUpdatedAt());
 
         // Step 4: Preserve existing educationLevel if not provided
         if (mentee.getEducationLevel() == null || mentee.getEducationLevel().isEmpty()) {
@@ -198,7 +209,7 @@ public class MenteeBean {
     /**
      * CREATE - Add mentee (admin function, no user registration)
      */
-    public void addMenteeAdmin(Mentee mentee) {
+    public void addAdmin(Mentee mentee) {
         logger.info("=== Admin Adding Mentee ===");
         logger.info("Username: {}, Email: {}, Field of Study: {}", mentee.getUsername(), mentee.getEmail(), mentee.getFieldOfStudy());
 
@@ -239,7 +250,7 @@ public class MenteeBean {
     /**
      * DELETE - Delete mentee
      */
-    public void deleteMentee(String menteeId) {
+    public void delete(String menteeId) {
         logger.info("=== Deleting mentee ===");
         logger.info("Mentee ID: {}", menteeId);
 

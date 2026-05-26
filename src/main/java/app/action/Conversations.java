@@ -22,8 +22,6 @@ import java.util.List;
 import java.util.Map;
 
 
- // Conversations - action handler for messaging conversations API
-
 @ApplicationScoped
 @Action(value = "conversations", label = "Conversations API")
 public class Conversations extends BaseAction {
@@ -58,7 +56,7 @@ public class Conversations extends BaseAction {
             if ("mentor".equalsIgnoreCase(role)) {
                 // Mentor: get all mentees assigned to this mentor
                 try {
-                    List<Mentee> mentees = menteeBean.getMenteesByMentorId(userId);
+                    List<Mentee> mentees = menteeBean.findByMentorId(userId);
                     logger.debug("[Conversations] Found {} mentees for mentor {}", mentees.size(), userId);
 
                     for (Mentee mentee : mentees) {
@@ -81,11 +79,11 @@ public class Conversations extends BaseAction {
             } else if ("mentee".equalsIgnoreCase(role)) {
                 // Mentee: get their assigned mentor (if any)
                 try {
-                    Mentee mentee = menteeBean.getMenteeByUserId(userId);
+                    Mentee mentee = menteeBean.getByUserId(userId);
                     if (mentee != null && mentee.getMentorId() != null) {
                         String mentorId = mentee.getMentorId();
                         try {
-                            Mentor mentor = mentorBean.getMentorById(mentorId);
+                            Mentor mentor = mentorBean.getById(mentorId);
                             if (mentor != null) {
                                 String roomId = ChatRoomUtil.getRoomId(userId, mentorId);
 

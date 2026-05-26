@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import java.io.Serial;
-import java.io.Serializable;
 
 @Entity
 @Table(name = "mentees")
@@ -13,7 +12,7 @@ import java.io.Serializable;
 @Setter
 @NoArgsConstructor
 @ToString(onlyExplicitlyIncluded = true, callSuper = false)
-public class Mentee extends User implements Serializable {
+public class Mentee extends User {
 
     @Serial
     private static final long serialVersionUID = 1L;

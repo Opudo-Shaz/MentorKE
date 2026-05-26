@@ -53,8 +53,8 @@ public class AdminDashboard extends BaseAction {
 
             // load total count
             List<User> users = userBean.getAllUsers();
-            List<Mentor> mentors = mentorBean.getAllMentors();
-            List<Mentee> mentees = menteeBean.getAllMentees();
+            List<Mentor> mentors = mentorBean.findAll();
+            List<Mentee> mentees = menteeBean.findAll();
 
             request.setAttribute("users", users);
             request.setAttribute("mentors", mentors);

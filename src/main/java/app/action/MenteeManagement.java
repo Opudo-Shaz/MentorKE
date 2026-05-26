@@ -106,7 +106,7 @@ public class MenteeManagement extends BaseAction {
         newMentee.setStatus(status.isEmpty() ? "Active" : status);
 
         // Delegate to bean (validation & business logic)
-        menteeBean.addMenteeAdmin(newMentee);
+        menteeBean.addAdmin(newMentee);
         return "success=mentee_added";
     }
 
@@ -143,7 +143,7 @@ public class MenteeManagement extends BaseAction {
         mentee.setStatus(status.isEmpty() ? "Active" : status);
 
         // Delegate to bean (validation & business logic)
-        menteeBean.updateMentee(menteeId, mentee);
+        menteeBean.update(menteeId, mentee);
         return "success=mentee_updated";
     }
 
@@ -156,7 +156,7 @@ public class MenteeManagement extends BaseAction {
         String menteeId = safe(request.getParameter("menteeId"));
 
         // Delegate to bean (validation & business logic)
-        menteeBean.deleteMentee(menteeId);
+        menteeBean.delete(menteeId);
         return "success=mentee_deleted";
     }
 

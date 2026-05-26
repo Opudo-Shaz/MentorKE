@@ -23,7 +23,7 @@ public class MentorApi {
     @GET
     public Response listMentors() {
         try {
-            List<MentorResponseDto> mentors = mentorBean.getAllMentors().stream()
+            List<MentorResponseDto> mentors = mentorBean.findAll().stream()
                     .map(MentorResponseDto::fromEntity)
                     .toList();
             return JsonApi.ok(mentors);
@@ -37,7 +37,7 @@ public class MentorApi {
     public Response getMentor(
         @PathParam("mentorId") String mentorId) {
         try {
-            Mentor mentor = mentorBean.getMentorById(mentorId);
+            Mentor mentor = mentorBean.getById(mentorId);
             if (mentor == null) {
                 return JsonApi.notFound("Mentor not found");
             }
@@ -52,7 +52,7 @@ public class MentorApi {
     public Response mentorsBySpecialization(
         @PathParam("specialization") String specialization) {
         try {
-            List<MentorResponseDto> mentors = mentorBean.getAllMentors().stream()
+            List<MentorResponseDto> mentors = mentorBean.findAll().stream()
                     .filter(mentor -> mentor.getSpecialization() != null
                             && mentor.getSpecialization().equalsIgnoreCase(specialization))
                 .map(MentorResponseDto::fromEntity)
@@ -71,7 +71,7 @@ public class MentorApi {
                 return JsonApi.badRequest("Request body is required");
             }
             Mentor mentor = JsonApi.read(body, MentorRequestDto.class).toEntity();
-            mentorBean.addMentorAdmin(mentor);
+            mentorBean.addAdmin(mentor);
             return JsonApi.created(MentorResponseDto.fromEntity(mentor));
         } catch (Exception e) {
             return JsonApi.badRequest(e.getMessage());
@@ -88,8 +88,8 @@ public class MentorApi {
                 return JsonApi.badRequest("Request body is required");
             }
             Mentor mentor = JsonApi.read(body, MentorRequestDto.class).toEntity();
-            mentorBean.updateMentor(mentorId, mentor);
-            return JsonApi.ok(MentorResponseDto.fromEntity(mentorBean.getMentorById(mentorId)));
+            mentorBean.update(mentorId, mentor);
+            return JsonApi.ok(MentorResponseDto.fromEntity(mentorBean.getById(mentorId)));
         } catch (Exception e) {
             return JsonApi.badRequest(e.getMessage());
         }
@@ -100,7 +100,7 @@ public class MentorApi {
     public Response deleteMentor(
         @PathParam("mentorId") String mentorId) {
         try {
-            mentorBean.deleteMentor(mentorId);
+            mentorBean.delete(mentorId);
             return Response.noContent().build();
         } catch (Exception e) {
             return JsonApi.badRequest(e.getMessage());

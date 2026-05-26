@@ -37,12 +37,12 @@ public class MentorDashboard extends BaseAction {
             String userId = getUserId(request);
 
             // Load mentor profile
-            Mentor mentor = mentorBean.getMentorByUserId(userId);
+            Mentor mentor = mentorBean.getByUserId(userId);
             request.setAttribute("mentor", mentor);
 
             // Load this mentor's mentees
             if (mentor != null) {
-                List<Mentee> mentees = menteeBean.getMenteesByMentorId(String.valueOf(mentor.getId()));
+                List<Mentee> mentees = menteeBean.findByMentorId(String.valueOf(mentor.getId()));
                 request.setAttribute("mentees", mentees);
             }
 

@@ -4,7 +4,6 @@ import app.bean.event.UserRegisteredEvent;
 import app.dao.MentorDAO;
 import app.model.AuditTrail;
 import app.model.Mentor;
-import app.model.User;
 import app.utility.validation.ValidationResult;
 import app.utility.validation.Validator;
 import app.utility.validation.ValidatorQualifier;
@@ -42,12 +41,11 @@ public class MentorBean {
     public MentorBean() {}
 
 
-    public void registerMentor(Mentor mentor, User user) throws SQLException {
+    public void add(Mentor mentor) throws SQLException {
         logger.info("=== Starting Mentor Registration ===");
-        logger.info("Username: {}, Email: {}, Specialization: {}", user.getUsername(), user.getEmail(), mentor.getSpecialization());
+        logger.info("Username: {}, Email: {}, Specialization: {}", mentor.getUsername(), mentor.getEmail(), mentor.getSpecialization());
 
-        // Step 1: Copy shared account fields onto the mentor record
-        mentor.setUser(user);
+        // Step 1: Ensure inherited account fields are set on the mentor record
         mentor.setRole("mentor");
         if (mentor.getStatus() == null || mentor.getStatus().isEmpty()) {
             mentor.setStatus("Active");
@@ -73,15 +71,15 @@ public class MentorBean {
             String.valueOf(mentor.getId()),
             "CREATE",
             String.valueOf(mentor.getId()),
-            "Mentor registered: " + user.getUsername() + ", Specialization: " + mentor.getSpecialization()
+            "Mentor registered: " + mentor.getUsername() + ", Specialization: " + mentor.getSpecialization()
         ));
 
         // Step 5: Fire email event with specialization for mentors
         logger.debug("Firing email registration event for mentor...");
         userRegisteredEvent.fire(
             new UserRegisteredEvent(
-                user.getEmail(),
-                user.getUsername(),
+                mentor.getEmail(),
+                mentor.getUsername(),
                 "MENTOR",
                 mentor.getSpecialization()
             )
@@ -93,15 +91,23 @@ public class MentorBean {
     /**
      * READ - Get mentor by ID
      */
-    public Mentor getMentorById(String mentorId) throws SQLException {
+    public Mentor getById(String mentorId) throws SQLException {
         logger.debug("Fetching mentor by ID: {}", mentorId);
         return mentorDAO.findById(Long.parseLong(mentorId));
     }
 
     /**
+     * READ - Get mentor by user ID
+     */
+    public Mentor getByUserId(String userId) throws SQLException {
+        logger.debug("Fetching mentor by user ID: {}", userId);
+        return mentorDAO.findById(Long.parseLong(userId));
+    }
+
+    /**
      * READ - Get all mentors
      */
-    public List<Mentor> getAllMentors() throws SQLException {
+    public List<Mentor> findAll() throws SQLException {
         logger.debug("Fetching all mentors");
         return mentorDAO.findAll();
     }
@@ -109,7 +115,7 @@ public class MentorBean {
     /**
      * UPDATE - Update existing mentor
      */
-     public void updateMentor(String mentorId, Mentor mentor) throws SQLException {
+     public void update(String mentorId, Mentor mentor) throws SQLException {
          logger.info("=== Updating mentor ===");
          logger.info("Mentor ID: {}", mentorId);
 
@@ -122,7 +128,12 @@ public class MentorBean {
          }
          logger.debug("Mentor found ✓");
 
-         mentor.setUser(existingMentor);
+         mentor.setUsername(existingMentor.getUsername());
+         mentor.setPassword(existingMentor.getPassword());
+         mentor.setEmail(existingMentor.getEmail());
+         mentor.setRole(existingMentor.getRole());
+         mentor.setCreatedAt(existingMentor.getCreatedAt());
+         mentor.setUpdatedAt(existingMentor.getUpdatedAt());
 
          // Step 3: Set ID (important for validator context)
         mentor.setId(Long.parseLong(mentorId));
@@ -161,12 +172,10 @@ public class MentorBean {
     /**
      * CREATE - Add mentor (admin function, no user registration)
      */
-    public void addMentorAdmin(Mentor mentor) throws SQLException {
+    public void addAdmin(Mentor mentor) throws SQLException {
         logger.info("=== Admin Adding Mentor ===");
         logger.info("Username: {}, Email: {}, Specialization: {}", mentor.getUsername(), mentor.getEmail(), mentor.getSpecialization());
 
-        // Step 1: Use the inherited account fields directly
-        User user = mentor;
         mentor.setRole("mentor");
 
         // Step 2: Validate mentor data
@@ -209,7 +218,7 @@ public class MentorBean {
     /**
      * DELETE - Delete mentor
      */
-    public void deleteMentor(String mentorId) throws SQLException {
+    public void delete(String mentorId) throws SQLException {
         logger.info("=== Deleting mentor ===");
         logger.info("Mentor ID: {}", mentorId);
 

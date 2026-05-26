@@ -96,7 +96,7 @@ public class MentorRequest extends BaseAction {
 
             for (MatchRequest req : pendingRequests) {
                 try {
-                    Mentee mentee = menteeBean.getMenteeById(req.getMenteeId());
+                    Mentee mentee = menteeBean.getById(req.getMenteeId());
                     req.setRequestedSpecialization(mentee != null ? mentee.getFieldOfStudy() : "Unknown");
                 } catch (Exception e) {
                     logger.warn("Could not load mentee details for request {}", req.getId());

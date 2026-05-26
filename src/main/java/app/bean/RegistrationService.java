@@ -2,7 +2,6 @@ package app.bean;
 
 import app.model.Mentee;
 import app.model.Mentor;
-import app.model.User;
 import app.utility.logging.AppLogger;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
@@ -37,13 +36,10 @@ public class RegistrationService {
         
         logger.info("[RegistrationService] Starting registration: username={}, role={}", username, role);
         
-        // Build base User entity
-        User newUser = new User(null, username, password, role, email, "Active");
-        
         if ("mentor".equalsIgnoreCase(role)) {
-            registerMentorFlow(newUser, roleSpecificData);
+            registerMentorFlow(username, password, email, roleSpecificData);
         } else if ("mentee".equalsIgnoreCase(role)) {
-            registerMenteeFlow(newUser, roleSpecificData);
+            registerMenteeFlow(username, password, email, roleSpecificData);
         } else {
             throw new IllegalArgumentException("Invalid role: " + role);
         }
@@ -54,10 +50,15 @@ public class RegistrationService {
     /**
      * Mentor-specific registration workflow
      */
-    private void registerMentorFlow(User user, Map<String, String> data) throws SQLException {
+    private void registerMentorFlow(String username, String password, String email, Map<String, String> data) throws SQLException {
         logger.debug("[RegistrationService] Processing mentor registration");
         
         Mentor mentor = new Mentor();
+        mentor.setUsername(username);
+        mentor.setPassword(password);
+        mentor.setEmail(email);
+        mentor.setRole("mentor");
+        mentor.setStatus("Active");
         mentor.setSpecialization(data.get("specialization"));
         mentor.setExpertise(data.get("expertise"));
         mentor.setBio(data.get("bio"));
@@ -78,23 +79,28 @@ public class RegistrationService {
         }
         
         // Delegate to MentorBean for validation, persistence, events, audit trail
-        mentorBean.registerMentor(mentor, user);
+        mentorBean.add(mentor);
     }
 
     /**
      * Mentee-specific registration workflow
      */
-    private void registerMenteeFlow(User user, Map<String, String> data) throws SQLException {
+    private void registerMenteeFlow(String username, String password, String email, Map<String, String> data) throws SQLException {
         logger.debug("[RegistrationService] Processing mentee registration");
         
         Mentee mentee = new Mentee();
+        mentee.setUsername(username);
+        mentee.setPassword(password);
+        mentee.setEmail(email);
+        mentee.setRole("mentee");
+        mentee.setStatus("Active");
         mentee.setEducationLevel(data.get("educationLevel"));
         mentee.setFieldOfStudy(data.get("fieldOfStudy"));
         mentee.setLearningGoals(data.get("learningGoals"));
         mentee.setPhoneNumber(data.get("phoneNumber"));
         
         // Delegate to MenteeBean for validation, persistence, events, audit trail
-        menteeBean.registerMentee(mentee, user);
+        menteeBean.add(mentee);
     }
 
     /**

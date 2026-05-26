@@ -23,7 +23,7 @@ public class MenteeApi {
     @GET
     public Response getAllMentees() {
         try {
-            List<MenteeResponseDto> mentees = menteeBean.getAllMentees().stream()
+            List<MenteeResponseDto> mentees = menteeBean.findAll().stream()
                     .map(MenteeResponseDto::fromEntity)
                     .toList();
             return JsonApi.ok(mentees);
@@ -37,7 +37,7 @@ public class MenteeApi {
     public Response getMentee(
         @PathParam("menteeId") String menteeId) {
         try {
-            Mentee mentee = menteeBean.getMenteeById(menteeId);
+            Mentee mentee = menteeBean.getById(menteeId);
             if (mentee == null) {
                 return JsonApi.notFound("Mentee not found");
             }
@@ -52,7 +52,7 @@ public class MenteeApi {
     public Response menteesByMentor(
         @PathParam("mentorId") String mentorId) {
         try {
-            List<MenteeResponseDto> mentees = menteeBean.getMenteesByMentorId(mentorId).stream()
+            List<MenteeResponseDto> mentees = menteeBean.findByMentorId(mentorId).stream()
                     .map(MenteeResponseDto::fromEntity)
                     .toList();
             return JsonApi.ok(mentees);
@@ -69,7 +69,7 @@ public class MenteeApi {
                 return JsonApi.badRequest("Request body is required");
             }
             Mentee mentee = JsonApi.read(body, MenteeRequestDto.class).toEntity();
-            menteeBean.addMenteeAdmin(mentee);
+            menteeBean.addAdmin(mentee);
             return JsonApi.created(MenteeResponseDto.fromEntity(mentee));
         } catch (Exception e) {
             return JsonApi.badRequest(e.getMessage());
@@ -86,8 +86,8 @@ public class MenteeApi {
                 return JsonApi.badRequest("Request body is required");
             }
             Mentee mentee = JsonApi.read(body, MenteeRequestDto.class).toEntity();
-            menteeBean.updateMentee(menteeId, mentee);
-            return JsonApi.ok(MenteeResponseDto.fromEntity(menteeBean.getMenteeById(menteeId)));
+            menteeBean.update(menteeId, mentee);
+            return JsonApi.ok(MenteeResponseDto.fromEntity(menteeBean.getById(menteeId)));
         } catch (Exception e) {
             return JsonApi.badRequest(e.getMessage());
         }
@@ -98,7 +98,7 @@ public class MenteeApi {
     public Response deleteMentee(
         @PathParam("menteeId") String menteeId) {
         try {
-            menteeBean.deleteMentee(menteeId);
+            menteeBean.delete(menteeId);
             return Response.noContent().build();
         } catch (Exception e) {
             return JsonApi.badRequest(e.getMessage());
