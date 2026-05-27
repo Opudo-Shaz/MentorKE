@@ -6,7 +6,7 @@ import app.bean.MenteeBean;
 import app.model.Mentor;
 import app.model.Mentee;
 import app.model.User;
-import app.security.MentorKeSecurity;
+import app.security.websecurity.MentorKeSecurity;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.inject.Inject;

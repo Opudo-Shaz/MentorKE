@@ -26,7 +26,7 @@ public class SessionApi {
     public Response getAllSessions() {
         try {
             return JsonApi.ok(new Object() {
-                public final String message = "Use user-specific endpoints: /sessions/user/{userId}";
+                public static final String message = "Use user-specific endpoints: /sessions/user/{userId}";
             });
         } catch (Exception e) {
             return JsonApi.badRequest(e.getMessage());

@@ -2,7 +2,7 @@ package app.action;
 
 import app.bean.MenteeBean;
 import app.model.Mentee;
-import app.security.MentorKeSecurity;
+import app.security.websecurity.MentorKeSecurity;
 import jakarta.inject.Inject;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.servlet.http.HttpServletRequest;

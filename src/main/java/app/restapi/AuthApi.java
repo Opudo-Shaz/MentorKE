@@ -1,15 +1,9 @@
 package app.restapi;
 
 import app.bean.UserBean;
-import app.bean.MentorBean;
-import app.bean.MenteeBean;
 import app.dtos.LoginRequestDto;
 import app.dtos.LoginResponseDto;
-import app.dtos.MentorRequestDto;
-import app.dtos.MenteeRequestDto;
 import app.model.User;
-import app.model.Mentor;
-import app.model.Mentee;
 import app.security.jwt.JwtUtil;
 import app.utility.logging.AppLogger;
 import at.favre.lib.crypto.bcrypt.BCrypt;

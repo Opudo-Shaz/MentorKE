@@ -10,9 +10,9 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 import app.bean.MenteeBean;
 import app.bean.MentorBean;
-import app.security.MentorKeSecurity;
 import app.model.Mentee;
 import app.model.Mentor;
+import app.security.websecurity.MentorKeSecurity;
 import app.framework.Action;
 import app.framework.ActionGetMethod;
 

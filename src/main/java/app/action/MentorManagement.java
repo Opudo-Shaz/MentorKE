@@ -2,7 +2,7 @@ package app.action;
 
 import app.bean.MentorBean;
 import app.model.Mentor;
-import app.security.MentorKeSecurity;
+import app.security.websecurity.MentorKeSecurity;
 import app.utility.logging.AppLogger;
 import app.framework.Action;
 import app.framework.ActionGetMethod;

@@ -1,4 +1,4 @@
-package app.security;
+package app.security.websecurity;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
