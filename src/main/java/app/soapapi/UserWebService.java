@@ -1,6 +1,8 @@
 package app.soapapi;
 
 import app.bean.UserBean;
+import app.model.Mentee;
+import app.model.Mentor;
 import app.model.User;
 import app.utility.logging.AppLogger;
 import jakarta.inject.Inject;
@@ -28,19 +30,56 @@ public class UserWebService {
     @Inject
     private UserBean userBean;
 
-    // CREATE USER
+    // ── CREATE USER ───────────────────────────────────────────
     @WebMethod(operationName = "registerUser")
     @WebResult(name = "result")
     public UserSoapResponse registerUser(
             @WebParam(name = "username") String username,
             @WebParam(name = "email") String email,
             @WebParam(name = "password") String password,
-            @WebParam(name = "role") String role) {
+            @WebParam(name = "role") String role,
+            // Mentor fields
+            @WebParam(name = "specialization") String specialization,
+            @WebParam(name = "expertise") String expertise,
+            @WebParam(name = "yearsOfExperience") Integer yearsOfExperience,
+            @WebParam(name = "bio") String bio,
+            @WebParam(name = "qualifications") String qualifications,
+            @WebParam(name = "phoneNumber") String phoneNumber,
+            // Mentee fields
+            @WebParam(name = "educationLevel") String educationLevel,
+            @WebParam(name = "fieldOfStudy") String fieldOfStudy,
+            @WebParam(name = "learningGoals") String learningGoals,
+            @WebParam(name = "mentorId") String mentorId) {
 
         try {
-            logger.info("[SOAP] Registering user: {}", username);
+            logger.info("[SOAP] Registering user: {} with role: {}", username, role);
 
-            User user = new User();
+            User user;
+
+            if ("mentor".equalsIgnoreCase(role)) {
+                Mentor mentor = new Mentor();
+                mentor.setSpecialization(specialization);
+                mentor.setExpertise(expertise);
+                mentor.setYearsOfExperience(yearsOfExperience);
+                mentor.setBio(bio);
+                mentor.setQualifications(qualifications);
+                mentor.setPhoneNumber(phoneNumber);
+                user = mentor;
+
+            } else if ("mentee".equalsIgnoreCase(role)) {
+                Mentee mentee = new Mentee();
+                mentee.setEducationLevel(educationLevel);
+                mentee.setFieldOfStudy(fieldOfStudy);
+                mentee.setLearningGoals(learningGoals);
+                mentee.setPhoneNumber(phoneNumber);
+                mentee.setMentorId(mentorId);
+                user = mentee;
+
+            } else {
+                return new UserSoapResponse(false, "Invalid role: " + role, null);
+            }
+
+            // Set base fields
             user.setUsername(username);
             user.setEmail(email);
             user.setPassword(password);
@@ -49,25 +88,15 @@ public class UserWebService {
             userBean.registerUser(user);
 
             logger.info("[SOAP] User registered successfully, ID: {}", user.getId());
-
-            return new UserSoapResponse(
-                    true,
-                    "User registered successfully",
-                    String.valueOf(user.getId())
-            );
+            return new UserSoapResponse(true, "User registered successfully", String.valueOf(user.getId()));
 
         } catch (Exception e) {
             logger.error("[SOAP] Error registering user", e);
-
-            return new UserSoapResponse(
-                    false,
-                    "Error: " + e.getMessage(),
-                    null
-            );
+            return new UserSoapResponse(false, "Error: " + e.getMessage(), null);
         }
     }
 
-    // GET USER BY ID
+    // ── GET USER BY ID ────────────────────────────────────────
     @WebMethod(operationName = "getUserById")
     @WebResult(name = "user")
     public UserSoapDto getUserById(
@@ -77,18 +106,17 @@ public class UserWebService {
             logger.info("[SOAP] Fetching user by ID: {}", userId);
 
             User user = userBean.getUserById(userId);
-
             if (user == null) return null;
 
             return UserSoapDto.fromEntity(user);
 
         } catch (Exception e) {
-            logger.error("[SOAP] Error fetching user", e);
+            logger.error("[SOAP] Error fetching user by ID", e);
             return null;
         }
     }
 
-    // GET USER BY USERNAME
+    // ── GET USER BY USERNAME ──────────────────────────────────
     @WebMethod(operationName = "getUserByUsername")
     @WebResult(name = "user")
     public UserSoapDto getUserByUsername(
@@ -98,18 +126,17 @@ public class UserWebService {
             logger.info("[SOAP] Fetching user by username: {}", username);
 
             User user = userBean.getUserByUsername(username);
-
             if (user == null) return null;
 
             return UserSoapDto.fromEntity(user);
 
         } catch (Exception e) {
-            logger.error("[SOAP] Error fetching user", e);
+            logger.error("[SOAP] Error fetching user by username", e);
             return null;
         }
     }
 
-    // GET ALL USERS
+    // ── GET ALL USERS ─────────────────────────────────────────
     @WebMethod(operationName = "getAllUsers")
     @WebResult(name = "users")
     public List<UserSoapDto> getAllUsers() {
@@ -124,12 +151,12 @@ public class UserWebService {
                     .toList();
 
         } catch (Exception e) {
-            logger.error("[SOAP] Error fetching users", e);
+            logger.error("[SOAP] Error fetching all users", e);
             return List.of();
         }
     }
 
-    // UPDATE USER
+    // ── UPDATE USER ───────────────────────────────────────────
     @WebMethod(operationName = "updateUser")
     @WebResult(name = "result")
     public UserSoapResponse updateUser(
@@ -137,12 +164,55 @@ public class UserWebService {
             @WebParam(name = "username") String username,
             @WebParam(name = "email") String email,
             @WebParam(name = "password") String password,
-            @WebParam(name = "status") String status) {
+            @WebParam(name = "status") String status,
+            // Mentor fields
+            @WebParam(name = "specialization") String specialization,
+            @WebParam(name = "expertise") String expertise,
+            @WebParam(name = "yearsOfExperience") Integer yearsOfExperience,
+            @WebParam(name = "bio") String bio,
+            @WebParam(name = "qualifications") String qualifications,
+            @WebParam(name = "phoneNumber") String phoneNumber,
+            // Mentee fields
+            @WebParam(name = "educationLevel") String educationLevel,
+            @WebParam(name = "fieldOfStudy") String fieldOfStudy,
+            @WebParam(name = "learningGoals") String learningGoals,
+            @WebParam(name = "mentorId") String mentorId) {
 
         try {
             logger.info("[SOAP] Updating user: {}", userId);
 
-            User user = new User();
+            // Fetch existing user to determine type
+            User existingUser = userBean.getUserById(userId);
+            if (existingUser == null) {
+                return new UserSoapResponse(false, "User not found: " + userId, userId);
+            }
+
+            User user;
+
+            if (existingUser instanceof Mentor) {
+                Mentor mentor = new Mentor();
+                mentor.setSpecialization(specialization);
+                mentor.setExpertise(expertise);
+                mentor.setYearsOfExperience(yearsOfExperience);
+                mentor.setBio(bio);
+                mentor.setQualifications(qualifications);
+                mentor.setPhoneNumber(phoneNumber);
+                user = mentor;
+
+            } else if (existingUser instanceof Mentee) {
+                Mentee mentee = new Mentee();
+                mentee.setEducationLevel(educationLevel);
+                mentee.setFieldOfStudy(fieldOfStudy);
+                mentee.setLearningGoals(learningGoals);
+                mentee.setPhoneNumber(phoneNumber);
+                mentee.setMentorId(mentorId);
+                user = mentee;
+
+            } else {
+                return new UserSoapResponse(false, "Unsupported user type", userId);
+            }
+
+            // Set base fields
             user.setUsername(username);
             user.setEmail(email);
             user.setPassword(password);
@@ -150,24 +220,16 @@ public class UserWebService {
 
             userBean.updateUser(userId, user);
 
-            return new UserSoapResponse(
-                    true,
-                    "User updated successfully",
-                    userId
-            );
+            logger.info("[SOAP] User updated successfully: {}", userId);
+            return new UserSoapResponse(true, "User updated successfully", userId);
 
         } catch (Exception e) {
             logger.error("[SOAP] Error updating user", e);
-
-            return new UserSoapResponse(
-                    false,
-                    "Error: " + e.getMessage(),
-                    userId
-            );
+            return new UserSoapResponse(false, "Error: " + e.getMessage(), userId);
         }
     }
 
-    // DELETE USER
+    // ── DELETE USER ───────────────────────────────────────────
     @WebMethod(operationName = "deleteUser")
     @WebResult(name = "result")
     public UserSoapResponse deleteUser(
@@ -178,20 +240,12 @@ public class UserWebService {
 
             userBean.deleteUser(userId);
 
-            return new UserSoapResponse(
-                    true,
-                    "User deleted successfully",
-                    userId
-            );
+            logger.info("[SOAP] User deleted successfully: {}", userId);
+            return new UserSoapResponse(true, "User deleted successfully", userId);
 
         } catch (Exception e) {
             logger.error("[SOAP] Error deleting user", e);
-
-            return new UserSoapResponse(
-                    false,
-                    "Error: " + e.getMessage(),
-                    userId
-            );
+            return new UserSoapResponse(false, "Error: " + e.getMessage(), userId);
         }
     }
 }

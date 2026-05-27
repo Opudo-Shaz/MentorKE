@@ -69,7 +69,7 @@ public class ActionRegistry {
         String[] p2 = path.split("/");
 
         if (p1.length != p2.length)
-            return null;
+            return Collections.emptyMap();
 
         Map<String, String> vars = new HashMap<>();
         for (int i = 0; i < p1.length; i++) {
@@ -77,7 +77,7 @@ public class ActionRegistry {
                 String key = p1[i].substring(1, p1[i].length() - 1);
                 vars.put(key, p2[i]);
             } else if (!p1[i].equals(p2[i])) {
-                return null;
+                return Collections.emptyMap();
             }
         }
 

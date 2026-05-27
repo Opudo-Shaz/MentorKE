@@ -12,7 +12,8 @@ public class PasswordUtil {
 
     private static final Logger logger = AppLogger.getLogger(PasswordUtil.class);
 
-    private static final int BCRYPT_COST = 10; // Default cost factor for BCrypt
+    // Default cost factor for BCrypt
+    private static final int BCRYPT_COST = 10; 
 
     /**
      * Hash a plain text password using BCrypt
