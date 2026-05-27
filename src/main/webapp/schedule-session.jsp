@@ -44,6 +44,12 @@
             <div class="alert alert-success"><%= successMessage %></div>
         <% } %>
 
+                <% if (mentees == null || mentees.isEmpty()) { %>
+            <div class="alert alert-error">
+                No mentees assigned to you yet. You cannot schedule a session without an assigned mentee.
+            </div>
+        <% } %>
+
         <form method="post" action="<%= ctx %>/app/sessions/create-session">
             <input type="hidden" name="mentorId" value="<%= mentorId != null ? mentorId : "" %>">
 

@@ -21,7 +21,7 @@ public class MenteeAction extends BaseAction {
     private SessionBean sessionBean;
 
     @Inject
-    private MenteeBean menteeBean;
+    private MenteeBean menteeBean;                   
 
     @Inject
     private MentorKeFramework framework;

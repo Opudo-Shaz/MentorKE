@@ -20,7 +20,8 @@ import app.framework.ActionGetMethod;
 import app.framework.ActionPostMethod;
 
 import java.io.IOException;
-import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @ApplicationScoped
@@ -203,51 +204,93 @@ public class SessionManagement extends BaseAction {
      * Display form to schedule a new session
      */
     private void handleScheduleForm(HttpServletRequest request, HttpServletResponse response)
-            throws Exception {
-        
-        String mentorId = request.getParameter("mentorId");
-        String menteeId = request.getParameter("menteeId");
+        throws Exception {
 
-        logger.info("Displaying schedule form for mentor: {}, mentee: {}", mentorId, menteeId);
+    String mentorId = (String) request.getAttribute("mentorId");
+    if (mentorId == null) mentorId = request.getParameter("mentorId");
 
-        setAttribute(request, "mentorId", mentorId);
-        setAttribute(request, "menteeId", menteeId);
-        forward(request, response, "/schedule-session.jsp");
+    String menteeId = (String) request.getAttribute("menteeId");
+    if (menteeId == null) menteeId = request.getParameter("menteeId");
+
+    logger.info("Displaying schedule form for mentor: {}, mentee: {}", mentorId, menteeId);
+
+    setAttribute(request, "mentorId", mentorId);
+    setAttribute(request, "menteeId", menteeId);
+
+    // Always reload mentees list so dropdown is never empty
+    try {
+        if (mentorId != null && !mentorId.isBlank()) {
+            List mentees = menteeBean.findByMentorId(mentorId);
+            setAttribute(request, "mentees", mentees);
+            logger.debug("Loaded {} mentees for mentor {}", mentees.size(), mentorId);
+        }
+    } catch (Exception e) {
+        logger.warn("Could not load mentees for mentor {}", mentorId, e);
     }
 
+    forward(request, response, "/schedule-session.jsp");
+}
+
     /**
-     * Create a new session
+     * Create a new session from mentor schedule form
      */
     private void handleCreateSession(HttpServletRequest request, HttpServletResponse response, String userId)
-            throws Exception {
-        
+            throws ServletException, IOException {
+
         String mentorId = request.getParameter("mentorId");
         String menteeId = request.getParameter("menteeId");
-        String scheduledDateStr = request.getParameter("scheduledDate");
-        String durationStr = request.getParameter("duration");
+        String scheduledDate = request.getParameter("scheduledDate");
+        String durationRaw = request.getParameter("duration");
         String topic = request.getParameter("topic");
 
-        logger.info("Creating session - Mentor: {}, Mentee: {}, Topic: {}", mentorId, menteeId, topic);
+        logger.info("Creating session for mentor {} and mentee {}", mentorId, menteeId);
 
         try {
-            java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-            java.time.LocalDateTime scheduledDate = java.time.LocalDateTime.parse(scheduledDateStr, formatter);
-            Integer duration = Integer.parseInt(durationStr);
-
-            if (!userId.equals(mentorId) && !userId.equals(menteeId)) {
-                response.sendError(HttpServletResponse.SC_FORBIDDEN);
-                return;
+            if (mentorId == null || mentorId.isBlank()) {
+                mentorId = userId;
             }
 
-            String sessionId = sessionBean.scheduleSession(mentorId, menteeId, scheduledDate, duration, topic);
+            if (menteeId == null || menteeId.isBlank()) {
+                throw new IllegalArgumentException("Mentee is required");
+            }
 
-            setAttribute(request, "successMessage", "Session scheduled successfully! Meeting link has been sent to both parties.");
-            handleViewSession(request, response, userId);
+            if (scheduledDate == null || scheduledDate.isBlank()) {
+                throw new IllegalArgumentException("Scheduled date is required");
+            }
+
+            int duration = Integer.parseInt(durationRaw);
+            if (duration <= 0) {
+                throw new IllegalArgumentException("Duration must be greater than zero");
+            }
+
+            // HTML datetime-local input emits yyyy-MM-dd'T'HH:mm (no seconds).
+            LocalDateTime scheduledAt = LocalDateTime.parse(
+                    scheduledDate,
+                    DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm")
+            );
+
+            sessionBean.scheduleSession(mentorId, menteeId, scheduledAt, duration, topic);
+
+            setAttribute(request, "successMessage", "Session scheduled successfully.");
+            redirect(response, request.getContextPath() + "/app/sessions/upcoming");
 
         } catch (Exception e) {
-            logger.error("Error creating session", e);
+            logger.error("Error scheduling session", e);
             setAttribute(request, "errorMessage", "Error scheduling session: " + e.getMessage());
-            handleScheduleForm(request, response);
+            setAttribute(request, "mentorId", mentorId);
+            setAttribute(request, "menteeId", menteeId);
+            try {
+                if (mentorId != null && !mentorId.isBlank()) {
+                    setAttribute(request, "mentees", menteeBean.findByMentorId(mentorId));
+                }
+            } catch (Exception ex) {
+                logger.warn("Could not reload mentee list for mentor {}", mentorId, ex);
+            }
+            try {
+                handleScheduleForm(request, response);
+            } catch (Exception ex) {
+                throw new ServletException(ex);
+            }
         }
     }
 
