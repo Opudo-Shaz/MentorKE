@@ -320,6 +320,8 @@ public class Messaging extends BaseAction {
         return map;
     }
 
+
+    // helper methods
     private String resolveRoomId(String userId1, String userId2) {
         return ChatRoomUtil.getRoomId(userId1, userId2);
     }

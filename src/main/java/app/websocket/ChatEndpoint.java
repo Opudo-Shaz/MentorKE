@@ -16,7 +16,7 @@ public class ChatEndpoint {
 
     private static final Logger logger = AppLogger.getLogger(ChatEndpoint.class);
 
-    // roomId → connected sessions (thread-safe)
+    // roomId → connected sessions- prevent race conditiions and allow multi-threaded access
     private static final Map<String, Set<Session>> rooms = new ConcurrentHashMap<>();
 
     @OnOpen
