@@ -172,8 +172,9 @@
         .chat-empty { display: grid; place-items: center; min-height: 240px; text-align: center; color: var(--gray-400); }
         .chat-empty h3 { font-size: 16px; color: var(--gray-600); margin-bottom: 6px; }
         .chat-empty p { font-size: 14px; max-width: 420px; line-height: 1.5; }
-        .message-row { display: flex; margin-bottom: 10px; }
+        .message-row { display: flex; width: 100%; margin-bottom: 10px; }
         .message-row.mine { justify-content: flex-end; }
+        .message-row.theirs { justify-content: flex-start; }
         .bubble {
             max-width: min(78%, 560px);
             padding: 11px 14px;
@@ -184,8 +185,17 @@
             white-space: pre-wrap;
             word-break: break-word;
         }
-        .bubble.mine { background: var(--blue-800); color: var(--white); border-top-right-radius: 6px; }
-        .bubble.theirs { background: var(--white); color: var(--gray-800); border-color: var(--gray-200); border-top-left-radius: 6px; }
+        .bubble.mine {
+            background: var(--white);
+            color: var(--gray-800);
+            border-color: var(--gray-200);
+            border-top-right-radius: 6px;
+        }
+        .bubble.theirs {
+            background: var(--blue-800);
+            color: var(--white);
+            border-top-left-radius: 6px;
+        }
         .bubble-meta { margin-top: 6px; font-size: 11px; opacity: 0.75; display: flex; gap: 8px; flex-wrap: wrap; }
         .message-composer { display: flex; gap: 10px; align-items: flex-end; }
         .message-input {
@@ -449,7 +459,7 @@
                            for (Message message : selectedMessages) {
                                boolean mine = userId != null && userId.equals(String.valueOf(message.getSenderId()));
                     %>
-                    <div class="message-row <%= mine ? "mine" : "theirs" %>">
+                    <div class="message-row <%= mine ? "mine" : "theirs" %>" data-sender-id="<%= message.getSenderId() %>" data-recipient-id="<%= message.getRecipientId() %>">
                         <div class="bubble <%= mine ? "mine" : "theirs" %>">
                             <%= message.getMessage() %>
                             <div class="bubble-meta">
@@ -512,9 +522,38 @@
         chatStream.scrollTop = chatStream.scrollHeight;
     }
 
+    function applyBubbleTheme(row, bubble, mine) {
+        row.classList.toggle('mine', mine);
+        row.classList.toggle('theirs', !mine);
+        row.style.justifyContent = mine ? 'flex-end' : 'flex-start';
+
+        bubble.classList.toggle('mine', mine);
+        bubble.classList.toggle('theirs', !mine);
+        bubble.style.background = mine ? 'var(--white)' : 'var(--blue-800)';
+        bubble.style.color = mine ? 'var(--gray-800)' : 'var(--white)';
+        bubble.style.borderColor = mine ? 'var(--gray-200)' : 'transparent';
+        bubble.style.borderTopLeftRadius = mine ? '16px' : '6px';
+        bubble.style.borderTopRightRadius = mine ? '6px' : '16px';
+    }
+
+    function normalizeExistingMessages() {
+        chatStream.querySelectorAll('.message-row').forEach((row) => {
+            const bubble = row.querySelector('.bubble');
+            if (!bubble) {
+                return;
+            }
+
+            const senderId = row.dataset.senderId || '';
+            const mine = senderId && senderId === userId;
+            applyBubbleTheme(row, bubble, mine);
+        });
+    }
+
     function createBubble(messageData, mine) {
         const row = document.createElement('div');
         row.className = `message-row ${mine ? 'mine' : 'theirs'}`;
+        row.dataset.senderId = messageData.senderId || '';
+        row.dataset.recipientId = messageData.recipientId || '';
 
         const bubble = document.createElement('div');
         bubble.className = `bubble ${mine ? 'mine' : 'theirs'}`;
@@ -531,6 +570,8 @@
         meta.appendChild(time);
         bubble.appendChild(meta);
         row.appendChild(bubble);
+
+        applyBubbleTheme(row, bubble, mine);
         return row;
     }
 
@@ -571,6 +612,8 @@
             console.warn('WebSocket unavailable', error);
         }
     }
+
+    normalizeExistingMessages();
 
     chatForm.addEventListener('submit', async (event) => {
         event.preventDefault();

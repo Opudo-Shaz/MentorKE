@@ -279,14 +279,16 @@
 
          /* ── ACTION GRID ── */
          .action-grid {
-             display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 20px;
+             display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 20px;
+             align-items: stretch;
          }
          .action-card {
              background: var(--white); border: 1px solid var(--gray-200);
              border-radius: var(--radius-lg); padding: 18px; text-align: center;
              box-shadow: var(--shadow-sm); text-decoration: none;
              color: var(--gray-800); transition: all 0.15s;
-             display: flex; flex-direction: column; align-items: center; gap: 10px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+            min-height: 118px;
          }
          .action-card:hover {
              border-color: var(--blue-200); background: var(--blue-25);
