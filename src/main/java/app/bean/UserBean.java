@@ -16,10 +16,10 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.ejb.Stateless;
 import org.slf4j.Logger;
+import java.util.Map;
 
 import java.util.ArrayList;
 import java.util.List;
-
 
 @Stateless
 @Named("userBean")
@@ -36,7 +36,6 @@ public class UserBean {
     @Inject
     private Event<AuditTrail> auditTrailEvent;
 
-
     @Inject
     @ValidatorQualifier(ValidatorQualifier.ValidationChoice.USER)
     private Validator<User> userValidator;
@@ -44,58 +43,97 @@ public class UserBean {
     @Inject
     private RegistrationService registrationService;
 
-    public UserBean(){}
+    public UserBean() {
+    }
 
     /**
      * CREATE - Register a new user
      */
     public void registerUser(User user) {
         logger.info("[UserBean] === Starting User Registration ===");
-        logger.info("[UserBean] Username: {} , Email: {} , Role: {}", user.getUsername(), user.getEmail(), user.getRole());
+        logger.info("[UserBean] Username: {} , Email: {} , Role: {}", user.getUsername(), user.getEmail(),
+                user.getRole());
 
-        //  Check if username already exists
-        logger.debug(" Checking if username exists...");
+        // Step 1: Check if username already exists
         User existingUser = getUserByUsername(user.getUsername());
         if (existingUser != null) {
             logger.warn("Username already exists!");
             throw new IllegalArgumentException("Username '" + user.getUsername() + "' already exists");
         }
-        logger.debug("Username check passed ✓");
 
-        //  Validate user data
+        // Step 2: Validate
         ValidationResult validationResult = userValidator.validate(user);
         if (!validationResult.isValid()) {
             throw new IllegalArgumentException("User validation failed: " + validationResult.getErrorMessages());
         }
-        logger.debug("Validation passed ");
+        logger.debug("Validation passed ✓");
 
-    
-        user.setStatus("Active");
+        // Build role-specific data map from the subtype
+        // RegistrationService handles password hashing internally
+        Map<String, String> roleData = new java.util.HashMap<>();
 
-        // Delegate to RegistrationService which will create the subtype and persist it
+        if (user instanceof Mentor mentor) {
+            if (mentor.getSpecialization() != null)
+                roleData.put("specialization", mentor.getSpecialization());
+            if (mentor.getExpertise() != null)
+                roleData.put("expertise", mentor.getExpertise());
+            if (mentor.getYearsOfExperience() != null)
+                roleData.put("yearsOfExperience", String.valueOf(mentor.getYearsOfExperience()));
+            if (mentor.getBio() != null)
+                roleData.put("bio", mentor.getBio());
+            if (mentor.getQualifications() != null)
+                roleData.put("qualifications", mentor.getQualifications());
+            if (mentor.getPhoneNumber() != null)
+                roleData.put("phoneNumber", mentor.getPhoneNumber());
+
+        } else if (user instanceof Mentee mentee) {
+            if (mentee.getEducationLevel() != null)
+                roleData.put("educationLevel", mentee.getEducationLevel());
+            if (mentee.getFieldOfStudy() != null)
+                roleData.put("fieldOfStudy", mentee.getFieldOfStudy());
+            if (mentee.getLearningGoals() != null)
+                roleData.put("learningGoals", mentee.getLearningGoals());
+            if (mentee.getPhoneNumber() != null)
+                roleData.put("phoneNumber", mentee.getPhoneNumber());
+            if (mentee.getMentorId() != null)
+                roleData.put("mentorId", mentee.getMentorId());
+        }
+
+        // Delegate to RegistrationService
+        // — handles password hashing, DAO save, events, audit trail
         try {
-            registrationService.registerUser(user.getUsername(), user.getPassword(), user.getEmail(), user.getRole(), new java.util.HashMap<>());
+            registrationService.registerUser(
+                    user.getUsername(),
+                    user.getPassword(),
+                    user.getEmail(),
+                    user.getRole(),
+                    roleData);
         } catch (java.sql.SQLException e) {
             throw new RuntimeException("Registration failed", e);
         }
 
-        // After delegation, resolve the created entity and set the id back on the supplied User
+        // Step 5: Resolve created entity and set ID back on user
         Mentor createdMentor = mentorDAO.getMentorByUsername(user.getUsername());
         if (createdMentor != null) {
             user.setId(createdMentor.getId());
-            logger.info("[UserBean] User registered successfully as Mentor, ID: {}", user.getId());
+            logger.info("[UserBean] Mentor registered successfully, ID: {}", user.getId());
+            auditTrailEvent.fire(new AuditTrail(
+                    "User", String.valueOf(user.getId()), "CREATE", "SYSTEM",
+                    "User registered: " + user.getUsername()));
             return;
         }
 
         Mentee createdMentee = menteeDAO.getMenteeByUsername(user.getUsername());
         if (createdMentee != null) {
             user.setId(createdMentee.getId());
-            logger.info("[UserBean] User registered successfully as Mentee, ID: {}", user.getId());
+            logger.info("[UserBean] Mentee registered successfully, ID: {}", user.getId());
+            auditTrailEvent.fire(new AuditTrail(
+                    "User", String.valueOf(user.getId()), "CREATE", "SYSTEM",
+                    "User registered: " + user.getUsername()));
             return;
         }
 
-        // If we reach here something unexpected happened
-        throw new IllegalStateException("User registration succeeded but created entity not found for username: " + user.getUsername());
+        throw new IllegalStateException("Registration succeeded but entity not found for: " + user.getUsername());
     }
 
     /**
@@ -139,84 +177,137 @@ public class UserBean {
      * UPDATE - Update existing user
      */
     public void updateUser(String userId, User user) {
-    logger.info("[UserBean] === Updating user ===");
-    logger.debug("[UserBean] User ID: {}", userId);
+        logger.info("[UserBean] === Updating user ===");
+        logger.debug("[UserBean] User ID: {}", userId);
 
-    //  Check if user exists
-    User existingUser = getUserById(userId);
-    if (existingUser == null) {
-        logger.error("[UserBean] User not found!");
-        throw new IllegalArgumentException("User with ID '" + userId + "' not found");
-    }
-    logger.debug("[UserBean] User found ✓");
-
-    // Preserve existing password BEFORE validation
-    if (user.getPassword() == null || user.getPassword().isEmpty()) {
-        logger.debug("[UserBean] No new password provided, keeping existing password");
-        user.setPassword(existingUser.getPassword());
-    } else {
-        // Hash new password if needed
-        if (PasswordUtil.needsHashing(user.getPassword())) {
-            logger.debug(" Hashing new password with BCrypt...");
-            user.setPassword(PasswordUtil.hashPassword(user.getPassword()));
+        // Check if user exists
+        User existingUser = getUserById(userId);
+        if (existingUser == null) {
+            logger.error("[UserBean] User not found!");
+            throw new IllegalArgumentException("User with ID '" + userId + "' not found");
         }
-    }
+        logger.debug("[UserBean] User found ✓");
 
-    user.setId(Long.parseLong(userId));
+        // Preserve existing password BEFORE validation
+        if (user.getPassword() == null || user.getPassword().isEmpty()) {
+            logger.debug("[UserBean] No new password provided, keeping existing password");
+            user.setPassword(existingUser.getPassword());
+        } else {
+            // Hash new password if needed
+            if (PasswordUtil.needsHashing(user.getPassword())) {
+                logger.debug(" Hashing new password with BCrypt...");
+                user.setPassword(PasswordUtil.hashPassword(user.getPassword()));
+            }
+        }
 
-    // Set default status
-    if (user.getStatus() == null || user.getStatus().isEmpty()) {
-        user.setStatus("Active");
-    }
+        // preserve existing Role if not provided
+        if (user.getRole() == null || user.getRole().isEmpty()) {
+            user.setRole(existingUser.getRole());
+        }
 
-    logger.debug("Validating user data...");
-    ValidationResult validationResult = userValidator.validate(user);
-    if (!validationResult.isValid()) {
-        logger.error(" Validation failed!");
-        throw new IllegalArgumentException("User validation failed: " + validationResult.getErrorMessages());
-    }
-    logger.debug("[UserBean] Validation passed ✓");
+        user.setId(Long.parseLong(userId));
 
-    //  Update user in database
-    logger.debug("[UserBean] Updating user in database...");
-    if (existingUser instanceof Mentor existingMentor) {
-        Mentor mentor = new Mentor();
-        mentor.setId(existingMentor.getId());
-        mentor.setUsername(user.getUsername());
-        mentor.setPassword(user.getPassword());
-        mentor.setRole(user.getRole());
-        mentor.setEmail(user.getEmail());
-        mentor.setStatus(user.getStatus());
-        mentor.setCreatedAt(user.getCreatedAt());
-        mentor.setUpdatedAt(user.getUpdatedAt());
-        mentorDAO.update(mentor);
-    } else if (existingUser instanceof Mentee existingMentee) {
-        Mentee mentee = new Mentee();
-        mentee.setId(existingMentee.getId());
-        mentee.setUsername(user.getUsername());
-        mentee.setPassword(user.getPassword());
-        mentee.setRole(user.getRole());
-        mentee.setEmail(user.getEmail());
-        mentee.setStatus(user.getStatus());
-        mentee.setCreatedAt(user.getCreatedAt());
-        mentee.setUpdatedAt(user.getUpdatedAt());
-        menteeDAO.update(mentee);
-    } else {
-        throw new IllegalStateException("Unsupported account type: " + existingUser.getClass().getSimpleName());
-    }
-    logger.info("[UserBean] User updated successfully");
+        // Set default status
+        if (user.getStatus() == null || user.getStatus().isEmpty()) {
+            user.setStatus("Active");
+        }
 
-    // Fire CRUD event
+        logger.debug("Validating user data...");
+        ValidationResult validationResult = userValidator.validate(user);
+        if (!validationResult.isValid()) {
+            logger.error(" Validation failed!");
+            throw new IllegalArgumentException("User validation failed: " + validationResult.getErrorMessages());
+        }
+        logger.debug("[UserBean] Validation passed ✓");
+
+        // Update user in database
+        // Update user in database
+        logger.debug("[UserBean] Updating user in database...");
+        if (existingUser instanceof Mentor existingMentor) {
+            Mentor mentor = new Mentor();
+            mentor.setId(existingMentor.getId());
+            mentor.setUsername(user.getUsername());
+            mentor.setPassword(user.getPassword());
+            mentor.setRole(user.getRole());
+            mentor.setEmail(user.getEmail());
+            mentor.setStatus(user.getStatus());
+            mentor.setCreatedAt(existingMentor.getCreatedAt()); // ✅ preserve from DB
+
+            // Preserve or update mentor-specific fields
+            mentor.setSpecialization(
+                    user instanceof Mentor m && m.getSpecialization() != null
+                            ? m.getSpecialization()
+                            : existingMentor.getSpecialization());
+            mentor.setExpertise(
+                    user instanceof Mentor m && m.getExpertise() != null
+                            ? m.getExpertise()
+                            : existingMentor.getExpertise());
+            mentor.setYearsOfExperience(
+                    user instanceof Mentor m && m.getYearsOfExperience() != null
+                            ? m.getYearsOfExperience()
+                            : existingMentor.getYearsOfExperience());
+            mentor.setBio(
+                    user instanceof Mentor m && m.getBio() != null
+                            ? m.getBio()
+                            : existingMentor.getBio());
+            mentor.setQualifications(
+                    user instanceof Mentor m && m.getQualifications() != null
+                            ? m.getQualifications()
+                            : existingMentor.getQualifications());
+            mentor.setPhoneNumber(
+                    user instanceof Mentor m && m.getPhoneNumber() != null
+                            ? m.getPhoneNumber()
+                            : existingMentor.getPhoneNumber());
+
+            mentorDAO.update(mentor);
+
+        } else if (existingUser instanceof Mentee existingMentee) {
+            Mentee mentee = new Mentee();
+            mentee.setId(existingMentee.getId());
+            mentee.setUsername(user.getUsername());
+            mentee.setPassword(user.getPassword());
+            mentee.setRole(user.getRole());
+            mentee.setEmail(user.getEmail());
+            mentee.setStatus(user.getStatus());
+            mentee.setCreatedAt(existingMentee.getCreatedAt()); // ✅ preserve from DB
+
+            // Preserve or update mentee-specific fields
+            mentee.setEducationLevel(
+                    user instanceof Mentee m && m.getEducationLevel() != null
+                            ? m.getEducationLevel()
+                            : existingMentee.getEducationLevel());
+            mentee.setFieldOfStudy(
+                    user instanceof Mentee m && m.getFieldOfStudy() != null
+                            ? m.getFieldOfStudy()
+                            : existingMentee.getFieldOfStudy());
+            mentee.setLearningGoals(
+                    user instanceof Mentee m && m.getLearningGoals() != null
+                            ? m.getLearningGoals()
+                            : existingMentee.getLearningGoals());
+            mentee.setPhoneNumber(
+                    user instanceof Mentee m && m.getPhoneNumber() != null
+                            ? m.getPhoneNumber()
+                            : existingMentee.getPhoneNumber());
+            mentee.setMentorId(
+                    user instanceof Mentee m && m.getMentorId() != null
+                            ? m.getMentorId()
+                            : existingMentee.getMentorId());
+
+            menteeDAO.update(mentee);
+
+        } else {
+            throw new IllegalStateException("Unsupported account type: " + existingUser.getClass().getSimpleName());
+        }
+        // Fire CRUD event
         auditTrailEvent.fire(new AuditTrail(
-        "User",
-        userId,
-        "UPDATE",
-        "ADMIN",
-        "User updated: " + user.getUsername()
-    ));
+                "User",
+                userId,
+                "UPDATE",
+                "ADMIN",
+                "User updated: " + user.getUsername()));
 
-    logger.info("[UserBean] === User Update Completed Successfully ===");
-}
+        logger.info("[UserBean] === User Update Completed Successfully ===");
+    }
 
     /**
      * DELETE - Delete user
@@ -247,12 +338,11 @@ public class UserBean {
 
         // Fire CRUD event for audit trail
         auditTrailEvent.fire(new AuditTrail(
-            "User",
-            userId,
-            "DELETE",
-            "ADMIN",
-            "User deleted: " + user.getUsername()
-        ));
+                "User",
+                userId,
+                "DELETE",
+                "ADMIN",
+                "User deleted: " + user.getUsername()));
 
         logger.info("=== User Deletion Completed Successfully ===");
     }

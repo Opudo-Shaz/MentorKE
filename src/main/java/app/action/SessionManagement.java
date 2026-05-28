@@ -110,6 +110,13 @@ public class SessionManagement extends BaseAction {
         handleCancelSession(request, response, userId);
     }
 
+    @ActionPostMethod("complete")
+    public void complete(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
+        String userId = getUserId(request);
+        handleCompleteSession(request, response, userId);
+    }
+
     @ActionPostMethod("add-notes")
     public void addNotes(HttpServletRequest request, HttpServletResponse response) throws Exception {
         if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
@@ -324,6 +331,48 @@ public class SessionManagement extends BaseAction {
         } catch (Exception e) {
             logger.error("Error cancelling session", e);
             setAttribute(request, "errorMessage", "Error cancelling session: " + e.getMessage());
+            handleUpcomingSessions(request, response, userId);
+        }
+    }
+
+    /**
+     * Mark a session as completed (can be performed by mentor or mentee)
+     */
+    private void handleCompleteSession(HttpServletRequest request, HttpServletResponse response, String userId)
+            throws ServletException, IOException {
+
+        String sessionId = request.getParameter("sessionId");
+        logger.info("Completing session: {} by user: {}", sessionId, userId);
+
+        try {
+            Session session = sessionBean.getSession(sessionId);
+
+            if (session == null) {
+                setAttribute(request, "errorMessage", "Session not found");
+                redirect(response, request.getContextPath() + "/app/sessions/upcoming");
+                return;
+            }
+
+            if (!session.getMentorId().equals(userId) && !session.getMenteeId().equals(userId)) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN);
+                return;
+            }
+
+            // Only allow completing sessions that are not already completed or cancelled
+            String status = session.getStatus() != null ? session.getStatus() : "";
+            if ("COMPLETED".equalsIgnoreCase(status) || "CANCELLED".equalsIgnoreCase(status)) {
+                setAttribute(request, "errorMessage", "Session cannot be marked complete");
+                redirect(response, request.getContextPath() + "/app/sessions/upcoming");
+                return;
+            }
+
+            sessionBean.updateSessionStatus(sessionId, "COMPLETED");
+            setAttribute(request, "successMessage", "Session marked as completed.");
+            redirect(response, request.getContextPath() + "/app/sessions/upcoming");
+
+        } catch (Exception e) {
+            logger.error("Error completing session", e);
+            setAttribute(request, "errorMessage", "Error completing session: " + e.getMessage());
             handleUpcomingSessions(request, response, userId);
         }
     }

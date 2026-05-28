@@ -30,6 +30,11 @@ public class UserWebService {
     @Inject
     private UserBean userBean;
 
+    // ── HELPER ────────────────────────────────────────────────
+    private String trim(String value) {
+        return value != null ? value.trim() : null;
+    }
+
     // ── CREATE USER ───────────────────────────────────────────
     @WebMethod(operationName = "registerUser")
     @WebResult(name = "result")
@@ -56,39 +61,41 @@ public class UserWebService {
 
             User user;
 
-            if ("mentor".equalsIgnoreCase(role)) {
+            if ("mentor".equalsIgnoreCase(trim(role))) {
                 Mentor mentor = new Mentor();
-                mentor.setSpecialization(specialization);
-                mentor.setExpertise(expertise);
+                mentor.setSpecialization(trim(specialization));
+                mentor.setExpertise(trim(expertise));
                 mentor.setYearsOfExperience(yearsOfExperience);
-                mentor.setBio(bio);
-                mentor.setQualifications(qualifications);
-                mentor.setPhoneNumber(phoneNumber);
+                mentor.setBio(trim(bio));
+                mentor.setQualifications(trim(qualifications));
+                mentor.setPhoneNumber(trim(phoneNumber));
                 user = mentor;
 
-            } else if ("mentee".equalsIgnoreCase(role)) {
+            } else if ("mentee".equalsIgnoreCase(trim(role))) {
                 Mentee mentee = new Mentee();
-                mentee.setEducationLevel(educationLevel);
-                mentee.setFieldOfStudy(fieldOfStudy);
-                mentee.setLearningGoals(learningGoals);
-                mentee.setPhoneNumber(phoneNumber);
-                mentee.setMentorId(mentorId);
+                mentee.setEducationLevel(trim(educationLevel));
+                mentee.setFieldOfStudy(trim(fieldOfStudy));
+                mentee.setLearningGoals(trim(learningGoals));
+                mentee.setPhoneNumber(trim(phoneNumber));
+                mentee.setMentorId(trim(mentorId));
                 user = mentee;
 
             } else {
-                return new UserSoapResponse(false, "Invalid role: " + role, null);
+                return new UserSoapResponse(false, "Invalid role: " + role
+                        + ". Must be 'mentor' or 'mentee'", null);
             }
 
-            // Set base fields
-            user.setUsername(username);
-            user.setEmail(email);
-            user.setPassword(password);
-            user.setRole(role);
+            // Set base fields — always trim to avoid email validation issues
+            user.setUsername(trim(username));
+            user.setEmail(trim(email));
+            user.setPassword(password); // never trim passwords
+            user.setRole(trim(role));
 
             userBean.registerUser(user);
 
             logger.info("[SOAP] User registered successfully, ID: {}", user.getId());
-            return new UserSoapResponse(true, "User registered successfully", String.valueOf(user.getId()));
+            return new UserSoapResponse(true, "User registered successfully",
+                    String.valueOf(user.getId()));
 
         } catch (Exception e) {
             logger.error("[SOAP] Error registering user", e);
@@ -105,8 +112,11 @@ public class UserWebService {
         try {
             logger.info("[SOAP] Fetching user by ID: {}", userId);
 
-            User user = userBean.getUserById(userId);
-            if (user == null) return null;
+            User user = userBean.getUserById(trim(userId));
+            if (user == null) {
+                logger.warn("[SOAP] User not found for ID: {}", userId);
+                return null;
+            }
 
             return UserSoapDto.fromEntity(user);
 
@@ -125,8 +135,11 @@ public class UserWebService {
         try {
             logger.info("[SOAP] Fetching user by username: {}", username);
 
-            User user = userBean.getUserByUsername(username);
-            if (user == null) return null;
+            User user = userBean.getUserByUsername(trim(username));
+            if (user == null) {
+                logger.warn("[SOAP] User not found for username: {}", username);
+                return null;
+            }
 
             return UserSoapDto.fromEntity(user);
 
@@ -182,7 +195,7 @@ public class UserWebService {
             logger.info("[SOAP] Updating user: {}", userId);
 
             // Fetch existing user to determine type
-            User existingUser = userBean.getUserById(userId);
+            User existingUser = userBean.getUserById(trim(userId));
             if (existingUser == null) {
                 return new UserSoapResponse(false, "User not found: " + userId, userId);
             }
@@ -191,34 +204,34 @@ public class UserWebService {
 
             if (existingUser instanceof Mentor) {
                 Mentor mentor = new Mentor();
-                mentor.setSpecialization(specialization);
-                mentor.setExpertise(expertise);
+                mentor.setSpecialization(trim(specialization));
+                mentor.setExpertise(trim(expertise));
                 mentor.setYearsOfExperience(yearsOfExperience);
-                mentor.setBio(bio);
-                mentor.setQualifications(qualifications);
-                mentor.setPhoneNumber(phoneNumber);
+                mentor.setBio(trim(bio));
+                mentor.setQualifications(trim(qualifications));
+                mentor.setPhoneNumber(trim(phoneNumber));
                 user = mentor;
 
             } else if (existingUser instanceof Mentee) {
                 Mentee mentee = new Mentee();
-                mentee.setEducationLevel(educationLevel);
-                mentee.setFieldOfStudy(fieldOfStudy);
-                mentee.setLearningGoals(learningGoals);
-                mentee.setPhoneNumber(phoneNumber);
-                mentee.setMentorId(mentorId);
+                mentee.setEducationLevel(trim(educationLevel));
+                mentee.setFieldOfStudy(trim(fieldOfStudy));
+                mentee.setLearningGoals(trim(learningGoals));
+                mentee.setPhoneNumber(trim(phoneNumber));
+                mentee.setMentorId(trim(mentorId));
                 user = mentee;
 
             } else {
                 return new UserSoapResponse(false, "Unsupported user type", userId);
             }
 
-            // Set base fields
-            user.setUsername(username);
-            user.setEmail(email);
-            user.setPassword(password);
-            user.setStatus(status);
+            // Set base fields — always trim
+            user.setUsername(trim(username));
+            user.setEmail(trim(email));
+            user.setPassword(password); // never trim passwords
+            user.setStatus(trim(status));
 
-            userBean.updateUser(userId, user);
+            userBean.updateUser(trim(userId), user);
 
             logger.info("[SOAP] User updated successfully: {}", userId);
             return new UserSoapResponse(true, "User updated successfully", userId);
@@ -238,7 +251,7 @@ public class UserWebService {
         try {
             logger.info("[SOAP] Deleting user: {}", userId);
 
-            userBean.deleteUser(userId);
+            userBean.deleteUser(trim(userId));
 
             logger.info("[SOAP] User deleted successfully: {}", userId);
             return new UserSoapResponse(true, "User deleted successfully", userId);

@@ -65,11 +65,14 @@ public class ActionRegistry {
     }
 
     private static Map<String, String> pathMatch(String pattern, String path) {
-        String[] p1 = pattern.split("/");
-        String[] p2 = path.split("/");
+        String normalizedPattern = normalizePath(pattern);
+        String normalizedPath = normalizePath(path);
+
+        String[] p1 = normalizedPattern.split("/");
+        String[] p2 = normalizedPath.split("/");
 
         if (p1.length != p2.length)
-            return Collections.emptyMap();
+            return null;
 
         Map<String, String> vars = new HashMap<>();
         for (int i = 0; i < p1.length; i++) {
@@ -77,10 +80,22 @@ public class ActionRegistry {
                 String key = p1[i].substring(1, p1[i].length() - 1);
                 vars.put(key, p2[i]);
             } else if (!p1[i].equals(p2[i])) {
-                return Collections.emptyMap();
+                return null;
             }
         }
 
         return vars;
+    }
+
+    private static String normalizePath(String path) {
+        if (path == null || path.isBlank()) {
+            return "/";
+        }
+
+        String normalized = path.startsWith("/") ? path : "/" + path;
+        while (normalized.length() > 1 && normalized.endsWith("/")) {
+            normalized = normalized.substring(0, normalized.length() - 1);
+        }
+        return normalized;
     }
 }

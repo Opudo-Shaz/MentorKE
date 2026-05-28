@@ -153,6 +153,15 @@
         }
         .btn-view:hover { background: var(--gray-50); }
         .btn-view svg { width: 13px; height: 13px; }
+        .btn-complete {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 6px 11px; background: var(--green-50); color: var(--green-700);
+            border: 1px solid var(--green-200); border-radius: var(--radius-md);
+            font-size: 12px; font-weight: 500; font-family: 'DM Sans', sans-serif;
+            cursor: pointer; transition: background 0.15s;
+        }
+        .btn-complete:hover { background: var(--green-200); }
+        .btn-complete svg { width: 13px; height: 13px; }
         .btn-cancel-session {
             display: inline-flex; align-items: center; gap: 5px;
             padding: 6px 11px; background: var(--red-50); color: var(--red-700);
@@ -319,10 +328,17 @@
                             <td><span class="pill <%= pillClass %>"><%= status %></span></td>
                             <td>
                                 <div class="actions">
-                                    <a class="btn-view" href="<%= ctx %>/app/sessions/view?sessionId=<%= s.getId() %>">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                                        View
-                                    </a>
+                                    <% if (!"completed".equalsIgnoreCase(status) && !"cancelled".equalsIgnoreCase(status)) { %>
+                                    <form method="post" action="<%= ctx %>/app/sessions/complete" style="margin:0; display:inline-block;">
+                                        <input type="hidden" name="sessionId" value="<%= s.getId() %>">
+                                        <button class="btn-complete" type="submit">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                            Mark complete
+                                        </button>
+                                    </form>
+                                    <% } else { %>
+                                        <span class="no-action">No actions</span>
+                                    <% } %>
                                     <form method="post" action="<%= ctx %>/app/sessions/cancel" style="margin:0;">
                                         <input type="hidden" name="sessionId" value="<%= s.getId() %>">
                                         <button class="btn-cancel-session" type="submit">
@@ -351,6 +367,18 @@
 
     </div><!-- /content -->
 </div><!-- /main -->
+
+    <script>
+    // Confirmation prompt for marking a session complete
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('form[action*="/sessions/complete"]').forEach(function(form) {
+            form.addEventListener('submit', function(e) {
+                var ok = confirm('Are you sure you want to mark this session as completed?');
+                if (!ok) e.preventDefault();
+            });
+        });
+    });
+    </script>
 
 </body>
 </html>
