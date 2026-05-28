@@ -10,6 +10,7 @@ import jakarta.jws.WebMethod;
 import jakarta.jws.WebParam;
 import jakarta.jws.WebResult;
 import jakarta.jws.WebService;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.ejb.Stateless;
 import org.slf4j.Logger;
 
