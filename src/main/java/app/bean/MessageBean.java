@@ -105,4 +105,8 @@ public class MessageBean {
     public int getTotalUnreadMessages(String userId) throws SQLException {
         return messageDAO.getUnreadMessageCount(userId);
     }
+
+    public int getTotalMessagesSent() {
+        return messageDAO.count();
+    }
 }

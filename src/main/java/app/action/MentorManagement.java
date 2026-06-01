@@ -106,6 +106,8 @@ public class MentorManagement extends BaseAction {
         String bio = safe(request.getParameter("bio"));
         String qualifications = safe(request.getParameter("qualifications"));
         String phoneNumber = safe(request.getParameter("phoneNumber"));
+        String location = safe(request.getParameter("location"));
+        String availability = safe(request.getParameter("availability"));
         String status = safe(request.getParameter("status"));
 
         Mentor newMentor = new Mentor();
@@ -121,6 +123,8 @@ public class MentorManagement extends BaseAction {
         newMentor.setBio(bio);
         newMentor.setQualifications(qualifications);
         newMentor.setPhoneNumber(phoneNumber);
+        newMentor.setLocation(location);
+        newMentor.setAvailability(availability);
         newMentor.setStatus(status.isEmpty() ? "Active" : status);
 
         mentorBean.addAdmin(newMentor);
@@ -138,6 +142,8 @@ public class MentorManagement extends BaseAction {
         String bio = safe(request.getParameter("bio"));
         String qualifications = safe(request.getParameter("qualifications"));
         String phoneNumber = safe(request.getParameter("phoneNumber"));
+        String location = safe(request.getParameter("location"));
+        String availability = safe(request.getParameter("availability"));
         String status = safe(request.getParameter("status"));
 
         Mentor mentor = new Mentor();
@@ -153,6 +159,8 @@ public class MentorManagement extends BaseAction {
         mentor.setBio(bio);
         mentor.setQualifications(qualifications);
         mentor.setPhoneNumber(phoneNumber);
+        mentor.setLocation(location);
+        mentor.setAvailability(availability);
         mentor.setStatus(status.isEmpty() ? "Active" : status);
 
         mentorBean.update(mentorId, mentor);

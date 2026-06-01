@@ -14,6 +14,12 @@
     String mentorBio    = mentor != null && mentor.getBio()            != null ? mentor.getBio()            : "No bio available.";
     String mentorQual   = mentor != null && mentor.getQualifications() != null ? mentor.getQualifications() : null;
     String mentorExp2   = mentor != null && mentor.getExpertise()      != null ? mentor.getExpertise()      : null;
+    String mentorLocation = mentor != null && mentor.getLocation() != null && !mentor.getLocation().isBlank() ? mentor.getLocation() : "Not provided";
+    String mentorAvailability = mentor != null && mentor.getAvailability() != null && !mentor.getAvailability().isBlank() ? mentor.getAvailability() : "Not provided";
+    int mentorRatingCount = mentor != null && mentor.getRatingCount() != null ? mentor.getRatingCount() : 0;
+    String mentorRating = mentor != null && mentor.getAverageRating() != null && mentorRatingCount > 0
+        ? String.format("%.1f/5 (%d ratings)", mentor.getAverageRating(), mentorRatingCount)
+        : "Not rated yet";
     String mentorStatus = mentor != null && mentor.getStatus()         != null ? mentor.getStatus()         : "Active";
     boolean isActive    = "Active".equalsIgnoreCase(mentorStatus);
     String initials     = mentorSpec.length() > 0 ? mentorSpec.substring(0,1).toUpperCase() : "M";
@@ -287,6 +293,27 @@
                                 <div>
                                     <div class="detail-label">Status</div>
                                     <div style="margin-top:4px;"><span class="pill <%= isActive ? "pill-active" : "pill-inactive" %>"><%= mentorStatus %></span></div>
+                                </div>
+                            </div>
+                            <div class="detail-row">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9 17 14 19 21 12 17 5 21 7 14 2 9 9 9 12 2"/></svg>
+                                <div>
+                                    <div class="detail-label">Rating</div>
+                                    <div class="detail-val"><%= mentorRating %></div>
+                                </div>
+                            </div>
+                            <div class="detail-row">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                <div>
+                                    <div class="detail-label">Location</div>
+                                    <div class="detail-val"><%= mentorLocation %></div>
+                                </div>
+                            </div>
+                            <div class="detail-row">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.24 10.24a6 6 0 0 0-8.48 0L12 10l.24.24a6 6 0 0 0 8.48 0L21 10l-.76.24z"/><path d="M4.93 19.07a10 10 0 0 1 14.14 0"/><path d="M8.46 15.54a5 5 0 0 1 7.07 0"/></svg>
+                                <div>
+                                    <div class="detail-label">Availability</div>
+                                    <div class="detail-val"><%= mentorAvailability %></div>
                                 </div>
                             </div>
                         </div>

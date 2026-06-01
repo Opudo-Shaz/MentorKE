@@ -3,6 +3,9 @@ package app.action;
 import app.bean.UserBean;
 import app.bean.MentorBean;
 import app.bean.MenteeBean;
+import app.bean.MessageBean;
+import app.dao.MentorDAO;
+import app.dao.SessionDAO;
 import app.model.User;
 import app.security.websecurity.MentorKeSecurity;
 import app.model.Mentor;
@@ -15,6 +18,7 @@ import jakarta.inject.Inject;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.slf4j.Logger;
 
@@ -33,6 +37,15 @@ public class AdminDashboard extends BaseAction {
 
     @Inject
     private MenteeBean menteeBean;
+
+    @Inject
+    private MessageBean messageBean;
+
+    @Inject
+    private MentorDAO mentorDAO;
+
+    @Inject
+    private SessionDAO sessionDAO;
 
     @Inject
     private MentorKeSecurity security;
@@ -60,6 +73,23 @@ public class AdminDashboard extends BaseAction {
             request.setAttribute("users", users);
             request.setAttribute("mentors", mentors);
             request.setAttribute("mentees", mentees);
+
+            int totalUsers = users != null ? users.size() : 0;
+            int activeMentors = mentorDAO.countActiveMentors();
+            int totalSessions = sessionDAO.count();
+
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime monthStart = now.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+            LocalDateTime nextMonthStart = monthStart.plusMonths(1);
+            int sessionsThisMonth = sessionDAO.countSessionsInMonth(monthStart, nextMonthStart);
+
+            int totalMessagesSent = messageBean.getTotalMessagesSent();
+
+            request.setAttribute("analyticsTotalUsers", totalUsers);
+            request.setAttribute("analyticsActiveMentors", activeMentors);
+            request.setAttribute("analyticsSessionsThisMonth", sessionsThisMonth);
+            request.setAttribute("analyticsTotalSessions", totalSessions);
+            request.setAttribute("analyticsTotalMessagesSent", totalMessagesSent);
 
             logger.debug("Users: {}", users != null ? users.size() : 0);
             logger.debug("Mentors: {}", mentors != null ? mentors.size() : 0);

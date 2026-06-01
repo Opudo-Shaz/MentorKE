@@ -124,6 +124,24 @@ public class SessionManagement extends BaseAction {
         handleAddNotes(request, response, userId);
     }
 
+    @ActionGetMethod("rate-form")
+    @RolesAllowed({"mentee"})
+    public void rateForm(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
+        if (requireRole(request, response, "mentee")) return;
+        String userId = getUserId(request);
+        handleRateForm(request, response, userId);
+    }
+
+    @ActionPostMethod("submit-rating")
+    @RolesAllowed({"mentee"})
+    public void submitRating(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
+        if (requireRole(request, response, "mentee")) return;
+        String userId = getUserId(request);
+        handleSubmitRating(request, response, userId);
+    }
+
     /**
      * Display upcoming sessions for the logged-in user
      */
@@ -227,7 +245,7 @@ public class SessionManagement extends BaseAction {
     // Always reload mentees list so dropdown is never empty
     try {
         if (mentorId != null && !mentorId.isBlank()) {
-            List mentees = menteeBean.findByMentorId(mentorId);
+            List<Mentee> mentees = menteeBean.findByMentorId(mentorId);
             setAttribute(request, "mentees", mentees);
             logger.debug("Loaded {} mentees for mentor {}", mentees.size(), mentorId);
         }
@@ -429,6 +447,69 @@ public class SessionManagement extends BaseAction {
             }
         } catch (Exception e) {
             logger.warn("Could not enrich session details", e);
+        }
+    }
+
+    private void handleRateForm(HttpServletRequest request, HttpServletResponse response, String userId)
+            throws ServletException, IOException {
+        String sessionId = request.getParameter("sessionId");
+        String mentorId = request.getParameter("mentorId");
+
+        try {
+            Session session = sessionBean.getSession(sessionId);
+            if (session == null) {
+                setAttribute(request, "errorMessage", "Session not found");
+                redirect(response, request.getContextPath() + "/app/sessions/completed");
+                return;
+            }
+
+            if (!userId.equals(session.getMenteeId())) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN);
+                return;
+            }
+
+            if (!"COMPLETED".equalsIgnoreCase(session.getStatus())) {
+                setAttribute(request, "errorMessage", "Only completed sessions can be rated");
+                redirect(response, request.getContextPath() + "/app/sessions/completed");
+                return;
+            }
+
+            if (mentorId != null && !mentorId.equals(session.getMentorId())) {
+                setAttribute(request, "errorMessage", "Invalid mentor for this session");
+                redirect(response, request.getContextPath() + "/app/sessions/completed");
+                return;
+            }
+
+            enrichSessionDetails(session);
+            setAttribute(request, "session", session);
+            setAttribute(request, "mentorId", session.getMentorId());
+            forward(request, response, "/rate-mentor.jsp");
+        } catch (Exception e) {
+            logger.error("Error loading rating form", e);
+            throw new ServletException(e);
+        }
+    }
+
+    private void handleSubmitRating(HttpServletRequest request, HttpServletResponse response, String userId)
+            throws ServletException, IOException {
+        String sessionId = request.getParameter("sessionId");
+        String mentorId = request.getParameter("mentorId");
+        String ratingRaw = request.getParameter("rating");
+        String feedback = request.getParameter("feedback");
+
+        try {
+            int rating = Integer.parseInt(ratingRaw);
+            sessionBean.submitMentorRating(sessionId, userId, mentorId, rating, feedback);
+            setAttribute(request, "successMessage", "Thank you. Your rating has been submitted.");
+            redirect(response, request.getContextPath() + "/app/sessions/completed");
+        } catch (IllegalArgumentException e) {
+            logger.warn("Rating submission rejected: {}", e.getMessage());
+            setAttribute(request, "errorMessage", e.getMessage());
+            handleRateForm(request, response, userId);
+        } catch (Exception e) {
+            logger.error("Error submitting mentor rating", e);
+            setAttribute(request, "errorMessage", "Could not submit rating: " + e.getMessage());
+            handleRateForm(request, response, userId);
         }
     }
 }

@@ -10,8 +10,10 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 import app.bean.MenteeBean;
 import app.bean.MentorBean;
+import app.bean.SessionBean;
 import app.model.Mentee;
 import app.model.Mentor;
+import app.model.Session;
 import app.security.websecurity.MentorKeSecurity;
 import app.framework.Action;
 import app.framework.ActionGetMethod;
@@ -25,6 +27,9 @@ public class MentorDashboard extends BaseAction {
 
     @Inject
     private MenteeBean menteeBean;
+
+    @Inject
+    private SessionBean sessionBean;
 
     @Inject
     private MentorKeSecurity security;
@@ -45,6 +50,19 @@ public class MentorDashboard extends BaseAction {
             if (mentor != null) {
                 List<Mentee> mentees = menteeBean.findByMentorId(String.valueOf(mentor.getId()));
                 request.setAttribute("mentees", mentees);
+
+                int totalMentees = mentees != null ? mentees.size() : 0;
+                List<Session> completedSessions = sessionBean.getCompletedSessions(userId);
+                List<Session> upcomingSessions = sessionBean.getUpcomingSessions(userId);
+
+                int sessionsCompleted = completedSessions != null ? completedSessions.size() : 0;
+                int sessionsUpcoming = upcomingSessions != null ? upcomingSessions.size() : 0;
+                double averageRating = mentor.getAverageRating() != null ? mentor.getAverageRating() : 0.0;
+
+                request.setAttribute("analyticsTotalMentees", totalMentees);
+                request.setAttribute("analyticsSessionsCompleted", sessionsCompleted);
+                request.setAttribute("analyticsUpcomingSessions", sessionsUpcoming);
+                request.setAttribute("analyticsAverageRating", averageRating);
             }
 
         } catch (Exception e) {

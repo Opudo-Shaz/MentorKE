@@ -225,7 +225,7 @@
         /* ── STATS ── */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 16px;
             margin-bottom: 24px;
         }
@@ -481,6 +481,18 @@
     int mentorCount = (mentors != null) ? mentors.size() : 0;
     int menteeCount = (mentees != null) ? mentees.size() : 0;
 
+    Integer analyticsTotalUsers = (Integer) request.getAttribute("analyticsTotalUsers");
+    Integer analyticsActiveMentors = (Integer) request.getAttribute("analyticsActiveMentors");
+    Integer analyticsSessionsThisMonth = (Integer) request.getAttribute("analyticsSessionsThisMonth");
+    Integer analyticsTotalSessions = (Integer) request.getAttribute("analyticsTotalSessions");
+    Integer analyticsTotalMessagesSent = (Integer) request.getAttribute("analyticsTotalMessagesSent");
+
+    int totalUsersMetric = analyticsTotalUsers != null ? analyticsTotalUsers : userCount;
+    int activeMentorsMetric = analyticsActiveMentors != null ? analyticsActiveMentors : mentorCount;
+    int sessionsThisMonthMetric = analyticsSessionsThisMonth != null ? analyticsSessionsThisMonth : 0;
+    int totalSessionsMetric = analyticsTotalSessions != null ? analyticsTotalSessions : 0;
+    int totalMessagesSentMetric = analyticsTotalMessagesSent != null ? analyticsTotalMessagesSent : 0;
+
     String successMsg = request.getParameter("success");
     String errorMsg   = request.getParameter("error");
 %>
@@ -600,7 +612,7 @@
                 </div>
                 <div>
                     <div class="stat-label">Total users</div>
-                    <div class="stat-value"><%= userCount %></div>
+                    <div class="stat-value"><%= totalUsersMetric %></div>
                 </div>
             </div>
             <div class="stat-card">
@@ -608,17 +620,26 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="#0f6e56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
                 </div>
                 <div>
-                    <div class="stat-label">Total mentors</div>
-                    <div class="stat-value"><%= mentorCount %></div>
+                    <div class="stat-label">Active mentors</div>
+                    <div class="stat-value"><%= activeMentorsMetric %></div>
                 </div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon amber">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 </div>
                 <div>
-                    <div class="stat-label">Total mentees</div>
-                    <div class="stat-value"><%= menteeCount %></div>
+                    <div class="stat-label">Sessions this month</div>
+                    <div class="stat-value" title="Total sessions: <%= totalSessionsMetric %>"><%= sessionsThisMonthMetric %></div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon blue">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#1565c0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                </div>
+                <div>
+                    <div class="stat-label">Total messages sent</div>
+                    <div class="stat-value"><%= totalMessagesSentMetric %></div>
                 </div>
             </div>
         </div>

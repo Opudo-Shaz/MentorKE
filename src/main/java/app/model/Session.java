@@ -1,6 +1,8 @@
 package app.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -53,6 +55,20 @@ public class Session implements Serializable {
 
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;                     // excluded — TEXT field, can be large
+
+    @Min(1)
+    @Max(5)
+    @Column(name = "mentor_rating")
+    private Integer mentorRating;
+
+    @Column(name = "rating_feedback", columnDefinition = "TEXT")
+    private String ratingFeedback;
+
+    @Column(name = "rating_requested_at")
+    private LocalDateTime ratingRequestedAt;
+
+    @Column(name = "rated_at")
+    private LocalDateTime ratedAt;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false)

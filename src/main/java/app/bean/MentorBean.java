@@ -117,6 +117,41 @@ public class MentorBean {
         return mentorDAO.findAll();
     }
 
+    public List<Mentor> searchMentors(
+            String specialization,
+            Integer minimumYearsOfExperience,
+            String availability,
+            String location,
+            Double minimumRating
+    ) throws SQLException {
+        logger.debug("Searching mentors with specialization={}, minYears={}, availability={}, location={}, minRating={}",
+                specialization, minimumYearsOfExperience, availability, location, minimumRating);
+        return mentorDAO.searchMentors(
+                specialization,
+                minimumYearsOfExperience,
+                availability,
+                location,
+                minimumRating
+        );
+    }
+
+    public void applyMentorRating(String mentorId, int rating) throws SQLException {
+        Mentor mentor = mentorDAO.findById(Long.parseLong(mentorId));
+        if (mentor == null) {
+            throw new IllegalArgumentException("Mentor not found");
+        }
+
+        int currentCount = mentor.getRatingCount() != null ? mentor.getRatingCount() : 0;
+        double currentAverage = mentor.getAverageRating() != null ? mentor.getAverageRating() : 0.0;
+
+        int newCount = currentCount + 1;
+        double newAverage = ((currentAverage * currentCount) + rating) / newCount;
+
+        mentor.setRatingCount(newCount);
+        mentor.setAverageRating(newAverage);
+        mentorDAO.update(mentor);
+    }
+
     /**
      * UPDATE - Update existing mentor
      */

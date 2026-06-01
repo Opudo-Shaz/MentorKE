@@ -7,10 +7,17 @@
     if (username == null) username = "Mentee";
 
     String selectedSpecialization = (String) request.getAttribute("selectedSpecialization");
+    Integer selectedMinYearsOfExperience = (Integer) request.getAttribute("selectedMinYearsOfExperience");
+    String selectedAvailability = (String) request.getAttribute("selectedAvailability");
+    String selectedLocation = (String) request.getAttribute("selectedLocation");
+    Double selectedMinRating = (Double) request.getAttribute("selectedMinRating");
     String successMessage = (String) request.getAttribute("successMessage");
     String errorMessage   = (String) request.getAttribute("errorMessage");
     List<Mentor> mentors  = (List<Mentor>) request.getAttribute("mentors");
     int mentorCount = (mentors != null) ? mentors.size() : 0;
+
+    String minYearsValue = selectedMinYearsOfExperience != null ? String.valueOf(selectedMinYearsOfExperience) : "";
+    String minRatingValue = selectedMinRating != null ? String.valueOf(selectedMinRating) : "";
 %>
 <!DOCTYPE html>
 <html lang="en">
@@ -197,7 +204,7 @@
         /* ── FILTER BAR ── */
         .filter-bar { display: flex; gap: 10px; flex-wrap: wrap; }
         .filter-input {
-            flex: 1; min-width: 220px;
+            flex: 1; min-width: 180px;
             padding: 9px 14px;
             border: 1px solid var(--gray-200);
             border-radius: var(--radius-md);
@@ -234,6 +241,19 @@
         }
         .btn-secondary:hover { background: var(--gray-50); }
         .btn-secondary svg { width: 16px; height: 16px; }
+
+        .top-rated-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            background: var(--amber-50);
+            color: var(--amber-700);
+            border: 1px solid var(--amber-200);
+        }
 
         /* ── MENTOR GRID ── */
         .mentor-grid {
@@ -426,7 +446,39 @@
                         type="text"
                         name="specialization"
                         value="<%= selectedSpecialization != null ? selectedSpecialization : "" %>"
-                        placeholder="Search by specialization…"
+                        placeholder="Specialization"
+                    >
+                    <input
+                        class="filter-input"
+                        type="number"
+                        min="0"
+                        name="minYearsOfExperience"
+                        value="<%= minYearsValue %>"
+                        placeholder="Min years"
+                    >
+                    <input
+                        class="filter-input"
+                        type="text"
+                        name="availability"
+                        value="<%= selectedAvailability != null ? selectedAvailability : "" %>"
+                        placeholder="Availability (e.g. Weekends)"
+                    >
+                    <input
+                        class="filter-input"
+                        type="text"
+                        name="location"
+                        value="<%= selectedLocation != null ? selectedLocation : "" %>"
+                        placeholder="Location"
+                    >
+                    <input
+                        class="filter-input"
+                        type="number"
+                        min="0"
+                        max="5"
+                        step="0.1"
+                        name="minRating"
+                        value="<%= minRatingValue %>"
+                        placeholder="Min rating"
                     >
                     <button class="btn-primary" type="submit">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -441,12 +493,19 @@
                 <!-- Mentor grid -->
                 <% if (mentors != null && !mentors.isEmpty()) { %>
                 <div class="mentor-grid">
-                    <% for (Mentor mentor : mentors) {
+                    <% for (int i = 0; i < mentors.size(); i++) {
+                        Mentor mentor = mentors.get(i);
                         String initials = (mentor.getUsername() != null && !mentor.getUsername().isEmpty())
                             ? mentor.getUsername().substring(0,1).toUpperCase() : "M";
                         String spec = mentor.getSpecialization() != null ? mentor.getSpecialization() : "—";
                         int exp = mentor.getYearsOfExperience() != null ? mentor.getYearsOfExperience() : 0;
                         String status = mentor.getStatus() != null ? mentor.getStatus() : "Active";
+                        String location = mentor.getLocation() != null && !mentor.getLocation().isBlank() ? mentor.getLocation() : "Not provided";
+                        String availability = mentor.getAvailability() != null && !mentor.getAvailability().isBlank() ? mentor.getAvailability() : "Not provided";
+                        double ratingValue = mentor.getAverageRating() != null ? mentor.getAverageRating() : 0.0;
+                        int ratingCount = mentor.getRatingCount() != null ? mentor.getRatingCount() : 0;
+                        String ratingDisplay = ratingCount > 0 ? String.format("%.1f/5 (%d)", ratingValue, ratingCount) : "Not rated yet";
+                        boolean topRated = i < 3 && ratingCount > 0;
                         boolean isActive = "Active".equalsIgnoreCase(status);
                         String encodedSpec = java.net.URLEncoder.encode(spec.equals("—") ? "" : spec, java.nio.charset.StandardCharsets.UTF_8);
                     %>
@@ -456,6 +515,9 @@
                             <div>
                                 <div class="mentor-name"><%= mentor.getUsername() %></div>
                                 <div class="mentor-spec"><%= spec %></div>
+                                <% if (topRated) { %>
+                                <div style="margin-top:6px;"><span class="top-rated-badge">Top rated in results</span></div>
+                                <% } %>
                             </div>
                         </div>
 
@@ -467,6 +529,18 @@
                             <div class="mentor-meta-row">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
                                 <span class="pill <%= isActive ? "pill-active" : "pill-inactive" %>"><%= status %></span>
+                            </div>
+                            <div class="mentor-meta-row">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.24 10.24a6 6 0 0 0-8.48 0L12 10l.24.24a6 6 0 0 0 8.48 0L21 10l-.76.24z"/><path d="M4.93 19.07a10 10 0 0 1 14.14 0"/><path d="M8.46 15.54a5 5 0 0 1 7.07 0"/></svg>
+                                <%= availability %>
+                            </div>
+                            <div class="mentor-meta-row">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                <%= location %>
+                            </div>
+                            <div class="mentor-meta-row">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9 17 14 19 21 12 17 5 21 7 14 2 9 9 9 12 2"/></svg>
+                                <%= ratingDisplay %>
                             </div>
                         </div>
 

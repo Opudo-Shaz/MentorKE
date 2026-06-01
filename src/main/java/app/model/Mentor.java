@@ -56,6 +56,27 @@ public class Mentor extends User {
     @ToString.Include
     private String phoneNumber;
 
+    @Size(max = 120)
+    @Column(name = "location", length = 120)
+    @ToString.Include
+    private String location;
+
+    @Size(max = 120)
+    @Column(name = "availability", length = 120)
+    @ToString.Include
+    private String availability;
+
+    @DecimalMin("0.0")
+    @DecimalMax("5.0")
+    @Column(name = "average_rating")
+    @ToString.Include
+    private Double averageRating;
+
+    @Min(0)
+    @Column(name = "rating_count")
+    @ToString.Include
+    private Integer ratingCount;
+
     @Builder
     public Mentor(Long id, String userId, String specialization, String expertise,
                   Integer yearsOfExperience, String bio, String qualifications,

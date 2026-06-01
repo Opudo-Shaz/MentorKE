@@ -230,6 +230,24 @@
         .notes-empty { color: var(--gray-400); font-style: italic; }
         .topic-cell { font-weight: 500; }
 
+        .action-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 10px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--blue-100);
+            background: var(--blue-50);
+            color: var(--blue-800);
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .action-muted {
+            color: var(--gray-400);
+            font-size: 12px;
+        }
+
         /* ── PILLS ── */
         .pill {
             display: inline-flex; align-items: center; gap: 4px;
@@ -374,6 +392,7 @@
                             <th>Topic</th>
                             <th>Notes</th>
                             <th>Status</th>
+                            <% if (!isMentor) { %><th>Rating</th><% } %>
                         </tr>
                     </thead>
                     <tbody>
@@ -396,10 +415,23 @@
                                 <% } %>
                             </td>
                             <td><span class="pill <%= pillClass %>"><%= status %></span></td>
+                            <% if (!isMentor) { %>
+                            <td>
+                                <% if ("COMPLETED".equalsIgnoreCase(status) && completedSession.getMentorRating() == null) { %>
+                                <a class="action-link" href="<%= ctx %>/app/sessions/rate-form?sessionId=<%= completedSession.getId() %>&mentorId=<%= completedSession.getMentorId() %>">
+                                    Rate mentor
+                                </a>
+                                <% } else if (completedSession.getMentorRating() != null) { %>
+                                <span class="action-muted">Rated: <%= completedSession.getMentorRating() %>/5</span>
+                                <% } else { %>
+                                <span class="action-muted">N/A</span>
+                                <% } %>
+                            </td>
+                            <% } %>
                         </tr>
                     <% } } else { %>
                         <tr>
-                            <td colspan="7">
+                            <td colspan="<%= isMentor ? 7 : 8 %>">
                                 <div class="empty-state">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/><circle cx="12" cy="12" r="10"/></svg>
                                     <h3>No completed sessions yet</h3>

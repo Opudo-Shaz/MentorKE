@@ -44,4 +44,12 @@ public class SessionDAO extends GenericDAO<Session, Long> {
         query.setParameter("userId", userId);
         return query.getResultList();
     }
+
+    public int countSessionsInMonth(LocalDateTime monthStartInclusive, LocalDateTime nextMonthStartExclusive) {
+        String jpql = "SELECT COUNT(s) FROM Session s WHERE s.scheduledDate >= :monthStart AND s.scheduledDate < :nextMonthStart";
+        TypedQuery<Long> query = entityManager.createQuery(jpql, Long.class);
+        query.setParameter("monthStart", monthStartInclusive);
+        query.setParameter("nextMonthStart", nextMonthStartExclusive);
+        return query.getSingleResult().intValue();
+    }
 }

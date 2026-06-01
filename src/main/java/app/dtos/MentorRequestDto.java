@@ -27,6 +27,10 @@ public class MentorRequestDto {
     private String bio;
     private String qualifications;
     private String phoneNumber;
+    private String location;
+    private String availability;
+    private Double averageRating;
+    private Integer ratingCount;
 
     public Mentor toEntity() {
         Mentor mentor = new Mentor();
@@ -42,6 +46,10 @@ public class MentorRequestDto {
         mentor.setBio(bio);
         mentor.setQualifications(qualifications);
         mentor.setPhoneNumber(phoneNumber);
+        mentor.setLocation(location);
+        mentor.setAvailability(availability);
+        mentor.setAverageRating(averageRating);
+        mentor.setRatingCount(ratingCount);
         return mentor;
     }
 }

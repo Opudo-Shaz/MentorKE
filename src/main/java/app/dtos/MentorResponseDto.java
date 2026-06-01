@@ -28,6 +28,10 @@ public class MentorResponseDto {
     private String bio;
     private String qualifications;
     private String phoneNumber;
+    private String location;
+    private String availability;
+    private Double averageRating;
+    private Integer ratingCount;
 
     public static MentorResponseDto fromEntity(Mentor mentor) {
         if (mentor == null) {
@@ -48,7 +52,11 @@ public class MentorResponseDto {
                 mentor.getYearsOfExperience(),
                 mentor.getBio(),
                 mentor.getQualifications(),
-                mentor.getPhoneNumber()
+                mentor.getPhoneNumber(),
+                mentor.getLocation(),
+                mentor.getAvailability(),
+                mentor.getAverageRating(),
+                mentor.getRatingCount()
         );
     }
 }

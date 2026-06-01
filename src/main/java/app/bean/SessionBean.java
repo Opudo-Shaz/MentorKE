@@ -39,6 +39,9 @@ public class SessionBean {
     private MenteeDAO menteeDAO;
 
     @Inject
+    private MentorBean mentorBean;
+
+    @Inject
     private EmailReminderBean emailBean;
 
     public SessionBean() {}
@@ -191,10 +194,99 @@ public class SessionBean {
 
         Session session = sessionDAO.findById(Long.parseLong(sessionId));
         if (session != null) {
+            boolean wasCompleted = "COMPLETED".equalsIgnoreCase(session.getStatus());
             session.setStatus(status);
             session.setUpdatedAt(LocalDateTime.now());
+
+            if (!wasCompleted && "COMPLETED".equalsIgnoreCase(status)) {
+                session.setRatingRequestedAt(LocalDateTime.now());
+            }
+
             sessionDAO.update(session);
+
+            if (!wasCompleted && "COMPLETED".equalsIgnoreCase(status)) {
+                sendMentorRatingRequest(session);
+            }
         }
+    }
+
+    public void submitMentorRating(String sessionId, String menteeId, String mentorId, int rating, String feedback)
+            throws SQLException {
+        Session session = sessionDAO.findById(Long.parseLong(sessionId));
+        if (session == null) {
+            throw new IllegalArgumentException("Session not found");
+        }
+
+        if (!"COMPLETED".equalsIgnoreCase(session.getStatus())) {
+            throw new IllegalArgumentException("Only completed sessions can be rated");
+        }
+
+        if (!session.getMenteeId().equals(menteeId)) {
+            throw new IllegalArgumentException("You can only rate mentors from your own sessions");
+        }
+
+        if (!session.getMentorId().equals(mentorId)) {
+            throw new IllegalArgumentException("Mentor does not match this session");
+        }
+
+        if (session.getMentorRating() != null) {
+            throw new IllegalArgumentException("This session has already been rated");
+        }
+
+        if (rating < 1 || rating > 5) {
+            throw new IllegalArgumentException("Rating must be between 1 and 5");
+        }
+
+        session.setMentorRating(rating);
+        session.setRatingFeedback(feedback == null ? null : feedback.trim());
+        session.setRatedAt(LocalDateTime.now());
+        session.setUpdatedAt(LocalDateTime.now());
+        sessionDAO.update(session);
+
+        mentorBean.applyMentorRating(mentorId, rating);
+    }
+
+    private void sendMentorRatingRequest(Session session) {
+        try {
+            Mentor mentor = mentorDAO.findById(Long.parseLong(session.getMentorId()));
+            Mentee mentee = menteeDAO.findById(Long.parseLong(session.getMenteeId()));
+            if (mentor == null || mentee == null || mentee.getEmail() == null || mentee.getEmail().isBlank()) {
+                return;
+            }
+
+            String baseUrl = System.getProperty("mentorke.baseUrl", "http://localhost:8080/MentorKE");
+            String ratingUrl = baseUrl + "/app/sessions/rate-form?sessionId=" + session.getId()
+                    + "&mentorId=" + mentor.getId();
+
+            String subject = "Rate your mentor session with " + mentor.getUsername();
+            String body = buildMentorRatingRequestEmailBody(mentee.getUsername(), mentor.getUsername(), session, ratingUrl);
+            emailBean.sendEmail(mentee.getEmail(), subject, body);
+        } catch (Exception e) {
+            logger.error("Failed to send rating request email for session {}", session.getId(), e);
+        }
+    }
+
+    private String buildMentorRatingRequestEmailBody(
+            String menteeName,
+            String mentorName,
+            Session session,
+            String ratingUrl
+    ) {
+        String sessionDateTime = session.getScheduledDate() != null
+                ? session.getScheduledDate().format(DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy 'at' h:mm a"))
+                : "recently";
+
+        return "<html>"
+                + "<body style='font-family:Arial,sans-serif;background:#f5f5f5;padding:20px;'>"
+                + "<div style='background:#fff;border-radius:8px;padding:30px;max-width:600px;margin:0 auto;'>"
+                + "<h2 style='color:#1e293b;border-bottom:2px solid #0d47a1;padding-bottom:10px;'>Rate Your Mentor</h2>"
+                + "<p>Hi " + menteeName + ",</p>"
+                + "<p>Your session with <strong>" + mentorName + "</strong> on " + sessionDateTime + " has been marked complete.</p>"
+                + "<p>Please rate your mentor to help other mentees find the best match.</p>"
+                + "<p><a href='" + ratingUrl + "' style='display:inline-block;background:#0d47a1;color:#fff;padding:10px 20px;border-radius:5px;text-decoration:none;'>Rate Mentor</a></p>"
+                + "<p style='font-size:13px;color:#475569;'>If the button does not work, copy this link: <a href='" + ratingUrl + "'>" + ratingUrl + "</a></p>"
+                + "<p style='color:#94a3b8;font-size:12px;margin-top:30px;'>This is an automated message from MentorKE.</p>"
+                + "</div></body></html>";
     }
 
     

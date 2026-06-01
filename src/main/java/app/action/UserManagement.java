@@ -116,6 +116,8 @@ public class UserManagement extends BaseAction {
             mentor.setBio(safe(request.getParameter("bio")));
             mentor.setQualifications(safe(request.getParameter("qualifications")));
             mentor.setPhoneNumber(safe(request.getParameter("phoneNumber")));
+            mentor.setLocation(safe(request.getParameter("location")));
+            mentor.setAvailability(safe(request.getParameter("availability")));
 
             mentorBean.addAdmin(mentor);
             return "success=mentor_added";
