@@ -4,7 +4,7 @@ MentorKE is a mentor–mentee matchmaking web application. It provides a server-
 backend (Servlets + JSP) and a PostgreSQL persistence layer for user management, sessions,
 and audit logging.
 
-Status: Completed — database migration, CRUD operations, and documentation are included.
+Status: Completed — CRUD operations and documentation are included.
 
 Key features
 - User management with roles (admin / mentor / mentee)
@@ -34,7 +34,8 @@ mvn clean package
 
 Configuration
 - Default DB settings are in [src/main/java/app/dbconnection/Connection.java](src/main/java/app/dbconnection/Connection.java).
-- The app will attempt to create the application database and required tables automatically on startup. Ensure the PostgreSQL server is reachable and credentials in the connection class are correct.
+- The app will attempt to create the application database and required tables automatically on startup, but schema changes to existing tables are applied manually.
+- See [DATABASE_MIGRATION_GUIDE.md](DATABASE_MIGRATION_GUIDE.md) for the current SQL migration.
 
 Deploy
 - Deploy `target/MentorKE.war` to your servlet container (WildFly, Tomcat). Access the app at:
@@ -43,7 +44,7 @@ Deploy
 
 Documentation
 - Start with IMPLEMENTATION_SUMMARY.md for architecture and setup details.
-- See DATABASE_MIGRATION_GUIDE.md and DEPLOYMENT_CHECKLIST.md for deeper guidance.
+- See [DATABASE_MIGRATION_GUIDE.md](DATABASE_MIGRATION_GUIDE.md) and DEPLOYMENT_CHECKLIST.md for deeper guidance.
 
 Suggested next steps
 - Use BCrypt for password hashing.
