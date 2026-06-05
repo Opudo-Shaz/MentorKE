@@ -1,6 +1,23 @@
+# Add PostgreSQL driver
 /subsystem=datasources/jdbc-driver=postgresql:add(\
     driver-name=postgresql,\
     driver-module-name=org.postgresql,\
     driver-class-name=org.postgresql.Driver,\
     driver-xa-datasource-class-name=org.postgresql.xa.PGXADataSource\
+)
+
+# Add datasource
+/subsystem=datasources/data-source=PostgresDS:add(\
+    jndi-name="java:/jdbc/PostgresDS",\
+    driver-name=postgresql,\
+    connection-url="${env.DB_URL}",\
+    user-name="${env.DB_USER}",\
+    password="${env.DB_PASSWORD}",\
+    enabled=true,\
+    use-java-context=true\
+)
+
+# Add JMS queue (only works in standalone-full.xml)
+/subsystem=messaging-activemq/server=default/jms-queue=MentorKEQueue:add(\
+    entries=["java:/jms/queue/MentorKEQueue"]\
 )

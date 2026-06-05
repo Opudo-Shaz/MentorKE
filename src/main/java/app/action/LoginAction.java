@@ -96,13 +96,13 @@ public class LoginAction extends BaseAction {
             }
 
             if (!passwordValid) {
-                setAttribute(request, "errorMessage", "Incorrect password.");
+                setAttribute(request, "errorMessage", "Invalid username or password.");
                 forward(request, response, "/login.jsp");
                 return;
             }
 
             if (!role.equalsIgnoreCase(user.getRole())) {
-                setAttribute(request, "errorMessage", "Selected role does not match your account.");
+                setAttribute(request, "errorMessage", "Invalid username or password.");
                 forward(request, response, "/login.jsp");
                 return;
             }
