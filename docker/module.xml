@@ -4,6 +4,7 @@
         <resource-root path="postgresql-42.7.3.jar"/>
     </resources>
     <dependencies>
-        <module name="jakarta.jakartaee-api"/>
+        <module name="java.sql"/>
+        <module name="java.logging"/>
     </dependencies>
 </module>
