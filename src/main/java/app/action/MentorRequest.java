@@ -7,22 +7,22 @@ import app.framework.ActionGetMethod;
 import app.framework.ActionPostMethod;
 import app.model.MatchRequest;
 import app.model.Mentee;
+import app.security.websecurity.MentorKeSecurity;
 import app.utility.logging.AppLogger;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 
 import java.util.List;
 
-/**
- * MentorRequest - framework action for mentor pending requests.
- * The logic still forwards to the existing JSP so the UI theme stays unchanged.
- */
+
 @ApplicationScoped
-@Action(value = "mentor-requests", label = "Pending Requests", showLink = false)
-public class MentorRequest extends AbstractAction {
+@Action(value = "mentor-requests", label = "Pending Requests")
+@RolesAllowed({"mentor","mentee","admin"})
+public class MentorRequest extends BaseAction {
 
     private static final Logger logger = AppLogger.getLogger(MentorRequest.class);
 
@@ -32,18 +32,27 @@ public class MentorRequest extends AbstractAction {
     @Inject
     private MenteeBean menteeBean;
 
+    @Inject
+    private MentorKeSecurity security;
+
     @ActionGetMethod("pending")
+    @RolesAllowed({"mentor"})
     public app.framework.ActionResponse pending(HttpServletRequest request, HttpServletResponse response) {
+        security.requireRole("mentor");
         return renderPendingRequests(request, response);
     }
 
     @ActionPostMethod("approve")
+    @RolesAllowed({"mentor"})
     public app.framework.ActionResponse approve(HttpServletRequest request, HttpServletResponse response) {
+        security.requireRole("mentor");
         return processDecision(request, response, "APPROVED");
     }
 
     @ActionPostMethod("reject")
+    @RolesAllowed({"mentor"})
     public app.framework.ActionResponse reject(HttpServletRequest request, HttpServletResponse response) {
+        security.requireRole("mentor");
         return processDecision(request, response, "REJECTED");
     }
 
@@ -70,10 +79,9 @@ public class MentorRequest extends AbstractAction {
         return renderPendingRequests(request, response);
     }
 
-    /**
-     * View pending mentee requests for this mentor.
-     * This forwards to the existing JSP so the existing theme stays intact.
-     */
+
+     // View pending mentee requests for this mentor.
+
     private app.framework.ActionResponse renderPendingRequests(HttpServletRequest request, HttpServletResponse response) {
         String mentorId = getUserIdString(request);
 
@@ -89,7 +97,7 @@ public class MentorRequest extends AbstractAction {
 
             for (MatchRequest req : pendingRequests) {
                 try {
-                    Mentee mentee = menteeBean.getMenteeById(req.getMenteeId());
+                    Mentee mentee = menteeBean.getById(req.getMenteeId());
                     req.setRequestedSpecialization(mentee != null ? mentee.getFieldOfStudy() : "Unknown");
                 } catch (Exception e) {
                     logger.warn("Could not load mentee details for request {}", req.getId());

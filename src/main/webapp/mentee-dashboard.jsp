@@ -391,6 +391,16 @@
             mentorInitials = mentorSpec.substring(0, 1).toUpperCase();
         }
     }
+
+    Integer analyticsSessionsAttended = (Integer) request.getAttribute("analyticsSessionsAttended");
+    Integer analyticsMentorshipHours = (Integer) request.getAttribute("analyticsMentorshipHours");
+    String analyticsCurrentMentor = (String) request.getAttribute("analyticsCurrentMentor");
+    Integer analyticsGoalsProgress = (Integer) request.getAttribute("analyticsGoalsProgress");
+
+    int sessionsAttendedMetric = analyticsSessionsAttended != null ? analyticsSessionsAttended : 0;
+    int mentorshipHoursMetric = analyticsMentorshipHours != null ? analyticsMentorshipHours : 0;
+    String currentMentorMetric = analyticsCurrentMentor != null ? analyticsCurrentMentor : (hasMentor ? mentorName : "Not assigned");
+    int goalsProgressMetric = analyticsGoalsProgress != null ? analyticsGoalsProgress : 0;
 %>
 
 <!-- ══════════════════ SIDEBAR ══════════════════ -->
@@ -502,38 +512,38 @@
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-icon blue">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#1565c0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#1565c0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                 </div>
                 <div>
-                    <div class="stat-label">Mentee ID</div>
-                    <div class="stat-value" style="font-size:18px">#<%= menteeId %></div>
+                    <div class="stat-label">Sessions attended</div>
+                    <div class="stat-value"><%= sessionsAttendedMetric %></div>
                 </div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon teal">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#0f6e56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#0f6e56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 </div>
                 <div>
-                    <div class="stat-label">Assigned mentor</div>
-                    <div class="stat-value" style="font-size:18px"><%= hasMentor ? "Yes" : "None" %></div>
+                    <div class="stat-label">Hours of mentorship</div>
+                    <div class="stat-value"><%= mentorshipHoursMetric %></div>
                 </div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon green">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                 </div>
                 <div>
-                    <div class="stat-label">Education level</div>
-                    <div class="stat-value" style="font-size:15px; padding-top:4px"><%= educationLevel %></div>
+                    <div class="stat-label">Current mentor</div>
+                    <div class="stat-value" style="font-size:14px; padding-top:4px"><%= currentMentorMetric %></div>
                 </div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon amber">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l3-3 3 2 4-5"/></svg>
                 </div>
                 <div>
-                    <div class="stat-label">Field of study</div>
-                    <div class="stat-value" style="font-size:14px; padding-top:4px"><%= fieldOfStudy %></div>
+                    <div class="stat-label">Goals progress</div>
+                    <div class="stat-value"><%= goalsProgressMetric %>%</div>
                 </div>
             </div>
         </div>

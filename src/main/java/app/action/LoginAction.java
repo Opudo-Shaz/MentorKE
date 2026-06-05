@@ -5,11 +5,15 @@ import app.model.User;
 import app.framework.Action;
 import app.framework.ActionGetMethod;
 import app.framework.ActionPostMethod;
+import app.utility.helper.PasswordUtil;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @ApplicationScoped
 @Action("login")
@@ -81,14 +85,24 @@ public class LoginAction extends BaseAction {
                 return;
             }
 
-            if (!password.equals(user.getPassword())) {
-                setAttribute(request, "errorMessage", "Incorrect password.");
+            // Verify password using PasswordUtil (supports both plain text and BCrypt hashes)
+            boolean passwordValid = false;
+            if (PasswordUtil.isBcryptHash(user.getPassword())) {
+                passwordValid = PasswordUtil.verifyPassword(password, user.getPassword());
+            } else {
+                
+                // Fallback to plain text comparison for backwards compatibility
+                passwordValid = password.equals(user.getPassword());
+            }
+
+            if (!passwordValid) {
+                setAttribute(request, "errorMessage", "Invalid username or password.");
                 forward(request, response, "/login.jsp");
                 return;
             }
 
             if (!role.equalsIgnoreCase(user.getRole())) {
-                setAttribute(request, "errorMessage", "Selected role does not match your account.");
+                setAttribute(request, "errorMessage", "Invalid username or password.");
                 forward(request, response, "/login.jsp");
                 return;
             }
@@ -99,12 +113,31 @@ public class LoginAction extends BaseAction {
                 return;
             }
 
+            // Establish the security principal using request.login()
+            // This is required for the container to recognize the authenticated user for @RolesAllowed checks
+            try {
+                request.login(username, password);
+            } catch (jakarta.servlet.ServletException e) {
+                Logger.getLogger(LoginAction.class.getName()).log(Level.WARNING, "Failed to establish security context for user: " + username, e);
+                // Continue to set session attributes even if container login fails
+            }
+
+            // Set session attributes for legacy session-based authorization
             HttpSession session = request.getSession(true);
             session.setAttribute("isLoggedIn", true);
             session.setAttribute("username",   user.getUsername());
             session.setAttribute("role",       user.getRole().toLowerCase());
             session.setAttribute("userId",     user.getId());
             session.setAttribute("loginTime",  System.currentTimeMillis());
+
+            Logger logger = Logger.getLogger(LoginAction.class.getName());
+            logger.log(Level.INFO, "=== LOGIN SUCCESSFUL ===");
+            logger.log(Level.INFO, "Session ID: " + session.getId());
+            logger.log(Level.INFO, "Username: " + user.getUsername());
+            logger.log(Level.INFO, "Role: " + user.getRole().toLowerCase());
+            logger.log(Level.INFO, "Session isLoggedIn: " + session.getAttribute("isLoggedIn"));
+            logger.log(Level.INFO, "Session role: " + session.getAttribute("role"));
+            logger.log(Level.INFO, "Redirecting to: " + user.getRole());
 
             redirectToDashboard(request, response, user.getRole());
             return;
@@ -128,6 +161,7 @@ public class LoginAction extends BaseAction {
     }
 
     private String safe(String value) {
+
         return value == null ? "" : value.trim();
     }
 }

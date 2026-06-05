@@ -16,7 +16,7 @@ public class EmailObserverBean {
     private static final Logger logger = AppLogger.getLogger(EmailObserverBean.class);
 
     @Inject
-    private EmailBean emailBean;
+    private EmailReminderBean emailBean;
 
     @Asynchronous
     public void onUserRegistered(@Observes UserRegisteredEvent event) {

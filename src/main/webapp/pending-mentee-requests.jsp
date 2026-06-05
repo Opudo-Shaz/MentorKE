@@ -4,211 +4,351 @@
 <%@ page import="app.model.MatchRequest" %>
 <%
     HttpSession currentSession = request.getSession(false);
-    String username = currentSession != null ? (String) currentSession.getAttribute("username") : null;
+    String username = currentSession != null ? (String) currentSession.getAttribute("username") : "Mentor";
     if (username == null) username = "Mentor";
+    String ctx = request.getContextPath();
 
     List<MatchRequest> pendingRequests = (List<MatchRequest>) request.getAttribute("pendingRequests");
     String successMessage = (String) request.getAttribute("successMessage");
-    String errorMessage = (String) request.getAttribute("errorMessage");
+    String errorMessage   = (String) request.getAttribute("errorMessage");
+    int reqCount = pendingRequests != null ? pendingRequests.size() : 0;
 %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pending Mentorship Requests — MentorKE</title>
+    <title>Pending Requests – MentorKE</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
         :root {
-            --bg: #f5f7fb;
-            --card: #ffffff;
-            --text: #1f2937;
-            --muted: #6b7280;
-            --line: #e5e7eb;
-            --blue: #1565c0;
-            --blue-50: #e8f1ff;
-            --green: #15803d;
-            --green-50: #ecfdf5;
-            --red: #b91c1c;
-            --red-50: #fef2f2;
-            --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
-            --radius: 16px;
+            --blue-800: #0d47a1;
+            --blue-700: #1565c0;
+            --blue-200: #90caf9;
+            --blue-100: #bbdefb;
+            --blue-50:  #e3f2fd;
+            --blue-25:  #f0f7ff;
+            --white:    #ffffff;
+            --gray-50:  #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-400: #94a3b8;
+            --gray-600: #475569;
+            --gray-800: #1e293b;
+            --green-50: #f0fdf4;
+            --green-200:#bbf7d0;
+            --green-700:#15803d;
+            --amber-50: #fffbeb;
+            --amber-200:#fde68a;
+            --amber-700:#b45309;
+            --red-50:   #fef2f2;
+            --red-200:  #fecaca;
+            --red-700:  #b91c1c;
+            --sidebar-w: 230px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.07);
         }
+
         body {
             font-family: 'DM Sans', sans-serif;
-            background: linear-gradient(180deg, #f8fbff 0%, var(--bg) 100%);
-            color: var(--text);
+            background: var(--gray-50);
+            color: var(--gray-800);
             min-height: 100vh;
-        }
-        .page {
-            max-width: 1180px;
-            margin: 0 auto;
-            padding: 28px 22px 44px;
-        }
-        .hero {
-            background: var(--card);
-            border: 1px solid var(--line);
-            border-radius: 24px;
-            box-shadow: var(--shadow);
-            padding: 22px 24px;
             display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 16px;
-            margin-bottom: 18px;
         }
-        .hero h1 { font-size: 28px; line-height: 1.1; margin-bottom: 8px; }
-        .hero p { color: var(--muted); font-size: 14px; max-width: 720px; }
-        .hero-actions { display: flex; gap: 10px; flex-wrap: wrap; }
-        .btn {
-            display: inline-flex; align-items: center; justify-content: center;
-            border-radius: 999px; padding: 10px 16px; font-weight: 600;
-            text-decoration: none; border: 1px solid transparent; cursor: pointer;
-            font-size: 14px; transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+
+        /* ── SIDEBAR ── */
+        .sidebar {
+            width: var(--sidebar-w); background: var(--blue-800);
+            height: 100vh; position: fixed; left: 0; top: 0;
+            display: flex; flex-direction: column; z-index: 50;
         }
-        .btn:hover { transform: translateY(-1px); }
-        .btn-primary { background: var(--blue); color: white; }
-        .btn-outline { background: white; color: var(--blue); border-color: #cfe0fb; }
-        .alert {
-            border-radius: 14px; padding: 14px 16px; margin-bottom: 16px;
-            font-size: 14px; border: 1px solid transparent;
+        .sidebar-brand { padding: 22px 18px 18px; border-bottom: 1px solid rgba(255,255,255,0.12); }
+        .logo { display: flex; align-items: center; gap: 10px; }
+        .logo-icon { width: 34px; height: 34px; background: rgba(255,255,255,0.18); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; }
+        .logo-text { font-size: 17px; font-weight: 600; color: var(--white); }
+        .logo-sub  { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 1px; }
+        .sidebar-nav { flex: 1; padding: 14px 10px; overflow-y: auto; }
+        .nav-section-label { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; color: rgba(255,255,255,0.4); text-transform: uppercase; padding: 12px 8px 6px; }
+        .nav-link { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: var(--radius-md); color: rgba(255,255,255,0.72); font-size: 14px; text-decoration: none; margin-bottom: 2px; transition: background 0.15s, color 0.15s; }
+        .nav-link svg { flex-shrink: 0; width: 18px; height: 18px; }
+        .nav-link:hover  { background: rgba(255,255,255,0.1);  color: var(--white); }
+        .nav-link.active { background: rgba(255,255,255,0.18); color: var(--white); font-weight: 500; }
+        /* pending count badge in nav */
+        .nav-badge { margin-left: auto; background: var(--amber-700); color: var(--white); font-size: 10px; font-weight: 600; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px; display: flex; align-items: center; justify-content: center; }
+        .sidebar-footer { padding: 14px 16px; border-top: 1px solid rgba(255,255,255,0.12); }
+        .sidebar-user { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .user-avatar { width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: var(--white); flex-shrink: 0; }
+        .user-name { font-size: 13px; font-weight: 500; color: var(--white); }
+        .user-role { font-size: 11px; color: rgba(255,255,255,0.5); }
+        .btn-logout { display: flex; align-items: center; justify-content: center; gap: 7px; width: 100%; padding: 8px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: var(--radius-md); color: rgba(255,255,255,0.75); font-size: 13px; font-family: 'DM Sans', sans-serif; cursor: pointer; text-decoration: none; transition: background 0.15s; }
+        .btn-logout:hover { background: rgba(255,255,255,0.16); color: var(--white); }
+
+        /* ── MAIN ── */
+        .main { margin-left: var(--sidebar-w); flex: 1; min-height: 100vh; display: flex; flex-direction: column; }
+
+        /* ── TOPBAR ── */
+        .topbar { height: 60px; background: var(--white); border-bottom: 1px solid var(--gray-200); display: flex; align-items: center; justify-content: space-between; padding: 0 28px; position: sticky; top: 0; z-index: 40; }
+        .topbar h1 { font-size: 17px; font-weight: 600; color: var(--gray-800); }
+        .topbar p  { font-size: 12px; color: var(--gray-400); margin-top: 1px; }
+        .topbar-actions { display: flex; align-items: center; gap: 10px; }
+        .btn-outline { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: var(--blue-800); text-decoration: none; padding: 6px 12px; border: 1px solid var(--blue-100); border-radius: var(--radius-md); background: var(--blue-50); transition: background 0.15s; }
+        .btn-outline:hover { background: var(--blue-100); }
+        .btn-outline svg { width: 15px; height: 15px; }
+
+        /* pending count badge in topbar */
+        .topbar-pending {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
+            background: var(--amber-50); color: var(--amber-700); border: 1px solid var(--amber-200);
         }
-        .alert-success { background: var(--green-50); color: var(--green); border-color: #bbf7d0; }
-        .alert-error { background: var(--red-50); color: var(--red); border-color: #fecaca; }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(12, 1fr);
-            gap: 16px;
-        }
-        .table-card {
-            grid-column: 1 / -1;
-            background: var(--card);
-            border: 1px solid var(--line);
-            border-radius: 20px;
-            box-shadow: var(--shadow);
-            overflow: hidden;
-        }
-        .table-head {
-            padding: 18px 20px;
-            border-bottom: 1px solid var(--line);
-            display: flex;
-            justify-content: space-between;
-            gap: 12px;
-            align-items: center;
-        }
-        .table-head h2 { font-size: 18px; margin-bottom: 4px; }
-        .table-head span { color: var(--muted); font-size: 13px; }
+        .topbar-pending::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--amber-700); }
+
+        /* ── CONTENT ── */
+        .content { padding: 24px 28px; flex: 1; display: flex; flex-direction: column; gap: 20px; }
+
+        /* ── ALERTS ── */
+        .alert { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: var(--radius-md); font-size: 14px; }
+        .alert svg { width: 18px; height: 18px; flex-shrink: 0; }
+        .alert-success { background: var(--green-50);  color: var(--green-700); border: 1px solid var(--green-200); }
+        .alert-error   { background: var(--red-50);    color: var(--red-700);   border: 1px solid var(--red-200); }
+
+        /* ── CARD ── */
+        .card { background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm); }
+        .card-header { padding: 14px 20px; border-bottom: 1px solid var(--gray-200); display: flex; align-items: center; justify-content: space-between; }
+        .card-header h2 { font-size: 15px; font-weight: 600; color: var(--gray-800); }
+        .card-header p  { font-size: 12px; color: var(--gray-400); margin-top: 1px; }
+        .count-badge { display: inline-flex; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; background: var(--amber-50); color: var(--amber-700); border: 1px solid var(--amber-200); }
+
+        /* ── TABLE ── */
         .table-wrap { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 16px 20px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
-        th { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); background: #fcfdff; }
-        td { font-size: 14px; }
-        .pill {
-            display: inline-flex; align-items: center; padding: 6px 10px; border-radius: 999px;
-            font-size: 12px; font-weight: 700; letter-spacing: .02em;
-        }
-        .pill-pending { background: #fff7ed; color: #c2410c; }
-        .pill-approved { background: var(--green-50); color: var(--green); }
-        .pill-rejected { background: var(--red-50); color: var(--red); }
+        thead th { background: var(--blue-25); color: var(--blue-800); font-size: 12px; font-weight: 600; padding: 10px 16px; text-align: left; border-bottom: 1px solid var(--blue-100); white-space: nowrap; }
+        tbody td { padding: 12px 16px; font-size: 13px; color: var(--gray-800); border-bottom: 1px solid var(--gray-100); vertical-align: middle; }
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr:hover td { background: var(--gray-50); }
+        .id-cell { font-size: 12px; color: var(--gray-400); font-weight: 500; }
+
+        /* mentee avatar cell */
+        .mentee-cell { display: flex; align-items: center; gap: 10px; }
+        .mentee-avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--blue-50); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: var(--blue-800); flex-shrink: 0; }
+
+        /* ── PILLS ── */
+        .pill { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+        .pill::before { content: ''; width: 5px; height: 5px; border-radius: 50%; }
+        .pill-pending  { background: var(--amber-50);  color: var(--amber-700); }
+        .pill-pending::before  { background: var(--amber-700); }
+        .pill-approved { background: var(--green-50);  color: var(--green-700); }
+        .pill-approved::before { background: var(--green-700); }
+        .pill-rejected { background: var(--red-50);    color: var(--red-700); }
+        .pill-rejected::before { background: var(--red-700); }
+
+        /* ── ACTION BUTTONS ── */
         .actions { display: flex; gap: 8px; flex-wrap: wrap; }
-        .action-form { display: inline; }
-        .btn-small {
-            padding: 9px 13px; border-radius: 12px; font-size: 13px; font-weight: 700;
-            border: 1px solid transparent; cursor: pointer;
+        .action-form { display: inline; margin: 0; }
+        .btn-approve {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 6px 12px; background: var(--green-700); color: var(--white);
+            border: none; border-radius: var(--radius-md);
+            font-size: 12px; font-weight: 500; font-family: 'DM Sans', sans-serif;
+            cursor: pointer; transition: opacity 0.15s;
         }
-        .btn-approve { background: var(--green); color: white; }
-        .btn-reject { background: white; color: var(--red); border-color: #fecaca; }
-        .empty {
-            padding: 54px 24px; text-align: center; color: var(--muted);
+        .btn-approve:hover { opacity: 0.88; }
+        .btn-approve svg { width: 13px; height: 13px; }
+        .btn-reject {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 6px 12px; background: var(--white); color: var(--red-700);
+            border: 1px solid var(--red-200); border-radius: var(--radius-md);
+            font-size: 12px; font-weight: 500; font-family: 'DM Sans', sans-serif;
+            cursor: pointer; transition: background 0.15s;
         }
-        .empty h3 { color: var(--text); margin-bottom: 8px; }
-        @media (max-width: 760px) {
-            .hero { flex-direction: column; }
-            .hero h1 { font-size: 24px; }
-            th, td { padding: 14px 16px; }
-        }
+        .btn-reject:hover { background: var(--red-50); }
+        .btn-reject svg { width: 13px; height: 13px; }
+
+        /* ── EMPTY STATE ── */
+        .empty-state { text-align: center; padding: 48px 20px; color: var(--gray-400); }
+        .empty-state svg { width: 40px; height: 40px; margin: 0 auto 12px; display: block; opacity: 0.3; }
+        .empty-state h3 { font-size: 16px; font-weight: 600; color: var(--gray-600); margin-bottom: 6px; }
+        .empty-state p  { font-size: 14px; }
     </style>
 </head>
 <body>
-<div class="page">
-    <div class="hero">
-        <div>
-            <h1>Pending Mentorship Requests</h1>
-            <p>Review new mentee requests, then approve to accept the match or reject to decline it. Requests default to <strong>PENDING</strong> until you choose.</p>
+
+<!-- ════════════ SIDEBAR ════════════ -->
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <div class="logo">
+            <div class="logo-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+            </div>
+            <div>
+                <div class="logo-text">MentorKE</div>
+                <div class="logo-sub">Mentor Portal</div>
+            </div>
         </div>
-        <div class="hero-actions">
-            <a class="btn btn-outline" href="/MentorKE/mentor-dashboard.jsp">Back to Dashboard</a>
-            <a class="btn btn-primary" href="/MentorKE/mentor-dashboard.jsp">View My Mentees</a>
+    </div>
+    <nav class="sidebar-nav">
+        <div class="nav-section-label">Menu</div>
+        <a href="<%= ctx %>/app/mentor-dashboard/" class="nav-link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            Dashboard
+        </a>
+        <a href="<%= ctx %>/app/mentor-requests/pending" class="nav-link active">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Pending Requests
+            <% if (reqCount > 0) { %><span class="nav-badge"><%= reqCount %></span><% } %>
+        </a>
+        <a href="<%= ctx %>/app/sessions/upcoming" class="nav-link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Upcoming Sessions
+        </a>
+        <a href="<%= ctx %>/app/sessions/completed" class="nav-link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Completed Sessions
+        </a>
+        <a href="<%= ctx %>/app/messaging/list-conversations" class="nav-link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Messages
+        </a>
+        <a href="<%= ctx %>/app/home/" class="nav-link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            Home
+        </a>
+    </nav>
+    <div class="sidebar-footer">
+        <div class="sidebar-user">
+            <div class="user-avatar"><%= username.substring(0,1).toUpperCase() %></div>
+            <div>
+                <div class="user-name"><%= username %></div>
+                <div class="user-role">Mentor</div>
+            </div>
+        </div>
+        <a href="<%= ctx %>/app/login/?action=logout" class="btn-logout">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Sign out
+        </a>
+    </div>
+</aside>
+
+<!-- ════════════ MAIN ════════════ -->
+<div class="main">
+
+    <div class="topbar">
+        <div>
+            <h1>Pending Requests</h1>
+            <p>Review and respond to mentorship requests from mentees</p>
+        </div>
+        <div class="topbar-actions">
+            <% if (reqCount > 0) { %>
+            <span class="topbar-pending"><%= reqCount %> awaiting response</span>
+            <% } %>
+            <a href="<%= ctx %>/app/mentor-dashboard/" class="btn-outline">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                Back to dashboard
+            </a>
         </div>
     </div>
 
-    <% if (successMessage != null && !successMessage.isEmpty()) { %>
-    <div class="alert alert-success"><%= successMessage %></div>
-    <% } %>
-    <% if (errorMessage != null && !errorMessage.isEmpty()) { %>
-    <div class="alert alert-error"><%= errorMessage %></div>
-    <% } %>
+    <div class="content">
 
-    <div class="table-card">
-        <div class="table-head">
-            <div>
-                <h2>Requests awaiting your response</h2>
-                <span><%= pendingRequests != null ? pendingRequests.size() : 0 %> request(s) found</span>
+        <!-- Alerts -->
+        <% if (successMessage != null && !successMessage.isEmpty()) { %>
+        <div class="alert alert-success">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <%= successMessage %>
+        </div>
+        <% } %>
+        <% if (errorMessage != null && !errorMessage.isEmpty()) { %>
+        <div class="alert alert-error">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <%= errorMessage %>
+        </div>
+        <% } %>
+
+        <!-- Requests table -->
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <h2>Requests awaiting your response</h2>
+                    <p>Approve to accept the match or reject to decline</p>
+                </div>
+                <span class="count-badge"><%= reqCount %> pending</span>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Request ID</th>
+                            <th>Mentee</th>
+                            <th>Specialization</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <% if (pendingRequests != null && !pendingRequests.isEmpty()) {
+                           for (MatchRequest req : pendingRequests) {
+                               String status = req.getStatus() != null ? req.getStatus() : "PENDING";
+                               String pillClass = "APPROVED".equalsIgnoreCase(status) ? "pill-approved"
+                                               : "REJECTED".equalsIgnoreCase(status) ? "pill-rejected"
+                                               : "pill-pending";
+                               String menteeId = req.getMenteeId() != null ? String.valueOf(req.getMenteeId()) : "?";
+                               String menteeInitial = menteeId.substring(0, 1).toUpperCase();
+                    %>
+                        <tr>
+                            <td class="id-cell">#<%= req.getId() %></td>
+                            <td>
+                                <div class="mentee-cell">
+                                    <div class="mentee-avatar"><%= menteeInitial %></div>
+                                    <span>Mentee #<%= menteeId %></span>
+                                </div>
+                            </td>
+                            <td><%= req.getRequestedSpecialization() != null ? req.getRequestedSpecialization() : "—" %></td>
+                            <td><span class="pill <%= pillClass %>"><%= status %></span></td>
+                            <td>
+                                <div class="actions">
+                                    <form class="action-form" action="<%= ctx %>/app/mentor-requests/approve" method="post">
+                                        <input type="hidden" name="action"    value="approve">
+                                        <input type="hidden" name="requestId" value="<%= req.getId() %>">
+                                        <button type="submit" class="btn-approve">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                            Approve
+                                        </button>
+                                    </form>
+                                    <form class="action-form" action="<%= ctx %>/app/mentor-requests/reject" method="post">
+                                        <input type="hidden" name="action"    value="reject">
+                                        <input type="hidden" name="requestId" value="<%= req.getId() %>">
+                                        <button type="submit" class="btn-reject">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                            Reject
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    <% } } else { %>
+                        <tr>
+                            <td colspan="5">
+                                <div class="empty-state">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                    <h3>No pending requests</h3>
+                                    <p>You don't have any mentorship requests waiting for approval right now.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    <% } %>
+                    </tbody>
+                </table>
             </div>
         </div>
 
-        <div class="table-wrap">
-            <table>
-                <thead>
-                <tr>
-                    <th>Request ID</th>
-                    <th>Mentee ID</th>
-                    <th>Requested Specialization</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-                </thead>
-                <tbody>
-                <% if (pendingRequests != null && !pendingRequests.isEmpty()) {
-                       for (MatchRequest req : pendingRequests) { %>
-                <tr>
-                    <td><%= req.getId() %></td>
-                    <td><%= req.getMenteeId() %></td>
-                    <td><%= req.getRequestedSpecialization() != null ? req.getRequestedSpecialization() : "-" %></td>
-                    <td>
-                        <span class="pill pill-pending"><%= req.getStatus() %></span>
-                    </td>
-                    <td>
-                        <div class="actions">
-                            <form class="action-form" action="/MentorKE/app/mentor-requests/approve" method="post">
-                                <input type="hidden" name="action" value="approve">
-                                <input type="hidden" name="requestId" value="<%= req.getId() %>">
-                                <button type="submit" class="btn-small btn-approve">Approve</button>
-                            </form>
-                            <form class="action-form" action="/MentorKE/app/mentor-requests/reject" method="post">
-                                <input type="hidden" name="action" value="reject">
-                                <input type="hidden" name="requestId" value="<%= req.getId() %>">
-                                <button type="submit" class="btn-small btn-reject">Reject</button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-                <% } } else { %>
-                <tr>
-                    <td colspan="5">
-                        <div class="empty">
-                            <h3>No pending requests</h3>
-                            <p>You don’t have any mentorship requests waiting for approval right now.</p>
-                        </div>
-                    </td>
-                </tr>
-                <% } %>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
+    </div><!-- /content -->
+</div><!-- /main -->
+
 </body>
 </html>

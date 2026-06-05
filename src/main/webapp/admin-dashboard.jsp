@@ -225,7 +225,7 @@
         /* ── STATS ── */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 16px;
             margin-bottom: 24px;
         }
@@ -277,7 +277,6 @@
             padding: 8px 16px;
             border-radius: var(--radius-md);
             font-size: 13px; font-weight: 500;
-            font-family: 'DM Sans', sans-serif;
             cursor: pointer; border: none; transition: background 0.15s, opacity 0.15s;
         }
         .btn svg { width: 16px; height: 16px; }
@@ -285,7 +284,6 @@
         .btn-primary:hover { background: var(--blue-700); }
         .btn-outline {
             background: var(--white); color: var(--gray-600);
-            border: 1px solid var(--gray-200);
         }
         .btn-outline:hover { background: var(--gray-100); }
         .btn-edit {
@@ -483,6 +481,18 @@
     int mentorCount = (mentors != null) ? mentors.size() : 0;
     int menteeCount = (mentees != null) ? mentees.size() : 0;
 
+    Integer analyticsTotalUsers = (Integer) request.getAttribute("analyticsTotalUsers");
+    Integer analyticsActiveMentors = (Integer) request.getAttribute("analyticsActiveMentors");
+    Integer analyticsSessionsThisMonth = (Integer) request.getAttribute("analyticsSessionsThisMonth");
+    Integer analyticsTotalSessions = (Integer) request.getAttribute("analyticsTotalSessions");
+    Integer analyticsTotalMessagesSent = (Integer) request.getAttribute("analyticsTotalMessagesSent");
+
+    int totalUsersMetric = analyticsTotalUsers != null ? analyticsTotalUsers : userCount;
+    int activeMentorsMetric = analyticsActiveMentors != null ? analyticsActiveMentors : mentorCount;
+    int sessionsThisMonthMetric = analyticsSessionsThisMonth != null ? analyticsSessionsThisMonth : 0;
+    int totalSessionsMetric = analyticsTotalSessions != null ? analyticsTotalSessions : 0;
+    int totalMessagesSentMetric = analyticsTotalMessagesSent != null ? analyticsTotalMessagesSent : 0;
+
     String successMsg = request.getParameter("success");
     String errorMsg   = request.getParameter("error");
 %>
@@ -602,7 +612,7 @@
                 </div>
                 <div>
                     <div class="stat-label">Total users</div>
-                    <div class="stat-value"><%= userCount %></div>
+                    <div class="stat-value"><%= totalUsersMetric %></div>
                 </div>
             </div>
             <div class="stat-card">
@@ -610,17 +620,26 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="#0f6e56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
                 </div>
                 <div>
-                    <div class="stat-label">Total mentors</div>
-                    <div class="stat-value"><%= mentorCount %></div>
+                    <div class="stat-label">Active mentors</div>
+                    <div class="stat-value"><%= activeMentorsMetric %></div>
                 </div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon amber">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 </div>
                 <div>
-                    <div class="stat-label">Total mentees</div>
-                    <div class="stat-value"><%= menteeCount %></div>
+                    <div class="stat-label">Sessions this month</div>
+                    <div class="stat-value" title="Total sessions: <%= totalSessionsMetric %>"><%= sessionsThisMonthMetric %></div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon blue">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#1565c0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                </div>
+                <div>
+                    <div class="stat-label">Total messages sent</div>
+                    <div class="stat-value"><%= totalMessagesSentMetric %></div>
                 </div>
             </div>
         </div>
@@ -1031,7 +1050,7 @@
                             <td><%= mentee.getUserId() %></td>
                             <td><%= mentee.getEducationLevel() %></td>
                             <td><%= mentee.getFieldOfStudy() %></td>
-                            <td><%= mentee.getPhoneNumber() %></td>
+                            <td><%= mentee.getPhoneNumber() != null ? mentee.getPhoneNumber() : "—" %></td>
                             <td>
                                 <span class="pill <%= "Active".equals(mentee.getStatus()) ? "pill-active" : "pill-inactive" %>">
                                     <%= mentee.getStatus() %>
@@ -1039,7 +1058,7 @@
                             </td>
                             <td>
                                 <div class="td-actions">
-                                    <button class="btn btn-edit" onclick="openEditModal('Mentee','<%= mentee.getId() %>',{educationLevel:'<%= mentee.getEducationLevel() %>',fieldOfStudy:'<%= mentee.getFieldOfStudy() %>',learningGoals:'<%= mentee.getLearningGoals() %>',phoneNumber:'<%= mentee.getPhoneNumber() %>',mentorId:'<%= mentee.getMentorId() != null ? mentee.getMentorId() : "" %>',status:'<%= mentee.getStatus() %>'})">
+                                    <button class="btn btn-edit" onclick="openEditModal('Mentee','<%= mentee.getId() %>',{username:'<%= mentee.getUsername() != null ? mentee.getUsername() : "" %>',email:'<%= mentee.getEmail() != null ? mentee.getEmail() : "" %>',educationLevel:'<%= mentee.getEducationLevel() != null ? mentee.getEducationLevel() : "" %>',fieldOfStudy:'<%= mentee.getFieldOfStudy() != null ? mentee.getFieldOfStudy() : "" %>',learningGoals:'<%= mentee.getLearningGoals() != null ? mentee.getLearningGoals() : "" %>',phoneNumber:'<%= mentee.getPhoneNumber() != null ? mentee.getPhoneNumber() : "" %>',mentorId:'<%= mentee.getMentorId() != null ? mentee.getMentorId() : "" %>',status:'<%= mentee.getStatus() %>'})">
                                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                         Edit
                                     </button>
@@ -1158,6 +1177,14 @@
                 <!-- Mentee fields -->
                 <div id="menteeFields" class="hidden">
                     <div class="form-grid" style="margin-bottom:12px">
+                            <div class="form-group">
+                                <label for="editMenteeUsername">Username</label>
+                                <input type="text" name="username" id="editMenteeUsername" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label for="editMenteeEmail">Email</label>
+                                <input type="email" name="email" id="editMenteeEmail" readonly>
+                            </div>
                         <div class="form-group">
                             <label for="editEducationLevel">Education level</label>
                             <select name="educationLevel" id="editEducationLevel">
@@ -1256,6 +1283,8 @@
             setVal('editMentorId', data.mentorId);
             setVal('editStatusMentee', data.status);
             setVal('editLearningGoals', data.learningGoals);
+                setVal('editMenteeUsername', data.username);
+                setVal('editMenteeEmail', data.email);
         }
 
         modal.classList.add('open');

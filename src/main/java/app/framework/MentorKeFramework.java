@@ -3,11 +3,15 @@ package app.framework;
 import app.utility.helper.ClassScanner;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Setter
+@Getter
 @ApplicationScoped
 public class MentorKeFramework {
 
@@ -113,7 +117,7 @@ public class MentorKeFramework {
 
         table.append("<table>");
 
-        // Collect column metadata from @Cohort12TableCol fields
+        // Collect column metadata from @MentorKeTableCol fields
         record ColMeta(String fieldName, String label) {}
         List<ColMeta> cols = new ArrayList<>();
         for (Field field : clazz.getDeclaredFields()) {
@@ -130,7 +134,7 @@ public class MentorKeFramework {
         for (ColMeta col : cols)
             table.append("<th style='width:").append(colWidth).append("%;'>")
                 .append(col.label()).append("</th>");
-        table.append("<th style='width:2%;'></th>");  // ✅ fixed: closing quotes were missing
+        table.append("<th style='width:2%;'></th>");  
         table.append("<th style='width:2%;'></th>");
         table.append("</tr></thead>");
 
@@ -155,14 +159,14 @@ public class MentorKeFramework {
                 idField.setAccessible(true);
                 Object idValue = idField.get(data);
 
-                // ✅ Edit button — uses the entity's own edit link
+                //  Edit button — uses the entity's own edit link
                 table.append("<a href='").append(ActionMap.APP_PATH)
                     .append(tableAnnot.editLink()).append("/").append(idValue)
                     .append("' class='icon-btn edit-btn' title='Edit'>")
                     .append("<i class='fa-solid fa-pen'></i>")
                     .append("</a>");
 
-                // ✅ Delete button — uses the entity's own delete link
+                //Delete button — uses the entity's own delete link
                 table.append("<a href='").append(ActionMap.APP_PATH)
                     .append(tableAnnot.deleteLink()).append("/").append(idValue)
                     .append("' class='icon-btn delete-btn' title='Delete'")
@@ -186,19 +190,12 @@ public class MentorKeFramework {
         return ClassScanner.scanForAction("app.action").stream()
             .map(clazz -> clazz.getAnnotation(Action.class))
             .filter(Objects::nonNull)
-            .filter(Action::showLink)
-            .sorted(Comparator.comparingInt(Action::linkPosition))
             .map(a -> "<a href='" + ActionMap.APP_PATH + a.value() + "/" + a.pageLink() + "'>"
                 + a.label() + "</a>")
             .collect(Collectors.joining("\n"));
     }
 
     // ─── FORM SELECTIONS ─────────────────────────────────────────────────────
-
-    public Map<String, List<SelectBox>> getFormSelections() { return formSelections; }
-    public void setFormSelections(Map<String, List<SelectBox>> formSelections) {
-        this.formSelections = formSelections;
-    }
 
     public void resetFormSelections() {
         formSelections = new HashMap<>();
@@ -262,7 +259,7 @@ public class MentorKeFramework {
 
     // ─── PRIVATE HELPERS ─────────────────────────────────────────────────────
 
-    // ✅ Searches both the class and its superclass for an "id" field
+    // Searches both the class and its superclass for an "id" field
     private Field findIdField(Class<?> clazz) throws NoSuchFieldException {
         try {
             return clazz.getDeclaredField("id");

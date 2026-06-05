@@ -4,7 +4,7 @@ import app.bean.event.UserRegisteredEvent;
 import app.dao.MentorDAO;
 import app.model.AuditTrail;
 import app.model.Mentor;
-import app.model.User;
+import app.utility.helper.PasswordUtil;
 import app.utility.validation.ValidationResult;
 import app.utility.validation.Validator;
 import app.utility.validation.ValidatorQualifier;
@@ -39,22 +39,18 @@ public class MentorBean {
     @ValidatorQualifier(ValidatorQualifier.ValidationChoice.MENTOR)
     private Validator<Mentor> mentorValidator;
 
-    // PUBLIC NO-ARG CONSTRUCTOR (required by CDI/EJB)
     public MentorBean() {}
 
-    // CONSTRUCTOR INJECTION (alternative)
-    @Inject
-    public MentorBean(MentorDAO mentorDAO) {
-        this.mentorDAO = mentorDAO;
-        logger.debug("CDI Bean initialized with constructor injection");
-    }
 
-    public void registerMentor(Mentor mentor, User user) throws SQLException {
+    public void add(Mentor mentor) throws SQLException {
         logger.info("=== Starting Mentor Registration ===");
-        logger.info("Username: {}, Email: {}, Specialization: {}", user.getUsername(), user.getEmail(), mentor.getSpecialization());
+        logger.info("Username: {}, Email: {}, Specialization: {}", mentor.getUsername(), mentor.getEmail(), mentor.getSpecialization());
 
-        // Step 1: Copy shared account fields onto the mentor record
-        mentor.setUser(user);
+        if (PasswordUtil.needsHashing(mentor.getPassword())) {
+            mentor.setPassword(PasswordUtil.hashPassword(mentor.getPassword()));
+        }
+
+        // Step 1: Ensure inherited account fields are set on the mentor record
         mentor.setRole("mentor");
         if (mentor.getStatus() == null || mentor.getStatus().isEmpty()) {
             mentor.setStatus("Active");
@@ -80,15 +76,15 @@ public class MentorBean {
             String.valueOf(mentor.getId()),
             "CREATE",
             String.valueOf(mentor.getId()),
-            "Mentor registered: " + user.getUsername() + ", Specialization: " + mentor.getSpecialization()
+            "Mentor registered: " + mentor.getUsername() + ", Specialization: " + mentor.getSpecialization()
         ));
 
         // Step 5: Fire email event with specialization for mentors
         logger.debug("Firing email registration event for mentor...");
         userRegisteredEvent.fire(
             new UserRegisteredEvent(
-                user.getEmail(),
-                user.getUsername(),
+                mentor.getEmail(),
+                mentor.getUsername(),
                 "MENTOR",
                 mentor.getSpecialization()
             )
@@ -100,7 +96,7 @@ public class MentorBean {
     /**
      * READ - Get mentor by ID
      */
-    public Mentor getMentorById(String mentorId) throws SQLException {
+    public Mentor getById(String mentorId) throws SQLException {
         logger.debug("Fetching mentor by ID: {}", mentorId);
         return mentorDAO.findById(Long.parseLong(mentorId));
     }
@@ -108,23 +104,58 @@ public class MentorBean {
     /**
      * READ - Get mentor by user ID
      */
-    public Mentor getMentorByUserId(String userId) throws SQLException {
-        logger.debug("Fetching mentor for user ID: {}", userId);
+    public Mentor getByUserId(String userId) throws SQLException {
+        logger.debug("Fetching mentor by user ID: {}", userId);
         return mentorDAO.findById(Long.parseLong(userId));
     }
 
     /**
      * READ - Get all mentors
      */
-    public List<Mentor> getAllMentors() throws SQLException {
+    public List<Mentor> findAll() throws SQLException {
         logger.debug("Fetching all mentors");
         return mentorDAO.findAll();
+    }
+
+    public List<Mentor> searchMentors(
+            String specialization,
+            Integer minimumYearsOfExperience,
+            String availability,
+            String location,
+            Double minimumRating
+    ) throws SQLException {
+        logger.debug("Searching mentors with specialization={}, minYears={}, availability={}, location={}, minRating={}",
+                specialization, minimumYearsOfExperience, availability, location, minimumRating);
+        return mentorDAO.searchMentors(
+                specialization,
+                minimumYearsOfExperience,
+                availability,
+                location,
+                minimumRating
+        );
+    }
+
+    public void applyMentorRating(String mentorId, int rating) throws SQLException {
+        Mentor mentor = mentorDAO.findById(Long.parseLong(mentorId));
+        if (mentor == null) {
+            throw new IllegalArgumentException("Mentor not found");
+        }
+
+        int currentCount = mentor.getRatingCount() != null ? mentor.getRatingCount() : 0;
+        double currentAverage = mentor.getAverageRating() != null ? mentor.getAverageRating() : 0.0;
+
+        int newCount = currentCount + 1;
+        double newAverage = ((currentAverage * currentCount) + rating) / newCount;
+
+        mentor.setRatingCount(newCount);
+        mentor.setAverageRating(newAverage);
+        mentorDAO.update(mentor);
     }
 
     /**
      * UPDATE - Update existing mentor
      */
-     public void updateMentor(String mentorId, Mentor mentor) throws SQLException {
+     public void update(String mentorId, Mentor mentor) throws SQLException {
          logger.info("=== Updating mentor ===");
          logger.info("Mentor ID: {}", mentorId);
 
@@ -137,11 +168,14 @@ public class MentorBean {
          }
          logger.debug("Mentor found ✓");
 
-         // Step 2: Validate that user still exists
-         // Step 2: Preserve immutable account identity
-         mentor.setUser(existingMentor);
+         mentor.setUsername(existingMentor.getUsername());
+         mentor.setPassword(existingMentor.getPassword());
+         mentor.setEmail(existingMentor.getEmail());
+         mentor.setRole(existingMentor.getRole());
+         mentor.setCreatedAt(existingMentor.getCreatedAt());
+         mentor.setUpdatedAt(existingMentor.getUpdatedAt());
 
-         // Step 3: Set ID (important for validator context)
+         // set mentor id
         mentor.setId(Long.parseLong(mentorId));
 
          // Step 4: Set default status if needed
@@ -149,7 +183,7 @@ public class MentorBean {
              mentor.setStatus("Active");
          }
 
-         // Step 5: Validate AFTER fixing missing fields
+        
          logger.debug("Validating mentor data...");
          ValidationResult validationResult = mentorValidator.validate(mentor);
          if (!validationResult.isValid()) {
@@ -158,12 +192,12 @@ public class MentorBean {
          }
          logger.debug("Validation passed ✓");
 
-         // Step 6: Update mentor in database
+         //  Update mentor in database
          logger.debug("Updating mentor in database...");
          mentorDAO.update(mentor);
          logger.info("Mentor updated successfully");
 
-         // Step 7: Fire CRUD event for audit trail
+         //  Fire CRUD event for audit trail
          auditTrailEvent.fire(new AuditTrail(
              "Mentor",
              mentorId,
@@ -176,17 +210,19 @@ public class MentorBean {
      }
 
     /**
-     * CREATE - Add mentor (admin function, no user registration)
+     * CREATE - Add mentor by Admin
      */
-    public void addMentorAdmin(Mentor mentor) throws SQLException {
+    public void addAdmin(Mentor mentor) throws SQLException {
         logger.info("=== Admin Adding Mentor ===");
         logger.info("Username: {}, Email: {}, Specialization: {}", mentor.getUsername(), mentor.getEmail(), mentor.getSpecialization());
 
-        // Step 1: Use the inherited account fields directly
-        User user = mentor;
+        if (PasswordUtil.needsHashing(mentor.getPassword())) {
+            mentor.setPassword(PasswordUtil.hashPassword(mentor.getPassword()));
+        }
+
         mentor.setRole("mentor");
 
-        // Step 2: Validate mentor data
+        //  Validate mentor data
         logger.debug("Validating mentor data...");
         ValidationResult validationResult = mentorValidator.validate(mentor);
         if (!validationResult.isValid()) {
@@ -195,12 +231,12 @@ public class MentorBean {
         }
         logger.debug("Validation passed ✓");
 
-        // Step 3: Add mentor to database
+        //  Add mentor to database
         logger.debug("Adding mentor to database...");
         mentorDAO.save(mentor);
         logger.info("Mentor added successfully, ID: {}", mentor.getId());
 
-        // Step 4: Fire CRUD event for audit trail
+        // Fire CRUD event for audit trail
         auditTrailEvent.fire(new AuditTrail(
             "Mentor",
             String.valueOf(mentor.getId()),
@@ -209,7 +245,7 @@ public class MentorBean {
             "Mentor added by admin: " + mentor.getUsername() + ", Specialization: " + mentor.getSpecialization()
         ));
 
-        // Step 5: Fire email event to notify user they're now a mentor
+        //  Fire email event to notify user they're now a mentor
         logger.debug("Firing email for newly assigned mentor...");
         userRegisteredEvent.fire(
             new UserRegisteredEvent(
@@ -226,11 +262,11 @@ public class MentorBean {
     /**
      * DELETE - Delete mentor
      */
-    public void deleteMentor(String mentorId) throws SQLException {
+    public void delete(String mentorId) throws SQLException {
         logger.info("=== Deleting mentor ===");
         logger.info("Mentor ID: {}", mentorId);
 
-        // Step 1: Check if mentor exists
+        // Check if mentor exists
         logger.debug("Checking if mentor exists...");
         Mentor mentor = mentorDAO.findById(Long.parseLong(mentorId));
         if (mentor == null) {

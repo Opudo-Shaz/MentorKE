@@ -7,25 +7,23 @@ import app.model.Session;
 import app.model.Mentor;
 import app.model.Mentee;
 import app.utility.logging.AppLogger;
-import jakarta.ejb.Stateless;
+import jakarta.annotation.Resource;
 import jakarta.ejb.Schedule;
+import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import jakarta.mail.Message;
+import jakarta.mail.MessagingException;
+import jakarta.mail.Transport;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 
-import java.sql.SQLException;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import java.util.List;
 
-/**
- * EmailReminderBean - EJB Stateless bean for sending reminder emails
- * Sends reminder emails to mentors and mentees about upcoming sessions
- * Runs on a schedule every 30 minutes
- */
+
 @Stateless
 @Named("emailReminderBean")
 public class EmailReminderBean {
@@ -41,45 +39,58 @@ public class EmailReminderBean {
     @Inject
     private MenteeDAO menteeDAO;
 
-    @Inject
-    private EmailBean emailBean;
+    @Resource(lookup = "java:/Mail")
+    private jakarta.mail.Session mailSession;
 
     public EmailReminderBean() {
-        logger.debug("CDI Bean initialized with default constructor");
+
+        logger.debug("EmailReminderBean initialized");
     }
 
-    /**
-     * Scheduled method that runs every 30 minutes
-     * Sends reminder emails for sessions happening within the next 24 hours
-     * Timezone is application server's default
-     */
+
+
+    public void sendEmail(String to, String subject, String body) {
+        logger.info("Attempting to send email to: {}", to);
+        try {
+            MimeMessage message = new MimeMessage(mailSession);
+            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
+            message.setSubject(subject);
+            message.setFrom(new InternetAddress("patikalostandfound@gmail.com", "MentorKE"));
+
+            if (body.contains("<html>") || body.contains("<!DOCTYPE")) {
+                message.setContent(body, "text/html; charset=UTF-8");
+            } else {
+                message.setText(body);
+            }
+
+            Transport.send(message);
+            logger.info("Email sent successfully to {}", to);
+
+        } catch (MessagingException e) {
+            logger.error("Mail error: {}", e.getMessage(), e);
+        } catch (Exception e) {
+            logger.error("Unexpected error sending email: {}", e.getMessage(), e);
+        }
+    }
+
+
+
+     // Runs every 30 minutes. Sends reminders for sessions
+
     @Schedule(hour = "*", minute = "*/30", persistent = false, info = "Session Reminder Scheduler")
     public void sendSessionReminders() {
         logger.info("=== Starting scheduled session reminder task ===");
-
         try {
-            // Get all sessions
-            List<Session> allSessions = sessionDAO.findAll();
-
-            LocalDateTime currentTime = LocalDateTime.now();
-            LocalDateTime twentyFourHoursLater = currentTime.plusHours(24);
-            LocalDateTime oneHourLater = currentTime.plusHours(1);
-
+            LocalDateTime now               = LocalDateTime.now();
+            LocalDateTime in24Hours         = now.plusHours(24);
+            LocalDateTime inOneHour         = now.plusHours(1);
             int remindersSent = 0;
 
-            for (Session session : allSessions) {
-                // Check if session is:
-                // 1. In PENDING or CONFIRMED status
-                // 2. Not yet started
-                // 3. Within the next 24 hours
-                // 4. At least 1 hour away (to avoid spam)
-
-                if (session.getScheduledDate() != null &&
-                    session.getScheduledDate().isAfter(currentTime) &&
-                    session.getScheduledDate().isBefore(twentyFourHoursLater) &&
-                    session.getScheduledDate().isAfter(oneHourLater) &&
-                    ("PENDING".equals(session.getStatus()) || "CONFIRMED".equals(session.getStatus()))) {
-
+            for (Session session : sessionDAO.findAll()) {
+                if (session.getScheduledDate() != null
+                        && session.getScheduledDate().isAfter(inOneHour)
+                        && session.getScheduledDate().isBefore(in24Hours)
+                        && ("PENDING".equals(session.getStatus()) || "CONFIRMED".equals(session.getStatus()))) {
                     try {
                         sendSessionReminderEmails(session);
                         remindersSent++;
@@ -97,13 +108,11 @@ public class EmailReminderBean {
     }
 
     /**
-     * Send reminder emails to both mentor and mentee for an upcoming session
+     * Send reminder emails to both mentor and mentee for a given session.
      */
-    public void sendSessionReminderEmails(Session session) throws SQLException {
+    public void sendSessionReminderEmails(Session session) {
         logger.info("Sending reminder emails for session: {}", session.getId());
-
         try {
-            // Get mentor and mentee
             Mentor mentor = mentorDAO.findById(Long.parseLong(session.getMentorId()));
             Mentee mentee = menteeDAO.findById(Long.parseLong(session.getMenteeId()));
 
@@ -112,28 +121,19 @@ public class EmailReminderBean {
                 return;
             }
 
-            String mentorEmail = mentor.getEmail();
-            String menteeEmail = mentee.getEmail();
+            String timeRemaining = formatTimeRemaining(session.getScheduledDate(), LocalDateTime.now());
+            String topic = session.getTopic();
 
-            // Calculate time remaining
-            LocalDateTime now = LocalDateTime.now();
-            String timeRemainingStr = formatTimeRemaining(session.getScheduledDate(), now);
+            sendEmail(mentor.getEmail(),
+                    "Reminder: Upcoming Session - " + topic,
+                    buildReminderEmailBody(session, mentor.getUsername(), mentee.getUsername(), timeRemaining, true));
 
-            // Build email bodies
-            String mentorSubject = "Reminder: Upcoming Session - " + session.getTopic();
-            String mentorBody = buildMentorReminderEmailBody(session, mentor.getUsername(), 
-                                                             mentee.getUsername(), timeRemainingStr);
+            sendEmail(mentee.getEmail(),
+                    "Reminder: Upcoming Session - " + topic,
+                    buildReminderEmailBody(session, mentee.getUsername(), mentor.getUsername(), timeRemaining, false));
 
-            String menteeSubject = "Reminder: Upcoming Session - " + session.getTopic();
-            String menteeBody = buildMenteeReminderEmailBody(session, mentee.getUsername(), 
-                                                             mentor.getUsername(), timeRemainingStr);
-
-            // Send emails
-            emailBean.sendEmail(mentorEmail, mentorSubject, mentorBody);
-            emailBean.sendEmail(menteeEmail, menteeSubject, menteeBody);
-
-            logger.info("Reminder emails sent for session {} to mentor {} and mentee {}", 
-                session.getId(), mentorEmail, menteeEmail);
+            logger.info("Reminder emails sent for session {} to {} and {}",
+                    session.getId(), mentor.getEmail(), mentee.getEmail());
 
         } catch (Exception e) {
             logger.error("Error sending session reminder emails", e);
@@ -141,11 +141,9 @@ public class EmailReminderBean {
     }
 
     /**
-     * Send a reminder email to mentor about an upcoming session
+     * Trigger a reminder for a single session by ID (mentor + mentee).
      */
-    public void sendMentorSessionReminder(String sessionId) throws SQLException {
-        logger.info("Sending individual mentor reminder for session: {}", sessionId);
-
+    public void sendSessionReminder(String sessionId) {
         Session session = sessionDAO.findById(Long.parseLong(sessionId));
         if (session != null) {
             sendSessionReminderEmails(session);
@@ -153,120 +151,77 @@ public class EmailReminderBean {
     }
 
     /**
-     * Send a reminder email to mentee about an upcoming session
+     * Count sessions that will receive reminders on the next scheduler run.
      */
-    public void sendMenteeSessionReminder(String sessionId) throws SQLException {
-        logger.info("Sending individual mentee reminder for session: {}", sessionId);
-
-        Session session = sessionDAO.findById(Long.parseLong(sessionId));
-        if (session != null) {
-            sendSessionReminderEmails(session);
-        }
-    }
-
-    /**
-     * Build HTML email body for mentor reminder
-     */
-    private String buildMentorReminderEmailBody(Session session, String mentorName, 
-                                                String menteeName, String timeRemaining) {
-        String sessionDateTime = session.getScheduledDate().format(
-            java.time.format.DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy 'at' h:mm a"));
-
-        return "<html>" +
-               "<body style='font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 20px;'>" +
-               "<div style='background-color: white; border-radius: 8px; padding: 30px; max-width: 600px; margin: 0 auto;'>" +
-               "<h2 style='color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px;'>Session Reminder</h2>" +
-               "<p>Hi " + mentorName + ",</p>" +
-               "<p>This is a reminder about your upcoming mentoring session with <strong>" + menteeName + "</strong>.</p>" +
-               "<div style='background-color: #ecf0f1; border-left: 4px solid #3498db; padding: 15px; margin: 20px 0;'>" +
-               "<p><strong>Session Details:</strong></p>" +
-               "<p><strong>Topic:</strong> " + session.getTopic() + "</p>" +
-               "<p><strong>Date & Time:</strong> " + sessionDateTime + "</p>" +
-               "<p><strong>Duration:</strong> " + session.getDurationMinutes() + " minutes</p>" +
-               "<p><strong>Time Remaining:</strong> " + timeRemaining + "</p>" +
-               "</div>" +
-               "<p><a href='" + session.getSessionLink() + "' style='display: inline-block; background-color: #3498db; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; margin-top: 10px;'>Join Session</a></p>" +
-               "<p>Meeting Link: <a href='" + session.getSessionLink() + "'>" + session.getSessionLink() + "</a></p>" +
-               "<p style='color: #7f8c8d; font-size: 12px; margin-top: 30px;'>This is an automated reminder. Please do not reply to this email.</p>" +
-               "</div>" +
-               "</body>" +
-               "</html>";
-    }
-
-    /**
-     * Build HTML email body for mentee reminder
-     */
-    private String buildMenteeReminderEmailBody(Session session, String menteeName, 
-                                                String mentorName, String timeRemaining) {
-        String sessionDateTime = session.getScheduledDate().format(
-            java.time.format.DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy 'at' h:mm a"));
-
-        return "<html>" +
-               "<body style='font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 20px;'>" +
-               "<div style='background-color: white; border-radius: 8px; padding: 30px; max-width: 600px; margin: 0 auto;'>" +
-               "<h2 style='color: #2c3e50; border-bottom: 2px solid #27ae60; padding-bottom: 10px;'>Session Reminder</h2>" +
-               "<p>Hi " + menteeName + ",</p>" +
-               "<p>This is a reminder about your upcoming mentoring session with <strong>" + mentorName + "</strong>.</p>" +
-               "<div style='background-color: #ecf0f1; border-left: 4px solid #27ae60; padding: 15px; margin: 20px 0;'>" +
-               "<p><strong>Session Details:</strong></p>" +
-               "<p><strong>Topic:</strong> " + session.getTopic() + "</p>" +
-               "<p><strong>Date & Time:</strong> " + sessionDateTime + "</p>" +
-               "<p><strong>Duration:</strong> " + session.getDurationMinutes() + " minutes</p>" +
-               "<p><strong>Time Remaining:</strong> " + timeRemaining + "</p>" +
-               "</div>" +
-               "<p><a href='" + session.getSessionLink() + "' style='display: inline-block; background-color: #27ae60; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; margin-top: 10px;'>Join Session</a></p>" +
-               "<p>Meeting Link: <a href='" + session.getSessionLink() + "'>" + session.getSessionLink() + "</a></p>" +
-               "<p style='color: #7f8c8d; font-size: 12px; margin-top: 30px;'>This is an automated reminder. Please do not reply to this email.</p>" +
-               "</div>" +
-               "</body>" +
-               "</html>";
-    }
-
-    /**
-     * Format time remaining in a human-readable format
-     */
-    private String formatTimeRemaining(LocalDateTime scheduledDate, LocalDateTime now) {
-        java.time.temporal.ChronoUnit unit = java.time.temporal.ChronoUnit.MINUTES;
-        long minutes = unit.between(now, scheduledDate);
-        long hours = minutes / 60;
-        long days = hours / 24;
-
-        if (days > 0) {
-            return days + " day" + (days > 1 ? "s" : "") + " and " + (hours % 24) + " hour" + ((hours % 24) != 1 ? "s" : "");
-        } else if (hours > 0) {
-            return hours + " hour" + (hours > 1 ? "s" : "") + " and " + (minutes % 60) + " minute" + ((minutes % 60) != 1 ? "s" : "");
-        } else {
-            return minutes + " minute" + (minutes != 1 ? "s" : "");
-        }
-    }
-
-    /**
-     * Get count of reminders that will be sent in the next run
-     * Useful for monitoring/logging
-     */
-    public int getUpcomingReminderCount() throws SQLException {
-        logger.info("Calculating upcoming reminder count");
-
-        List<Session> allSessions = sessionDAO.findAll();
-
-        LocalDateTime currentTime = LocalDateTime.now();
-        LocalDateTime twentyFourHoursLater = currentTime.plusHours(24);
-        LocalDateTime oneHourLater = currentTime.plusHours(1);
-
+    public int getUpcomingReminderCount() {
+        LocalDateTime now       = LocalDateTime.now();
+        LocalDateTime in24Hours = now.plusHours(24);
+        LocalDateTime inOneHour = now.plusHours(1);
         int count = 0;
 
-        for (Session session : allSessions) {
-            if (session.getScheduledDate() != null &&
-                session.getScheduledDate().isAfter(currentTime) &&
-                session.getScheduledDate().isBefore(twentyFourHoursLater) &&
-                session.getScheduledDate().isAfter(oneHourLater) &&
-                ("PENDING".equals(session.getStatus()) || "CONFIRMED".equals(session.getStatus()))) {
+        for (Session session : sessionDAO.findAll()) {
+            if (session.getScheduledDate() != null
+                    && session.getScheduledDate().isAfter(inOneHour)
+                    && session.getScheduledDate().isBefore(in24Hours)
+                    && ("PENDING".equals(session.getStatus()) || "CONFIRMED".equals(session.getStatus()))) {
                 count++;
             }
         }
 
         logger.info("Upcoming reminders to be sent: {}", count);
         return count;
+    }
 
+    /**
+     *
+     * @param isMentor true  → recipient is the mentor (blue accent)
+     *                 false → recipient is the mentee (green accent)
+     */
+    private String buildReminderEmailBody(Session session, String recipientName,
+                                          String otherPartyName, String timeRemaining,
+                                          boolean isMentor) {
+        String accentColor  = isMentor ? "#0d47a1" : "#15803d";
+        String roleLabel    = isMentor ? "mentee"  : "mentor";
+        String sessionDateTime = session.getScheduledDate()
+                .format(DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy 'at' h:mm a"));
+
+        return "<html>" +
+                "<body style='font-family:Arial,sans-serif;background:#f5f5f5;padding:20px;'>" +
+                "<div style='background:#fff;border-radius:8px;padding:30px;max-width:600px;margin:0 auto;'>" +
+                "<h2 style='color:#1e293b;border-bottom:2px solid " + accentColor + ";padding-bottom:10px;'>Session Reminder</h2>" +
+                "<p>Hi " + recipientName + ",</p>" +
+                "<p>This is a reminder about your upcoming mentoring session with <strong>" + otherPartyName + "</strong> (" + roleLabel + ").</p>" +
+                "<div style='background:#f1f5f9;border-left:4px solid " + accentColor + ";padding:15px;margin:20px 0;'>" +
+                "<p><strong>Topic:</strong> " + session.getTopic() + "</p>" +
+                "<p><strong>Date &amp; Time:</strong> " + sessionDateTime + "</p>" +
+                "<p><strong>Duration:</strong> " + session.getDurationMinutes() + " minutes</p>" +
+                "<p><strong>Time remaining:</strong> " + timeRemaining + "</p>" +
+                "</div>" +
+                "<p><a href='" + session.getSessionLink() + "' " +
+                "style='display:inline-block;background:" + accentColor + ";color:#fff;" +
+                "padding:10px 20px;border-radius:5px;text-decoration:none;'>Join Session</a></p>" +
+                "<p style='font-size:13px;color:#475569;'>Or copy this link: " +
+                "<a href='" + session.getSessionLink() + "'>" + session.getSessionLink() + "</a></p>" +
+                "<p style='color:#94a3b8;font-size:12px;margin-top:30px;'>This is an automated reminder. Please do not reply to this email.</p>" +
+                "</div></body></html>";
+    }
+
+// helper method to format remaining time to huma readable form
+    private String formatTimeRemaining(LocalDateTime scheduledDate, LocalDateTime now) {
+        long minutes = ChronoUnit.MINUTES.between(now, scheduledDate);
+        long hours   = minutes / 60;
+        long days    = hours   / 24;
+
+        if (days > 0) {
+            long remainingHours = hours % 24;
+            return days + " day" + (days > 1 ? "s" : "")
+                    + " and " + remainingHours + " hour" + (remainingHours != 1 ? "s" : "");
+        } else if (hours > 0) {
+            long remainingMins = minutes % 60;
+            return hours + " hour" + (hours > 1 ? "s" : "")
+                    + " and " + remainingMins + " minute" + (remainingMins != 1 ? "s" : "");
+        } else {
+            return minutes + " minute" + (minutes != 1 ? "s" : "");
+        }
     }
 }

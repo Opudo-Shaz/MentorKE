@@ -43,7 +43,7 @@ public class ActionRegistry {
 
             String actionMethodPath = ("/" + actionPath + "/" + methodPath)
                     .replaceAll("//+", "/");
-
+// /mentee/session
             ActionMap actionMap = new ActionMap(clazz, method, httpMethod, actionMethodPath);
             mappings.computeIfAbsent(httpMethod, k -> new ArrayList<>()).add(actionMap);
             System.out.println("Mapped: " + actionMethodPath + " [" + httpMethod + "]");
@@ -65,8 +65,11 @@ public class ActionRegistry {
     }
 
     private static Map<String, String> pathMatch(String pattern, String path) {
-        String[] p1 = pattern.split("/");
-        String[] p2 = path.split("/");
+        String normalizedPattern = normalizePath(pattern);
+        String normalizedPath = normalizePath(path);
+
+        String[] p1 = normalizedPattern.split("/");
+        String[] p2 = normalizedPath.split("/");
 
         if (p1.length != p2.length)
             return null;
@@ -82,5 +85,17 @@ public class ActionRegistry {
         }
 
         return vars;
+    }
+
+    private static String normalizePath(String path) {
+        if (path == null || path.isBlank()) {
+            return "/";
+        }
+
+        String normalized = path.startsWith("/") ? path : "/" + path;
+        while (normalized.length() > 1 && normalized.endsWith("/")) {
+            normalized = normalized.substring(0, normalized.length() - 1);
+        }
+        return normalized;
     }
 }

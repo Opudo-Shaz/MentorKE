@@ -3,7 +3,11 @@ package app.action;
 import app.bean.UserBean;
 import app.bean.MentorBean;
 import app.bean.MenteeBean;
+import app.bean.MessageBean;
+import app.dao.MentorDAO;
+import app.dao.SessionDAO;
 import app.model.User;
+import app.security.websecurity.MentorKeSecurity;
 import app.model.Mentor;
 import app.model.Mentee;
 import app.framework.Action;
@@ -11,13 +15,16 @@ import app.framework.ActionGetMethod;
 import app.utility.logging.AppLogger;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.slf4j.Logger;
 
 @ApplicationScoped
-@Action(value = "admin", label = "Admin Dashboard", showLink = false)
+@Action(value = "admin", label = "Admin Dashboard")
+@RolesAllowed({"mentor","mentee","admin"})
 public class AdminDashboard extends BaseAction {
 
     private static final Logger logger = AppLogger.getLogger(AdminDashboard.class);
@@ -31,17 +38,22 @@ public class AdminDashboard extends BaseAction {
     @Inject
     private MenteeBean menteeBean;
 
+    @Inject
+    private MessageBean messageBean;
+
+    @Inject
+    private MentorDAO mentorDAO;
+
+    @Inject
+    private SessionDAO sessionDAO;
+
+    @Inject
+    private MentorKeSecurity security;
+
     @ActionGetMethod("")
+    @RolesAllowed({"admin"})
     public void get(HttpServletRequest request, HttpServletResponse response) throws Exception {
-
-        if (!isLoggedIn(request)) {
-            redirect(response, request.getContextPath() + "/app/login/");
-            return;
-        }
-
-        if (!requireRole(request, response, "admin")) {
-            return;
-        }
+        security.requireRole("admin");
 
         String view = request.getParameter("view");
         if (view == null || view.isEmpty()) {
@@ -53,31 +65,50 @@ public class AdminDashboard extends BaseAction {
 
         try {
 
-            if ("users".equalsIgnoreCase(view)) {
-                List<User> users = userBean.getAllUsers();
-                logger.debug("Retrieved {} users", users != null ? users.size() : "null");
-                request.setAttribute("users", users);
-            }
+            // load total count
+            List<User> users = userBean.getAllUsers();
+            List<Mentor> mentors = mentorBean.findAll();
+            List<Mentee> mentees = menteeBean.findAll();
 
-            else if ("mentors".equalsIgnoreCase(view)) {
-                List<Mentor> mentors = mentorBean.getAllMentors();
-                logger.debug("Retrieved {} mentors", mentors != null ? mentors.size() : "null");
-                request.setAttribute("mentors", mentors);
-            }
+            request.setAttribute("users", users);
+            request.setAttribute("mentors", mentors);
+            request.setAttribute("mentees", mentees);
 
-            else if ("mentees".equalsIgnoreCase(view)) {
-                List<Mentee> mentees = menteeBean.getAllMentees();
-                logger.debug("Retrieved {} mentees", mentees != null ? mentees.size() : "null");
-                request.setAttribute("mentees", mentees);
-            }
+            int totalUsers = users != null ? users.size() : 0;
+            int activeMentors = mentorDAO.countActiveMentors();
+            int totalSessions = sessionDAO.count();
 
-            else {
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime monthStart = now.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+            LocalDateTime nextMonthStart = monthStart.plusMonths(1);
+            int sessionsThisMonth = sessionDAO.countSessionsInMonth(monthStart, nextMonthStart);
+
+            int totalMessagesSent = messageBean.getTotalMessagesSent();
+
+            request.setAttribute("analyticsTotalUsers", totalUsers);
+            request.setAttribute("analyticsActiveMentors", activeMentors);
+            request.setAttribute("analyticsSessionsThisMonth", sessionsThisMonth);
+            request.setAttribute("analyticsTotalSessions", totalSessions);
+            request.setAttribute("analyticsTotalMessagesSent", totalMessagesSent);
+
+            logger.debug("Users: {}", users != null ? users.size() : 0);
+            logger.debug("Mentors: {}", mentors != null ? mentors.size() : 0);
+            logger.debug("Mentees: {}", mentees != null ? mentees.size() : 0);
+
+            // Validate selected view only
+            if (!"users".equalsIgnoreCase(view)
+                    && !"mentors".equalsIgnoreCase(view)
+                    && !"mentees".equalsIgnoreCase(view)) {
+
                 logger.warn("Unknown view: {}", view);
                 request.setAttribute("error", "Unknown view: " + view);
+                view = "users";
             }
 
+            request.setAttribute("view", view);
+
         } catch (Exception e) {
-            logger.error("ERROR: {}", e.getMessage());
+            logger.error("ERROR: {}", e.getMessage(), e);
             request.setAttribute("error", "Failed to load data: " + e.getMessage());
         }
 

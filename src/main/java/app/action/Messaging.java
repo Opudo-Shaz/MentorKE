@@ -4,7 +4,11 @@ import app.bean.MessageBean;
 import app.bean.MentorBean;
 import app.bean.MenteeBean;
 import app.model.Message;
+import app.security.websecurity.MentorKeSecurity;
+import app.model.Mentor;
+import app.model.Mentee;
 import jakarta.inject.Inject;
+import jakarta.annotation.security.RolesAllowed;
 import app.utility.logging.AppLogger;
 import org.slf4j.Logger;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,17 +19,20 @@ import jakarta.enterprise.context.ApplicationScoped;
 import app.framework.Action;
 import app.framework.ActionGetMethod;
 import app.framework.ActionPostMethod;
+import app.websocket.ChatRoomUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
-/**
- * Messaging - framework action handling messaging features.
- */
 @ApplicationScoped
-@Action(value = "messaging", label = "Messaging", showLink = false)
+@Action(value = "messaging", label = "Messaging")
+@RolesAllowed({"mentor","mentee","admin"})
 public class Messaging extends BaseAction {
 
     private static final Logger logger = AppLogger.getLogger(Messaging.class);
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     @Inject
     private MessageBean messageBean;
@@ -36,43 +43,58 @@ public class Messaging extends BaseAction {
     @Inject
     private MenteeBean menteeBean;
 
+    @Inject
+    private MentorKeSecurity security;
+
     @ActionGetMethod("conversation")
+    @RolesAllowed({"mentor", "mentee"})
     public void conversation(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
-        String userId = getUserId(request);
-        handleConversation(request, response, userId);
+        listConversations(request, response);
     }
 
     @ActionGetMethod("unread-count")
+    @RolesAllowed({"mentor", "mentee"})
     public void unreadCount(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
+        security.requireAuthentication();
         String userId = getUserId(request);
         handleUnreadCount(request, response, userId);
     }
 
     @ActionGetMethod("list-conversations")
+    @RolesAllowed({"mentor", "mentee"})
     public void listConversations(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
+        security.requireAuthentication();
         String userId = getUserId(request);
         handleListConversations(request, response, userId);
     }
 
     @ActionGetMethod("")
+    @RolesAllowed({"mentor", "mentee"})
     public void defaultGet(HttpServletRequest request, HttpServletResponse response) throws Exception {
         listConversations(request, response);
     }
 
     @ActionPostMethod("send-message")
     public void sendMessage(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
         String userId = getUserId(request);
+        if (userId == null) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            writeJson(response, Map.of("success", false, "error", "Not authenticated"));
+            return;
+        }
+
         handleSendMessage(request, response, userId);
     }
 
     @ActionPostMethod("mark-read")
     public void markRead(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
         String userId = getUserId(request);
+        if (userId == null) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            writeJson(response, Map.of("success", false, "error", "Not authenticated"));
+            return;
+        }
+
         handleMarkAsRead(request, response, userId);
     }
 
@@ -83,6 +105,7 @@ public class Messaging extends BaseAction {
             throws ServletException, IOException {
         
         String otherUserId = request.getParameter("userId");
+        String currentRole = getUserRole(request);
         logger.info("User {} viewing conversation with {}", userId, otherUserId);
 
         try {
@@ -95,20 +118,15 @@ public class Messaging extends BaseAction {
             List<Message> messages = messageBean.getConversation(userId, otherUserId);
             messageBean.markConversationAsRead(userId, otherUserId);
 
-            Object otherUser = null;
-            try {
-                otherUser = mentorBean.getMentorById(otherUserId);
-                if (otherUser == null) {
-                    otherUser = menteeBean.getMenteeById(otherUserId);
-                }
-            } catch (Exception e) {
-                logger.warn("Could not load other user details");
-            }
+            Object otherUser = resolvePartnerEntity(otherUserId, currentRole);
 
             setAttribute(request, "messages", messages);
             setAttribute(request, "otherUserId", otherUserId);
             setAttribute(request, "otherUser", otherUser);
-            forward(request, response, "/conversation.jsp");
+            setAttribute(request, "selectedPartnerId", otherUserId);
+            setAttribute(request, "selectedPartner", otherUser);
+            setAttribute(request, "roomId", resolveRoomId(userId, otherUserId));
+            forward(request, response, "/message-inbox.jsp");
 
         } catch (Exception e) {
             logger.error("Error retrieving conversation", e);
@@ -129,19 +147,26 @@ public class Messaging extends BaseAction {
 
         try {
             if (messageText == null || messageText.trim().isEmpty()) {
-                setAttribute(request, "errorMessage", "Message cannot be empty");
-                handleConversation(request, response, userId);
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                writeJson(response, Map.of("success", false, "error", "Message cannot be empty"));
                 return;
             }
 
-            messageBean.sendMessage(userId, recipientId, messageText.trim());
+            Message savedMessage = messageBean.sendMessage(userId, recipientId, messageText.trim());
+            String roomId = resolveRoomId(userId, recipientId);
+
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("success", true);
+            payload.put("roomId", roomId);
+            payload.put("message", messageToMap(savedMessage));
+
+            writeJson(response, payload);
             logger.info("Message sent successfully");
-            handleConversation(request, response, userId);
 
         } catch (Exception e) {
             logger.error("Error sending message", e);
-            setAttribute(request, "errorMessage", "Error sending message: " + e.getMessage());
-            handleConversation(request, response, userId);
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            writeJson(response, Map.of("success", false, "error", "Error sending message: " + e.getMessage()));
         }
     }
 
@@ -163,15 +188,15 @@ public class Messaging extends BaseAction {
 
             String returnTo = request.getParameter("returnTo");
             if ("conversation".equals(returnTo)) {
-                String otherUserId = request.getParameter("userId");
                 handleConversation(request, response, userId);
             } else {
-                response.getWriter().write("{\"success\": true}");
+                writeJson(response, Map.of("success", true));
             }
 
         } catch (Exception e) {
             logger.error("Error marking message as read", e);
-            response.getWriter().write("{\"success\": false, \"error\": \"" + e.getMessage() + "\"}");
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            writeJson(response, Map.of("success", false, "error", e.getMessage()));
         }
     }
 
@@ -205,14 +230,164 @@ public class Messaging extends BaseAction {
         try {
             List<Message> recentConversations = messageBean.getRecentConversations(userId);
             int unreadCount = messageBean.getUnreadMessageCount(userId);
+            String currentRole = getUserRole(request);
+
+            String partnerId = request.getParameter("partnerId");
+            if ((partnerId == null || partnerId.trim().isEmpty()) && recentConversations != null && !recentConversations.isEmpty()) {
+                Message firstConversation = recentConversations.get(0);
+                partnerId = userId.equals(String.valueOf(firstConversation.getSenderId()))
+                        ? String.valueOf(firstConversation.getRecipientId())
+                        : String.valueOf(firstConversation.getSenderId());
+            }
+
+            if (partnerId == null || partnerId.trim().isEmpty()) {
+                partnerId = resolveDefaultChatPartner(userId);
+            }
+
+            Object selectedPartner = null;
+            String selectedPartnerName = null;
+            String selectedPartnerRole = null;
+            List<Message> conversationMessages = null;
+            String roomId = null;
+
+            List<Map<String, Object>> conversationSummaries = new java.util.ArrayList<>();
+            java.util.Set<String> seenPartnerIds = new java.util.LinkedHashSet<>();
+
+            if (recentConversations != null) {
+                for (Message message : recentConversations) {
+                    String candidatePartnerId = userId.equals(String.valueOf(message.getSenderId()))
+                            ? String.valueOf(message.getRecipientId())
+                            : String.valueOf(message.getSenderId());
+
+                    if (!seenPartnerIds.add(candidatePartnerId)) {
+                        continue;
+                    }
+
+                    Object partnerEntity = resolvePartnerEntity(candidatePartnerId, currentRole);
+                    String partnerName = resolvePartnerName(partnerEntity, candidatePartnerId);
+                    String partnerRole = resolvePartnerRole(partnerEntity, currentRole);
+
+                    Map<String, Object> summary = new HashMap<>();
+                    summary.put("partnerId", candidatePartnerId);
+                    summary.put("partnerName", partnerName);
+                    summary.put("partnerRole", partnerRole);
+                    summary.put("lastMessage", message.getMessage());
+                    summary.put("createdAt", message.getCreatedAt());
+                    summary.put("selected", candidatePartnerId.equals(partnerId));
+                    conversationSummaries.add(summary);
+                }
+            }
+
+            if (partnerId != null && !partnerId.trim().isEmpty()) {
+                conversationMessages = messageBean.getConversation(userId, partnerId);
+                roomId = resolveRoomId(userId, partnerId);
+                selectedPartner = resolvePartnerEntity(partnerId, currentRole);
+                selectedPartnerName = resolvePartnerName(selectedPartner, partnerId);
+                selectedPartnerRole = resolvePartnerRole(selectedPartner, currentRole);
+            }
 
             setAttribute(request, "conversations", recentConversations);
+            setAttribute(request, "conversationSummaries", conversationSummaries);
             setAttribute(request, "unreadCount", unreadCount);
+            setAttribute(request, "selectedPartnerId", partnerId);
+            setAttribute(request, "selectedPartner", selectedPartner);
+            setAttribute(request, "selectedPartnerName", selectedPartnerName);
+            setAttribute(request, "selectedPartnerRole", selectedPartnerRole);
+            setAttribute(request, "messages", conversationMessages);
+            setAttribute(request, "roomId", roomId);
             forward(request, response, "/message-inbox.jsp");
 
         } catch (Exception e) {
             logger.error("Error retrieving conversations", e);
             throw new ServletException(e);
         }
+    }
+
+    private void writeJson(HttpServletResponse response, Object data) throws IOException {
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write(mapper.writeValueAsString(data));
+    }
+
+    private Map<String, Object> messageToMap(Message message) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", message.getId());
+        map.put("senderId", message.getSenderId());
+        map.put("recipientId", message.getRecipientId());
+        map.put("message", message.getMessage());
+        map.put("isRead", message.getIsRead());
+        map.put("createdAt", message.getCreatedAt() != null ? message.getCreatedAt().toString() : null);
+        return map;
+    }
+
+
+    // helper methods
+    private String resolveRoomId(String userId1, String userId2) {
+        return ChatRoomUtil.getRoomId(userId1, userId2);
+    }
+
+    private String resolveDefaultChatPartner(String userId) {
+        try {
+            if (userId == null) {
+                return null;
+            }
+
+            Mentee mentee = menteeBean.getByUserId(userId);
+            if (mentee != null && mentee.getMentorId() != null && !mentee.getMentorId().isBlank()) {
+                return mentee.getMentorId();
+            }
+
+            Mentor mentor = mentorBean.getByUserId(userId);
+            if (mentor != null) {
+                List<Mentee> mentees = menteeBean.findByMentorId(String.valueOf(mentor.getId()));
+                if (mentees != null && !mentees.isEmpty() && mentees.get(0) != null && mentees.get(0).getId() != null) {
+                    return String.valueOf(mentees.get(0).getId());
+                }
+            }
+        } catch (Exception e) {
+            logger.warn("Could not resolve default chat partner for user {}", userId, e);
+        }
+
+        return null;
+    }
+
+    private Object resolvePartnerEntity(String partnerId, String currentRole) throws Exception {
+        if (partnerId == null || partnerId.isBlank()) {
+            return null;
+        }
+
+        if ("mentor".equalsIgnoreCase(currentRole)) {
+            return menteeBean.getById(partnerId);
+        }
+
+        if ("mentee".equalsIgnoreCase(currentRole)) {
+            return mentorBean.getById(partnerId);
+        }
+
+        Mentor mentor = mentorBean.getById(partnerId);
+        if (mentor != null) {
+            return mentor;
+        }
+        return menteeBean.getById(partnerId);
+    }
+
+    private String resolvePartnerName(Object partnerEntity, String fallbackId) {
+        if (partnerEntity instanceof Mentor mentor && mentor.getUsername() != null) {
+            return mentor.getUsername();
+        }
+        if (partnerEntity instanceof Mentee mentee && mentee.getUsername() != null) {
+            return mentee.getUsername();
+        }
+        return "User #" + fallbackId;
+    }
+
+    private String resolvePartnerRole(Object partnerEntity, String currentRole) {
+        if (partnerEntity instanceof Mentor) {
+            return "mentor";
+        }
+        if (partnerEntity instanceof Mentee) {
+            return "mentee";
+        }
+        return "mentor".equalsIgnoreCase(currentRole) ? "mentee" : "mentor";
     }
 }

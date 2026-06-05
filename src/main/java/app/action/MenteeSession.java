@@ -1,6 +1,5 @@
 package app.action;
 
-import app.bean.SessionMatchingBean;
 import app.bean.MatchRequestBean;
 import app.bean.MenteeBean;
 import app.bean.MentorBean;
@@ -19,15 +18,14 @@ import java.util.List;
 import app.framework.Action;
 import app.framework.ActionGetMethod;
 import app.framework.ActionPostMethod;
+import jakarta.annotation.security.RolesAllowed;
 
 @ApplicationScoped
-@Action(value = "mentee-sessions", label = "Mentee Sessions", showLink = false)
+@Action(value = "mentee-sessions", label = "Mentee Sessions")
+@RolesAllowed({"mentor","mentee","admin"})
 public class MenteeSession extends BaseAction {
 
     private static final Logger logger = AppLogger.getLogger(MenteeSession.class);
-
-    @Inject
-    private SessionMatchingBean sessionMatchingBean;
 
     @Inject
     private MatchRequestBean matchRequestBean;
@@ -41,26 +39,28 @@ public class MenteeSession extends BaseAction {
     @ActionGetMethod("browse")
     public void browse(HttpServletRequest request, HttpServletResponse response) throws Exception {
         if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
-        if (!requireRole(request, response, "mentee")) return;
+        if (requireRole(request, response, "mentee")) return;
         String userId = getUserId(request);
-        String specialization = request.getParameter("specialization");
+        MentorSearchCriteria criteria = readSearchCriteria(request);
+        String specialization = criteria.specialization;
+
         if (specialization == null || specialization.trim().isEmpty()) {
             try {
-                Mentee mentee = menteeBean.getMenteeByUserId(userId);
+                Mentee mentee = menteeBean.getByUserId(userId);
                 if (mentee != null && mentee.getFieldOfStudy() != null && !mentee.getFieldOfStudy().trim().isEmpty()) {
-                    specialization = mentee.getFieldOfStudy();
+                    criteria.specialization = mentee.getFieldOfStudy();
                 }
             } catch (Exception e) {
                 logger.warn("Could not load mentee profile for specialization lookup: {}", userId, e);
             }
         }
-        handleBrowseMentors(request, response, userId, specialization);
+        handleBrowseMentors(request, response, userId, criteria);
     }
 
     @ActionGetMethod("request")
     public void requestForm(HttpServletRequest request, HttpServletResponse response) throws Exception {
         if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
-        if (!requireRole(request, response, "mentee")) return;
+        if (requireRole(request, response, "mentee")) return;
         String userId = getUserId(request);
         handleRequestMentor(request, response, userId);
     }
@@ -68,7 +68,7 @@ public class MenteeSession extends BaseAction {
     @ActionGetMethod("my-requests")
     public void myRequests(HttpServletRequest request, HttpServletResponse response) throws Exception {
         if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
-        if (!requireRole(request, response, "mentee")) return;
+        if (requireRole(request, response, "mentee")) return;
         String userId = getUserId(request);
         handleMyRequests(request, response, userId);
     }
@@ -76,7 +76,7 @@ public class MenteeSession extends BaseAction {
     @ActionGetMethod("view-mentor")
     public void viewMentor(HttpServletRequest request, HttpServletResponse response) throws Exception {
         if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
-        if (!requireRole(request, response, "mentee")) return;
+        if (requireRole(request, response, "mentee")) return;
         handleViewMentor(request, response);
     }
 
@@ -88,21 +88,21 @@ public class MenteeSession extends BaseAction {
     @ActionPostMethod("request-mentor")
     public void requestMentor(HttpServletRequest request, HttpServletResponse response) throws Exception {
         if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
-        if (!requireRole(request, response, "mentee")) return;
+        if (requireRole(request, response, "mentee")) return;
         String userId = getUserId(request);
 
         String mentorId = request.getParameter("mentorId");
-        String specialization = request.getParameter("specialization");
+        MentorSearchCriteria criteria = readSearchCriteria(request);
 
-        matchRequestBean.requestMentor(userId, mentorId, specialization);
+        matchRequestBean.requestMentor(userId, mentorId, criteria.specialization);
         request.setAttribute("successMessage", "Request sent to mentor successfully!");
-        handleBrowseMentors(request, response, userId, specialization);
+        handleBrowseMentors(request, response, userId, criteria);
     }
 
     @ActionPostMethod("cancel-request")
     public void cancelRequest(HttpServletRequest request, HttpServletResponse response) throws Exception {
         if (!isLoggedIn(request)) { redirect(response, request.getContextPath() + "/app/login/"); return; }
-        if (!requireRole(request, response, "mentee")) return;
+        if (requireRole(request, response, "mentee")) return;
         String userId = getUserId(request);
 
         String requestId = request.getParameter("requestId");
@@ -117,21 +117,32 @@ public class MenteeSession extends BaseAction {
     /**
      * Browse available mentors
      */
-    private void handleBrowseMentors(HttpServletRequest request, HttpServletResponse response, String userId, String specialization) 
+        private void handleBrowseMentors(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            String userId,
+            MentorSearchCriteria criteria
+        )
             throws ServletException, IOException {
         
         logger.info("Mentee {} browsing mentors", userId);
         List<Mentor> mentors;
 
         try {
-            if (specialization != null && !specialization.trim().isEmpty()) {
-                mentors = sessionMatchingBean.findMentorsBySpecialization(specialization);
-            } else {
-                mentors = mentorBean.getAllMentors();
-            }
+            mentors = mentorBean.searchMentors(
+                    criteria.specialization,
+                    criteria.minimumYearsOfExperience,
+                    criteria.availability,
+                    criteria.location,
+                    criteria.minimumRating
+            );
 
             request.setAttribute("mentors", mentors);
-            request.setAttribute("selectedSpecialization", specialization);
+                request.setAttribute("selectedSpecialization", criteria.specialization);
+                request.setAttribute("selectedMinYearsOfExperience", criteria.minimumYearsOfExperience);
+                request.setAttribute("selectedAvailability", criteria.availability);
+                request.setAttribute("selectedLocation", criteria.location);
+                request.setAttribute("selectedMinRating", criteria.minimumRating);
             request.getRequestDispatcher("/browse-mentors.jsp").forward(request, response);
 
         } catch (Exception e) {
@@ -150,14 +161,14 @@ public class MenteeSession extends BaseAction {
         logger.info("Mentee {} requesting mentor {}", userId, mentorId);
 
         try {
-            Mentor mentor = mentorBean.getMentorById(mentorId);
+            Mentor mentor = mentorBean.getById(mentorId);
             
             if (mentor != null) {
                 request.setAttribute("mentor", mentor);
                 request.getRequestDispatcher("/request-mentor.jsp").forward(request, response);
             } else {
                 request.setAttribute("errorMessage", "Mentor not found");
-                handleBrowseMentors(request, response, userId, request.getParameter("specialization"));
+                handleBrowseMentors(request, response, userId, readSearchCriteria(request));
             }
         } catch (Exception e) {
             logger.error("Error viewing mentor request form", e);
@@ -197,7 +208,7 @@ public class MenteeSession extends BaseAction {
         logger.info("Viewing mentor profile: {}", mentorId);
 
         try {
-            Mentor mentor = mentorBean.getMentorById(mentorId);
+            Mentor mentor = mentorBean.getById(mentorId);
 
             if (mentor != null) {
                 request.setAttribute("mentor", mentor);
@@ -210,5 +221,45 @@ public class MenteeSession extends BaseAction {
             logger.error("Error viewing mentor profile", e);
             throw new ServletException(e);
         }
+    }
+
+    private Integer parseInteger(String value) {
+        try {
+            if (value == null || value.isBlank()) {
+                return null;
+            }
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
+
+    private Double parseDouble(String value) {
+        try {
+            if (value == null || value.isBlank()) {
+                return null;
+            }
+            return Double.parseDouble(value.trim());
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
+
+    private MentorSearchCriteria readSearchCriteria(HttpServletRequest request) {
+        MentorSearchCriteria criteria = new MentorSearchCriteria();
+        criteria.specialization = request.getParameter("specialization");
+        criteria.minimumYearsOfExperience = parseInteger(request.getParameter("minYearsOfExperience"));
+        criteria.availability = request.getParameter("availability");
+        criteria.location = request.getParameter("location");
+        criteria.minimumRating = parseDouble(request.getParameter("minRating"));
+        return criteria;
+    }
+
+    private static class MentorSearchCriteria {
+        private String specialization;
+        private Integer minimumYearsOfExperience;
+        private String availability;
+        private String location;
+        private Double minimumRating;
     }
 }

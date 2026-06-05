@@ -7,17 +7,24 @@ import app.model.Session;
 import jakarta.inject.Inject;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.annotation.security.RolesAllowed;
 
+import java.sql.SQLException;
 import java.util.List;
 
 @ApplicationScoped
-@Action(value = "mentee", label = "Mentee", linkPosition = 2)
-public class MenteeAction extends AbstractAction {
+@Action(value = "mentee", label = "Mentee")
+@RolesAllowed({"mentor","mentee","admin"})
+public class MenteeAction extends BaseAction {
 
-    @Inject private SessionBean sessionBean;
-    @Inject private MenteeBean menteeBean;
-    @Inject private MentorKeFramework framework;
-    @Inject private app.dao.SessionDAO sessionDAO;
+    @Inject
+    private SessionBean sessionBean;
+
+    @Inject
+    private MenteeBean menteeBean;                   
+
+    @Inject
+    private MentorKeFramework framework;
 
     @ActionGetMethod("sessions")
     public ActionResponse sessions(HttpServletRequest req) {
@@ -36,11 +43,10 @@ public class MenteeAction extends AbstractAction {
     }
 
     @ActionPostMethod("book")
-    public ActionResponse create(@ActionRequestBody Session session, HttpServletRequest req) {
+    public ActionResponse create(@ActionRequestBody Session session, HttpServletRequest req) throws SQLException {
         String userId = getUserIdString(req);
         session.setMenteeId(userId);
-        // use DAO save directly; bean scheduling uses different signature
-        sessionDAO.save(session);
+        sessionBean.bookSession(session);
         try {
             return new ActionResponse(Session.class, sessionBean.getSessionsByMentee(userId));
         } catch (Exception e) {
@@ -54,7 +60,7 @@ public class MenteeAction extends AbstractAction {
         try {
             Session s = sessionBean.getSession(String.valueOf(id));
             if (s != null && userId.equals(s.getMenteeId())) {
-                sessionDAO.delete(id);
+                sessionBean.deleteSessionIfOwned(id, userId);
             }
             return new ActionResponse(Session.class, sessionBean.getSessionsByMentee(userId));
         } catch (Exception e) {

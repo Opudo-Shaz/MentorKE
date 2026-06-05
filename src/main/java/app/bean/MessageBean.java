@@ -21,20 +21,19 @@ public class MessageBean {
     @Inject
     private MessageDAO messageDAO;
 
-    public MessageBean() {
-        logger.debug("CDI Bean initialized with default constructor");
-    }
+    public MessageBean() {}
 
     /**
      * Send a message from one user to another
      */
-    public void sendMessage(String senderId, String recipientId, String messageText) throws SQLException {
+    public Message sendMessage(String senderId, String recipientId, String messageText) throws SQLException {
         logger.info("Sending message from {} to {}", senderId, recipientId);
 
         Message message = new Message(senderId, recipientId, messageText);
         messageDAO.save(message);
 
         logger.info("Message sent successfully");
+        return message;
     }
 
     /**
@@ -105,5 +104,9 @@ public class MessageBean {
      */
     public int getTotalUnreadMessages(String userId) throws SQLException {
         return messageDAO.getUnreadMessageCount(userId);
+    }
+
+    public int getTotalMessagesSent() {
+        return messageDAO.count();
     }
 }

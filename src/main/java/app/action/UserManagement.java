@@ -6,9 +6,11 @@ import app.bean.MenteeBean;
 import app.model.Mentor;
 import app.model.Mentee;
 import app.model.User;
+import app.security.websecurity.MentorKeSecurity;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.inject.Inject;
+import jakarta.annotation.security.RolesAllowed;
 import java.io.IOException;
 import app.utility.logging.AppLogger;
 import org.slf4j.Logger;
@@ -17,7 +19,8 @@ import app.framework.Action;
 import app.framework.ActionPostMethod;
 
 @ApplicationScoped
-@Action(value = "user-management", label = "User Management", showLink = false)
+@Action(value = "user-management", label = "User Management")
+@RolesAllowed({"mentor","mentee","admin"})
 public class UserManagement extends BaseAction {
 
     private static final Logger logger = AppLogger.getLogger(UserManagement.class);
@@ -31,11 +34,14 @@ public class UserManagement extends BaseAction {
     @Inject
     private MenteeBean menteeBean;
 
+    @Inject
+    private MentorKeSecurity security;
+
     @ActionPostMethod("add")
+    @RolesAllowed({"admin"})
     public void add(HttpServletRequest request, HttpServletResponse response) throws IOException {
         logger.info("=== HTTP POST add user ===");
-        if (!isLoggedIn(request)) { redirect(response, "login"); return; }
-        if (!requireRole(request, response, "admin")) return;
+        security.requireRole("admin");
 
         try {
             String redirectParam = handleAddUser(request);
@@ -52,7 +58,7 @@ public class UserManagement extends BaseAction {
     public void update(HttpServletRequest request, HttpServletResponse response) throws IOException {
         logger.info("=== HTTP POST update user ===");
         if (!isLoggedIn(request)) { redirect(response, "login"); return; }
-        if (!requireRole(request, response, "admin")) return;
+        if (requireRole(request, response, "admin")) return;
 
         try {
             String redirectParam = handleUpdateUser(request);
@@ -69,7 +75,7 @@ public class UserManagement extends BaseAction {
     public void delete(HttpServletRequest request, HttpServletResponse response) throws IOException {
         logger.info("=== HTTP POST delete user ===");
         if (!isLoggedIn(request)) { redirect(response, "login"); return; }
-        if (!requireRole(request, response, "admin")) return;
+        if (requireRole(request, response, "admin")) return;
 
         try {
             String redirectParam = handleDeleteUser(request);
@@ -110,8 +116,10 @@ public class UserManagement extends BaseAction {
             mentor.setBio(safe(request.getParameter("bio")));
             mentor.setQualifications(safe(request.getParameter("qualifications")));
             mentor.setPhoneNumber(safe(request.getParameter("phoneNumber")));
+            mentor.setLocation(safe(request.getParameter("location")));
+            mentor.setAvailability(safe(request.getParameter("availability")));
 
-            mentorBean.addMentorAdmin(mentor);
+            mentorBean.addAdmin(mentor);
             return "success=mentor_added";
         }
 
@@ -131,7 +139,7 @@ public class UserManagement extends BaseAction {
                 mentee.setMentorId(mentorId);
             }
 
-            menteeBean.addMenteeAdmin(mentee);
+            menteeBean.addAdmin(mentee);
             return "success=mentee_added";
         }
 

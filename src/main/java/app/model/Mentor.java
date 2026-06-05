@@ -1,56 +1,83 @@
 package app.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import jakarta.validation.constraints.*;
+import lombok.*;
 import java.io.Serial;
-import java.io.Serializable;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "mentors")
-public class Mentor extends User implements Serializable {
+@Getter
+@Setter
+@NoArgsConstructor
+@ToString(onlyExplicitlyIncluded = true, callSuper = false)
+public class Mentor extends User {
+
     @Serial
     private static final long serialVersionUID = 1L;
 
     @OneToMany(mappedBy = "mentor")
+    @JsonIgnore
     private List<Mentee> mentees = new ArrayList<>();
 
     @NotBlank
     @Size(max = 100)
     @Column(name = "specialization", length = 100)
+    @ToString.Include
     private String specialization;
 
     @Size(max = 5000)
     @Column(name = "expertise", columnDefinition = "TEXT")
+    @ToString.Include
     private String expertise;
 
     @Min(0)
     @Max(80)
     @Column(name = "years_of_experience")
+    @ToString.Include
     private Integer yearsOfExperience;
 
     @Size(max = 5000)
     @Column(name = "bio", columnDefinition = "TEXT")
+    @ToString.Include
     private String bio;
 
     @Size(max = 5000)
     @Column(name = "qualifications", columnDefinition = "TEXT")
+    @ToString.Include
     private String qualifications;
 
     @Pattern(regexp = "^$|^[0-9+()\\-\\s]{7,20}$")
     @Size(max = 20)
     @Column(name = "phone_number", length = 20)
+    @ToString.Include
     private String phoneNumber;
 
+    @Size(max = 120)
+    @Column(name = "location", length = 120)
+    @ToString.Include
+    private String location;
+
+    @Size(max = 120)
+    @Column(name = "availability", length = 120)
+    @ToString.Include
+    private String availability;
+
+    @DecimalMin("0.0")
+    @DecimalMax("5.0")
+    @Column(name = "average_rating")
+    @ToString.Include
+    private Double averageRating;
+
+    @Min(0)
+    @Column(name = "rating_count")
+    @ToString.Include
+    private Integer ratingCount;
+
+    @Builder
     public Mentor(Long id, String userId, String specialization, String expertise,
                   Integer yearsOfExperience, String bio, String qualifications,
                   String phoneNumber, String status) {
@@ -65,10 +92,10 @@ public class Mentor extends User implements Serializable {
         setStatus(status);
     }
 
-    public Mentor() {
-    }
+    // --- Identity bridge ---
 
     @Transient
+    @ToString.Include(name = "userId", rank = 1)  
     public String getUserId() {
         return getId() != null ? String.valueOf(getId()) : null;
     }
@@ -78,105 +105,7 @@ public class Mentor extends User implements Serializable {
             setId(null);
             return;
         }
-
         setId(Long.parseLong(userId));
     }
 
-    public User getUser() {
-        return this;
-    }
-
-    public void setUser(User user) {
-        if (user == null) {
-            setId(null);
-            setUsername(null);
-            setPassword(null);
-            setRole(null);
-            setEmail(null);
-            setStatus(null);
-            setCreatedAt(null);
-            setUpdatedAt(null);
-            return;
-        }
-
-        setId(user.getId());
-        setUsername(user.getUsername());
-        setPassword(user.getPassword());
-        setRole(user.getRole());
-        setEmail(user.getEmail());
-        setStatus(user.getStatus());
-        setCreatedAt(user.getCreatedAt());
-        setUpdatedAt(user.getUpdatedAt());
-    }
-
-    public List<Mentee> getMentees() {
-        return mentees;
-    }
-
-    public void setMentees(List<Mentee> mentees) {
-        this.mentees = mentees;
-    }
-
-    public String getSpecialization() {
-        return specialization;
-    }
-
-    public void setSpecialization(String specialization) {
-        this.specialization = specialization;
-    }
-
-    public String getExpertise() {
-        return expertise;
-    }
-
-    public void setExpertise(String expertise) {
-        this.expertise = expertise;
-    }
-
-    public Integer getYearsOfExperience() {
-        return yearsOfExperience;
-    }
-
-    public void setYearsOfExperience(Integer yearsOfExperience) {
-        this.yearsOfExperience = yearsOfExperience;
-    }
-
-    public String getBio() {
-        return bio;
-    }
-
-    public void setBio(String bio) {
-        this.bio = bio;
-    }
-
-    public String getQualifications() {
-        return qualifications;
-    }
-
-    public void setQualifications(String qualifications) {
-        this.qualifications = qualifications;
-    }
-
-    public String getPhoneNumber() {
-        return phoneNumber;
-    }
-
-    public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
-    }
-
-    @Override
-    public String toString() {
-        return "Mentor{" +
-                "id='" + getId() + '\'' +
-                ", userId='" + getUserId() + '\'' +
-                ", specialization='" + specialization + '\'' +
-                ", expertise='" + expertise + '\'' +
-                ", yearsOfExperience=" + yearsOfExperience +
-                ", bio='" + bio + '\'' +
-                ", qualifications='" + qualifications + '\'' +
-                ", phoneNumber='" + phoneNumber + '\'' +
-                ", status='" + getStatus() + '\'' +
-                '}';
-    }
 }
