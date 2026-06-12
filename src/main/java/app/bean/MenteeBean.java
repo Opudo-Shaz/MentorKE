@@ -47,12 +47,30 @@ public class MenteeBean {
         logger.debug("CDI Bean initialized with constructor injection");
     }
 
-   //  Register a new mentee
-   
-    public void add(Mentee mentee) {
-        logger.info("=== Starting Mentee Registration ===");
+    /**
+     * CREATE - Register a mentee.
+     * source = "SELF"  -> self-registration, mentee.getPassword() is the plain password the user chose
+     * source = "ADMIN" -> admin-created, system generates a temp password and emails it
+     */
+    public void add(Mentee mentee, String source) {
+        logger.info("=== Starting Mentee Registration ({}) ===", source);
         logger.info("Username: {}, Email: {}, Field of Study: {}", mentee.getUsername(), mentee.getEmail(),
                 mentee.getFieldOfStudy());
+
+        String plainTempPassword = null;
+
+        if ("ADMIN".equals(source)) {
+            // Admin does not set a password — generate a temporary one
+            plainTempPassword = PasswordUtil.generateTempPassword();
+            mentee.setPassword(PasswordUtil.hashPassword(plainTempPassword));
+            mentee.setMustChangePassword(true);
+        } else {
+            // Self-registration — user provided their own password
+            if (PasswordUtil.needsHashing(mentee.getPassword())) {
+                mentee.setPassword(PasswordUtil.hashPassword(mentee.getPassword()));
+            }
+            mentee.setMustChangePassword(false);
+        }
 
         mentee.setRole("mentee");
         if (mentee.getStatus() == null || mentee.getStatus().isEmpty()) {
@@ -73,58 +91,53 @@ public class MenteeBean {
         menteeDAO.save(mentee);
         logger.info("Mentee added successfully, ID: {}", mentee.getId());
 
-        //  Fire CRUD event for audit trail
+        // Fire CRUD event for audit trail
         auditTrailEvent.fire(new AuditTrail(
             "Mentee",
             String.valueOf(mentee.getId()),
             "CREATE",
-            String.valueOf(mentee.getId()),
+            "ADMIN".equals(source) ? "ADMIN" : String.valueOf(mentee.getId()),
             "Mentee registered: " + mentee.getUsername() + ", Field: " + mentee.getFieldOfStudy()));
 
-        //  Fire email event for mentees
+        // Fire email event — includes temp password only for admin-created accounts
         logger.debug("Firing email registration event for mentee...");
         userRegisteredEvent.fire(
-                new UserRegisteredEvent(
+            new UserRegisteredEvent(
                 mentee.getEmail(),
                 mentee.getUsername(),
-                        "MENTEE"));
+                "MENTEE",
+                null,
+                plainTempPassword
+            ));
 
         logger.info("=== Mentee Registration Completed Successfully ===");
     }
 
     // Get mentee by ID
- 
     public Mentee getById(String menteeId) {
         logger.debug("Fetching mentee by ID: {}", menteeId);
         return menteeDAO.findById(Long.parseLong(menteeId));
     }
 
-
-     // Get all mentees
-    
+    // Get all mentees
     public List<Mentee> findAll() {
         logger.debug("Fetching all mentees");
         return menteeDAO.findAll();
     }
 
-     // Get mentees assigned to a mentor
-     
+    // Get mentees assigned to a mentor
     public List<Mentee> findByMentorId(String mentorId) {
-
         logger.debug("Fetching mentees for mentor ID: {}", mentorId);
-
         return menteeDAO.getMenteesByMentorId(mentorId);
     }
 
     // Get mentee by user ID
-    
     public Mentee getByUserId(String userId) {
         logger.debug("Fetching mentee by user ID: {}", userId);
         return menteeDAO.findById(Long.parseLong(userId));
     }
 
     // Update existing mentee
-     
     public void update(String menteeId, Mentee mentee) {
         logger.info("=== Updating mentee ===");
         logger.info("Mentee ID: {}", menteeId);
@@ -137,8 +150,7 @@ public class MenteeBean {
         }
         logger.debug("Mentee found ✓");
 
-        //  Normalize mentorId (convert empty/whitespace to null BEFORE
-        // preservation)
+        // Normalize mentorId (convert empty/whitespace to null BEFORE preservation)
         if (mentee.getMentorId() != null && mentee.getMentorId().trim().isEmpty()) {
             logger.debug("Empty mentorId provided, treating as null");
             mentee.setMentorId(null);
@@ -151,23 +163,24 @@ public class MenteeBean {
         mentee.setRole(existingMentee.getRole());
         mentee.setCreatedAt(existingMentee.getCreatedAt());
         mentee.setUpdatedAt(existingMentee.getUpdatedAt());
+        mentee.setMustChangePassword(existingMentee.isMustChangePassword());
 
-        //  Preserve existing educationLevel if not provided
+        // Preserve existing educationLevel if not provided
         if (mentee.getEducationLevel() == null || mentee.getEducationLevel().isEmpty()) {
             logger.debug("No new educationLevel provided, keeping existing educationLevel");
             mentee.setEducationLevel(existingMentee.getEducationLevel());
         }
 
-        //  Preserve existing mentorId if not provided
+        // Preserve existing mentorId if not provided
         if (mentee.getMentorId() == null) {
             logger.debug("No new mentorId provided, keeping existing mentorId");
             mentee.setMentorId(existingMentee.getMentorId());
         }
 
-        //  Set ID (important for validator context)
+        // Set ID (important for validator context)
         mentee.setId(Long.parseLong(menteeId));
 
-        //  Set default status if needed
+        // Set default status if needed
         if (mentee.getStatus() == null || mentee.getStatus().isEmpty()) {
             mentee.setStatus("Active");
         }
@@ -181,67 +194,23 @@ public class MenteeBean {
         }
         logger.debug("Validation passed ");
 
-        //  Update mentee in database
+        // Update mentee in database
         logger.debug("Updating mentee in database...");
         menteeDAO.update(mentee);
         logger.info("Mentee updated successfully");
 
-        //  Fire CRUD event for audit trail
+        // Fire CRUD event for audit trail
         auditTrailEvent.fire(new AuditTrail(
                 "Mentee",
                 menteeId,
                 "UPDATE",
-            menteeId,
+                menteeId,
                 "Mentee updated: Field=" + mentee.getFieldOfStudy()));
 
         logger.info("=== Mentee Update Completed Successfully ===");
     }
 
-   //  Add mentee (admin function, no user registration)
-    
-    public void addAdmin(Mentee mentee) {
-        logger.info("=== Admin Adding Mentee ===");
-        logger.info("Username: {}, Email: {}, Field of Study: {}", mentee.getUsername(), mentee.getEmail(), mentee.getFieldOfStudy());
-
-            if (PasswordUtil.needsHashing(mentee.getPassword())) {
-                mentee.setPassword(PasswordUtil.hashPassword(mentee.getPassword()));
-            }
-
-        //  Validate mentee data
-        logger.debug("Validating mentee data...");
-        ValidationResult validationResult = menteeValidator.validate(mentee);
-        if (!validationResult.isValid()) {
-            logger.error("Validation failed!");
-            throw new IllegalArgumentException("Mentee validation failed: " + validationResult.getErrorMessages());
-        }
-        logger.debug("Validation passed ✓");
-
-        //  Add mentee to database
-        logger.debug("Adding mentee to database...");
-        menteeDAO.save(mentee);
-        logger.info("Mentee added successfully, ID: {}", mentee.getId());
-
-        //  Fire CRUD event for audit trail
-        auditTrailEvent.fire(new AuditTrail(
-                "Mentee",
-                String.valueOf(mentee.getId()),
-                "CREATE",
-                "ADMIN",
-            "Mentee added by admin: " + mentee.getUsername() + ", Field: " + mentee.getFieldOfStudy()));
-
-        //  Fire email event to notify user they're now a mentee
-        logger.debug("Firing email for newly assigned mentee...");
-        userRegisteredEvent.fire(
-                new UserRegisteredEvent(
-                mentee.getEmail(),
-                mentee.getUsername(),
-                        "MENTEE"));
-
-        logger.info("=== Mentee Addition Completed Successfully ===");
-    }
-
     // Delete mentee
-     
     public void delete(String menteeId) {
         logger.info("=== Deleting mentee ===");
         logger.info("Mentee ID: {}", menteeId);

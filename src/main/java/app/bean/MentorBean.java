@@ -42,56 +42,74 @@ public class MentorBean {
     public MentorBean() {}
 
 
-    public void add(Mentor mentor) throws SQLException {
-        logger.info("=== Starting Mentor Registration ===");
-        logger.info("Username: {}, Email: {}, Specialization: {}", mentor.getUsername(), mentor.getEmail(), mentor.getSpecialization());
+/**
+ * CREATE - Register a mentor.
+ * source = "SELF" (self-registration, user provides their own password)
+ * source = "ADMIN" (admin-created, system generates temp password and emails it)
+ */
+public void add(Mentor mentor, String source) throws SQLException {
+    logger.info("=== Starting Mentor Registration ({}) ===", source);
+    logger.info("Username: {}, Email: {}, Specialization: {}",
+            mentor.getUsername(), mentor.getEmail(), mentor.getSpecialization());
 
+    String plainTempPassword = null;
+
+    if ("ADMIN".equals(source)) {
+        // Admin does not set a password — generate a temporary one
+        plainTempPassword = PasswordUtil.generateTempPassword();
+        mentor.setPassword(PasswordUtil.hashPassword(plainTempPassword));
+        mentor.setMustChangePassword(true);
+    } else {
+        // Self-registration — user provided their own password
         if (PasswordUtil.needsHashing(mentor.getPassword())) {
             mentor.setPassword(PasswordUtil.hashPassword(mentor.getPassword()));
         }
-
-        // Step 1: Ensure inherited account fields are set on the mentor record
-        mentor.setRole("mentor");
-        if (mentor.getStatus() == null || mentor.getStatus().isEmpty()) {
-            mentor.setStatus("Active");
-        }
-
-        // Step 2: Validate mentor data
-        logger.debug("Validating mentor data...");
-        ValidationResult validationResult = mentorValidator.validate(mentor);
-        if (!validationResult.isValid()) {
-            logger.error("Validation failed!");
-            throw new IllegalArgumentException("Mentor validation failed: " + validationResult.getErrorMessages());
-        }
-        logger.debug("Validation passed ✓");
-
-        // Step 3: Add mentor to database
-        logger.debug("Adding mentor to database...");
-        mentorDAO.save(mentor);
-        logger.info("Mentor added successfully, ID: {}", mentor.getId());
-
-        // Step 4: Fire CRUD event for audit trail
-        auditTrailEvent.fire(new AuditTrail(
-            "Mentor",
-            String.valueOf(mentor.getId()),
-            "CREATE",
-            String.valueOf(mentor.getId()),
-            "Mentor registered: " + mentor.getUsername() + ", Specialization: " + mentor.getSpecialization()
-        ));
-
-        // Step 5: Fire email event with specialization for mentors
-        logger.debug("Firing email registration event for mentor...");
-        userRegisteredEvent.fire(
-            new UserRegisteredEvent(
-                mentor.getEmail(),
-                mentor.getUsername(),
-                "MENTOR",
-                mentor.getSpecialization()
-            )
-        );
-
-        logger.info("=== Mentor Registration Completed Successfully ===");
+        mentor.setMustChangePassword(false);
     }
+
+    // Common setup
+    mentor.setRole("mentor");
+    if (mentor.getStatus() == null || mentor.getStatus().isEmpty()) {
+        mentor.setStatus("Active");
+    }
+
+    // Validate
+    logger.debug("Validating mentor data...");
+    ValidationResult validationResult = mentorValidator.validate(mentor);
+    if (!validationResult.isValid()) {
+        logger.error("Validation failed!");
+        throw new IllegalArgumentException("Mentor validation failed: " + validationResult.getErrorMessages());
+    }
+    logger.debug("Validation passed ✓");
+
+    // Persist
+    logger.debug("Adding mentor to database...");
+    mentorDAO.save(mentor);
+    logger.info("Mentor added successfully, ID: {}", mentor.getId());
+
+    // Audit trail
+    auditTrailEvent.fire(new AuditTrail(
+        "Mentor",
+        String.valueOf(mentor.getId()),
+        "CREATE",
+        "ADMIN".equals(source) ? "ADMIN" : String.valueOf(mentor.getId()),
+        "Mentor registered: " + mentor.getUsername() + ", Specialization: " + mentor.getSpecialization()
+    ));
+
+    // Email event — pass temp password only if admin-created
+    logger.debug("Firing email registration event for mentor...");
+    userRegisteredEvent.fire(
+        new UserRegisteredEvent(
+            mentor.getEmail(),
+            mentor.getUsername(),
+            "MENTOR",
+            mentor.getSpecialization(),
+            plainTempPassword  // null for self-registration
+        )
+    );
+
+    logger.info("=== Mentor Registration Completed Successfully ===");
+}
 
     /**
      * READ - Get mentor by ID
@@ -208,56 +226,6 @@ public class MentorBean {
 
          logger.info("=== Mentor Update Completed Successfully ===");
      }
-
-    /**
-     * CREATE - Add mentor by Admin
-     */
-    public void addAdmin(Mentor mentor) throws SQLException {
-        logger.info("=== Admin Adding Mentor ===");
-        logger.info("Username: {}, Email: {}, Specialization: {}", mentor.getUsername(), mentor.getEmail(), mentor.getSpecialization());
-
-        if (PasswordUtil.needsHashing(mentor.getPassword())) {
-            mentor.setPassword(PasswordUtil.hashPassword(mentor.getPassword()));
-        }
-
-        mentor.setRole("mentor");
-
-        //  Validate mentor data
-        logger.debug("Validating mentor data...");
-        ValidationResult validationResult = mentorValidator.validate(mentor);
-        if (!validationResult.isValid()) {
-            logger.error("Validation failed!");
-            throw new IllegalArgumentException("Mentor validation failed: " + validationResult.getErrorMessages());
-        }
-        logger.debug("Validation passed ✓");
-
-        //  Add mentor to database
-        logger.debug("Adding mentor to database...");
-        mentorDAO.save(mentor);
-        logger.info("Mentor added successfully, ID: {}", mentor.getId());
-
-        // Fire CRUD event for audit trail
-        auditTrailEvent.fire(new AuditTrail(
-            "Mentor",
-            String.valueOf(mentor.getId()),
-            "CREATE",
-            "ADMIN",
-            "Mentor added by admin: " + mentor.getUsername() + ", Specialization: " + mentor.getSpecialization()
-        ));
-
-        //  Fire email event to notify user they're now a mentor
-        logger.debug("Firing email for newly assigned mentor...");
-        userRegisteredEvent.fire(
-            new UserRegisteredEvent(
-                mentor.getEmail(),
-                mentor.getUsername(),
-                "MENTOR",
-                mentor.getSpecialization()
-            )
-        );
-
-        logger.info("=== Mentor Addition Completed Successfully ===");
-    }
 
     /**
      * DELETE - Delete mentor

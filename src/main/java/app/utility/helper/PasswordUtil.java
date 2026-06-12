@@ -4,6 +4,8 @@ import at.favre.lib.crypto.bcrypt.BCrypt;
 import app.utility.logging.AppLogger;
 import org.slf4j.Logger;
 
+import java.security.SecureRandom;
+
 /**
  * PasswordUtil - Utility class for password hashing and verification
  * Uses BCrypt for secure password storage
@@ -13,12 +15,15 @@ public class PasswordUtil {
     private static final Logger logger = AppLogger.getLogger(PasswordUtil.class);
 
     // Default cost factor for BCrypt
-    private static final int BCRYPT_COST = 10; 
+    private static final int BCRYPT_COST = 10;
+
+    // Characters used for temporary password generation (no ambiguous chars like 0/O, 1/l/I)
+    private static final String TEMP_PASSWORD_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+    private static final int TEMP_PASSWORD_LENGTH = 10;
+    private static final SecureRandom RANDOM = new SecureRandom();
 
     /**
      * Hash a plain text password using BCrypt
-     * @param plainPassword The plain text password
-     * @return The hashed password
      */
     public static String hashPassword(String plainPassword) {
         if (plainPassword == null || plainPassword.isEmpty()) {
@@ -36,9 +41,6 @@ public class PasswordUtil {
 
     /**
      * Verify a plain text password against a BCrypt hash
-     * @param plainPassword The plain text password to verify
-     * @param hashedPassword The BCrypt hash to verify against
-     * @return True if password matches, false otherwise
      */
     public static boolean verifyPassword(String plainPassword, String hashedPassword) {
         if (plainPassword == null || hashedPassword == null) {
@@ -55,8 +57,6 @@ public class PasswordUtil {
 
     /**
      * Check if a hash is a valid BCrypt hash
-     * @param hash The hash to check
-     * @return True if it's a BCrypt hash, false otherwise
      */
     public static boolean isBcryptHash(String hash) {
         if (hash == null) {
@@ -68,12 +68,24 @@ public class PasswordUtil {
 
     /**
      * Check if a password needs hashing (i.e., it's not already a BCrypt hash)
-     * @param password The password to check
-     * @return True if the password needs hashing, false if it's already hashed
      */
     public static boolean needsHashing(String password) {
         return password != null && !isBcryptHash(password);
     }
+
+    /**
+     * Generate a secure, human-friendly temporary password.
+     * Used when an admin creates a user account — the plain value
+     * is emailed once to the user and never stored.
+     *
+     * @return a random 10-character temporary password
+     */
+    public static String generateTempPassword() {
+        StringBuilder sb = new StringBuilder(TEMP_PASSWORD_LENGTH);
+        for (int i = 0; i < TEMP_PASSWORD_LENGTH; i++) {
+            sb.append(TEMP_PASSWORD_CHARS.charAt(RANDOM.nextInt(TEMP_PASSWORD_CHARS.length())));
+        }
+        logger.debug("Temporary password generated");
+        return sb.toString();
+    }
 }
-
-

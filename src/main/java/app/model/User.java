@@ -34,7 +34,7 @@ public class User implements Serializable {
     @NotBlank
     @Size(max = 255)
     @Column(name = "password", length = 255, nullable = false)
-    private String password;                  // excluded from toString — never log passwords
+    private String password; // excluded from toString — never log passwords
 
     @NotBlank
     @Size(max = 50)
@@ -53,6 +53,9 @@ public class User implements Serializable {
     @Column(name = "status", length = 50)
     @ToString.Include
     private String status;
+
+    @Column(name = "must_change_password")
+    private boolean mustChangePassword = false;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false)
