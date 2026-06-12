@@ -11,11 +11,7 @@ public class EmailTemplateUtil {
 
     
     private EmailTemplateUtil() {
-        /* This utility class should not be instantiated */
     }
-
-
-
 
 
     public static String loadTemplate(String templateName) {

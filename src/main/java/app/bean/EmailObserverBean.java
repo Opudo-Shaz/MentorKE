@@ -8,6 +8,7 @@ import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import app.utility.logging.AppLogger;
 import org.slf4j.Logger;
+import java.util.HashMap;
 import java.util.Map;
 
 @Stateless
@@ -23,29 +24,36 @@ public class EmailObserverBean {
         logger.info("User registered event received for: {}", event.getName());
 
         try {
-            // Load appropriate template based on role
-            String templateName = "welcome-email.html";
-            if ("MENTOR".equals(event.getRole())) {
+            String templateName;
+            String subject;
+            Map<String, String> values = new HashMap<>();
+            values.put("name", event.getName());
+            values.put("role", event.getRole());
+            values.put("specialization", event.getSpecialization() != null ? event.getSpecialization() : "");
+
+            if (event.hasTempPassword()) {
+                // Admin-created account — send temp password + force reset
+                templateName = "admin-created-account.html";
+                subject = "Your MentorKE Account Has Been Created";
+                values.put("tempPassword", event.getTempPassword());
+            } else if ("MENTOR".equals(event.getRole())) {
                 templateName = "mentor-email.html";
+                subject = "Welcome to MentorKE - " + event.getRole();
             } else if ("MENTEE".equals(event.getRole())) {
                 templateName = "mentee-email.html";
+                subject = "Welcome to MentorKE - " + event.getRole();
+            } else {
+                templateName = "welcome-email.html";
+                subject = "Welcome to MentorKE - " + event.getRole();
             }
 
             // Load template
             String template = EmailTemplateUtil.loadTemplate(templateName);
 
-            // Prepare template variables
-            Map<String, String> values = Map.of(
-                "name", event.getName(),
-                "role", event.getRole(),
-                "specialization", event.getSpecialization() != null ? event.getSpecialization() : ""
-            );
-
             // Populate template
             String html = EmailTemplateUtil.populateTemplate(template, values);
 
             // Send email
-            String subject = "Welcome to MentorKE - " + event.getRole();
             emailBean.sendEmail(event.getEmail(), subject, html);
 
             logger.info("Email scheduled for: {}", event.getName());
