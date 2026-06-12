@@ -206,7 +206,7 @@ public class EmailReminderBean {
                 "</div></body></html>";
     }
 
-// helper method to format remaining time to huma readable form
+// helper method to format remaining time to human readable form
     private String formatTimeRemaining(LocalDateTime scheduledDate, LocalDateTime now) {
         long minutes = ChronoUnit.MINUTES.between(now, scheduledDate);
         long hours   = minutes / 60;
