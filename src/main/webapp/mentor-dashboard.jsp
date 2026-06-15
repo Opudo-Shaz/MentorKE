@@ -242,76 +242,91 @@
         .pill-inactive { background: var(--amber-50);  color: var(--amber-700); }
         .pill-inactive::before { background: var(--amber-700); }
 
-         /* ── EXPERTISE TAGS ── */
-         .tag {
-             display: inline-block;
-             background: var(--blue-50); color: var(--blue-800);
-             font-size: 12px; font-weight: 500;
-             padding: 4px 12px; border-radius: 20px;
-             border: 1px solid var(--blue-100);
-             margin: 3px;
-         }
+        /* ── EXPERTISE TAGS ── */
+        .tag {
+            display: inline-block;
+            background: var(--blue-50); color: var(--blue-800);
+            font-size: 12px; font-weight: 500;
+            padding: 4px 12px; border-radius: 20px;
+            border: 1px solid var(--blue-100);
+            margin: 3px;
+        }
 
-         /* ── BIO / GOALS BOX ── */
-         .info-box {
-             font-size: 13px; color: var(--gray-600); line-height: 1.7;
-             background: var(--blue-25);
-             border-left: 3px solid var(--blue-200);
-             border-radius: 0 var(--radius-md) var(--radius-md) 0;
-             padding: 12px 14px;
-         }
+        /* ── BIO / GOALS BOX ── */
+        .info-box {
+            font-size: 13px; color: var(--gray-600); line-height: 1.7;
+            background: var(--blue-25);
+            border-left: 3px solid var(--blue-200);
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            padding: 12px 14px;
+        }
 
-         /* ── OVERVIEW TILES ── */
-         .overview-tile {
-             border-radius: var(--radius-md); padding: 14px 16px; margin-bottom: 12px;
-         }
-         .overview-tile:last-child { margin-bottom: 0; }
-         .overview-tile-label {
-             font-size: 11px; font-weight: 600; text-transform: uppercase;
-             letter-spacing: 0.06em; margin-bottom: 4px;
-         }
-         .overview-tile-value { font-size: 15px; font-weight: 600; color: var(--gray-800); }
+        /* ── OVERVIEW TILES ── */
+        .overview-tile {
+            border-radius: var(--radius-md); padding: 14px 16px; margin-bottom: 12px;
+        }
+        .overview-tile:last-child { margin-bottom: 0; }
+        .overview-tile-label {
+            font-size: 11px; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.06em; margin-bottom: 4px;
+        }
+        .overview-tile-value { font-size: 15px; font-weight: 600; color: var(--gray-800); }
 
-         /* ── EMPTY STATE ── */
-         .empty-state { text-align: center; padding: 32px 20px; color: var(--gray-400); }
-         .empty-state svg { width: 36px; height: 36px; margin: 0 auto 10px; display: block; opacity: 0.35; }
-         .empty-state p { font-size: 14px; }
+        /* ── EMPTY STATE ── */
+        .empty-state { text-align: center; padding: 32px 20px; color: var(--gray-400); }
+        .empty-state svg { width: 36px; height: 36px; margin: 0 auto 10px; display: block; opacity: 0.35; }
+        .empty-state p { font-size: 14px; }
 
-         /* ── ACTION GRID ── */
-         .action-grid {
-             display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 20px;
-             align-items: stretch;
-         }
-         .action-card {
-             background: var(--white); border: 1px solid var(--gray-200);
-             border-radius: var(--radius-lg); padding: 18px; text-align: center;
-             box-shadow: var(--shadow-sm); text-decoration: none;
-             color: var(--gray-800); transition: all 0.15s;
+        /* ── ACTION GRID — now 5 columns to fit availability card ── */
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 14px;
+            margin-bottom: 20px;
+            align-items: stretch;
+        }
+        .action-card {
+            background: var(--white); border: 1px solid var(--gray-200);
+            border-radius: var(--radius-lg); padding: 18px; text-align: center;
+            box-shadow: var(--shadow-sm); text-decoration: none;
+            color: var(--gray-800); transition: all 0.15s;
             display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
             min-height: 118px;
-         }
-         .action-card:hover {
-             border-color: var(--blue-200); background: var(--blue-25);
-             transform: translateY(-2px);
-         }
-         .action-icon {
-             width: 40px; height: 40px; border-radius: var(--radius-md);
-             background: var(--blue-50); display: flex; align-items: center; justify-content: center;
-         }
-         .action-icon svg { width: 20px; height: 20px; color: var(--blue-800); }
-         .action-label { font-size: 13px; font-weight: 500; line-height: 1.3; }
+        }
+        .action-card:hover {
+            border-color: var(--blue-200); background: var(--blue-25);
+            transform: translateY(-2px);
+        }
+        .action-icon {
+            width: 40px; height: 40px; border-radius: var(--radius-md);
+            background: var(--blue-50); display: flex; align-items: center; justify-content: center;
+        }
+        .action-icon svg { width: 20px; height: 20px; color: var(--blue-800); }
+        .action-label { font-size: 13px; font-weight: 500; line-height: 1.3; }
 
-         /* ── UNREAD BADGE ── */
-         .unread-badge {
-             position: absolute; top: -4px; right: -4px;
-             background: var(--red-700); color: var(--white);
-             font-size: 10px; font-weight: 600;
-             width: 18px; height: 18px;
-             border-radius: 50%;
-             display: flex; align-items: center; justify-content: center;
-             border: 2px solid var(--white);
-         }
-         .unread-badge.hidden { display: none; }
+        /* ── UNREAD BADGE ── */
+        .unread-badge {
+            position: absolute; top: -4px; right: -4px;
+            background: var(--red-700); color: var(--white);
+            font-size: 10px; font-weight: 600;
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            border: 2px solid var(--white);
+        }
+        .unread-badge.hidden { display: none; }
+
+        /* ── AVAILABILITY CARD ACCENT ── */
+        .action-card.availability-card:hover {
+            border-color: var(--green-200);
+            background: var(--green-50);
+        }
+        .action-card.availability-card .action-icon {
+            background: var(--green-50);
+        }
+        .action-card.availability-card .action-icon svg {
+            color: var(--green-700);
+        }
     </style>
 </head>
 <body>
@@ -336,17 +351,16 @@
 
     int menteeCount = (mentees != null) ? mentees.size() : 0;
 
-        Integer analyticsTotalMentees = (Integer) request.getAttribute("analyticsTotalMentees");
-        Integer analyticsSessionsCompleted = (Integer) request.getAttribute("analyticsSessionsCompleted");
-        Integer analyticsUpcomingSessions = (Integer) request.getAttribute("analyticsUpcomingSessions");
-        Double analyticsAverageRating = (Double) request.getAttribute("analyticsAverageRating");
+    Integer analyticsTotalMentees       = (Integer) request.getAttribute("analyticsTotalMentees");
+    Integer analyticsSessionsCompleted  = (Integer) request.getAttribute("analyticsSessionsCompleted");
+    Integer analyticsUpcomingSessions   = (Integer) request.getAttribute("analyticsUpcomingSessions");
+    Double  analyticsAverageRating      = (Double)  request.getAttribute("analyticsAverageRating");
 
-        int totalMenteesMetric = analyticsTotalMentees != null ? analyticsTotalMentees : menteeCount;
-        int sessionsCompletedMetric = analyticsSessionsCompleted != null ? analyticsSessionsCompleted : 0;
-        int upcomingSessionsMetric = analyticsUpcomingSessions != null ? analyticsUpcomingSessions : 0;
-        String averageRatingMetric = (analyticsAverageRating != null && analyticsAverageRating > 0)
-            ? String.format("%.1f", analyticsAverageRating)
-            : "0.0";
+    int    totalMenteesMetric      = analyticsTotalMentees      != null ? analyticsTotalMentees      : menteeCount;
+    int    sessionsCompletedMetric = analyticsSessionsCompleted != null ? analyticsSessionsCompleted : 0;
+    int    upcomingSessionsMetric  = analyticsUpcomingSessions  != null ? analyticsUpcomingSessions  : 0;
+    String averageRatingMetric     = (analyticsAverageRating != null && analyticsAverageRating > 0)
+                                     ? String.format("%.1f", analyticsAverageRating) : "0.0";
 
     String initials = username.substring(0, 1).toUpperCase();
     if (specialization.length() > 1) initials = specialization.substring(0, 1).toUpperCase();
@@ -357,7 +371,11 @@
     <div class="sidebar-brand">
         <div class="logo">
             <div class="logo-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                    <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+                </svg>
             </div>
             <div>
                 <div class="logo-text">MentorKE</div>
@@ -370,17 +388,41 @@
         <div class="nav-section-label">Menu</div>
 
         <a href="<%= request.getContextPath() %>/app/mentor-dashboard/" class="nav-link active">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+            </svg>
             Dashboard
         </a>
 
+        <a href="<%= request.getContextPath() %>/app/mentor-availability/" class="nav-link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            Availability
+        </a>
+
         <a href="<%= request.getContextPath() %>/app/home/" class="nav-link">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
             Home
         </a>
 
         <a href="/MentorKE/app/about/" class="nav-link">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
             About
         </a>
     </nav>
@@ -394,7 +436,12 @@
             </div>
         </div>
         <a href="<%= request.getContextPath() %>/app/login/?action=logout" class="btn-logout">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
             Sign out
         </a>
     </div>
@@ -417,46 +464,88 @@
 
         <% if (errorMsg != null && !errorMsg.isEmpty()) { %>
         <div class="alert alert-error">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
             <%= errorMsg %>
         </div>
         <% } %>
 
-        <!-- QUICK ACTIONS -->
+        <!-- ── QUICK ACTIONS (5 cards) ── -->
         <div class="action-grid">
+
             <a href="<%= request.getContextPath() %>/app/mentor-requests/pending" class="action-card">
                 <div class="action-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
                 </div>
                 <span class="action-label">Pending<br>Requests</span>
             </a>
 
             <a href="<%= request.getContextPath() %>/app/sessions/upcoming" class="action-card">
                 <div class="action-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                    </svg>
                 </div>
                 <span class="action-label">Upcoming<br>Sessions</span>
             </a>
+
             <a href="<%= request.getContextPath() %>/app/sessions/completed" class="action-card">
                 <div class="action-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"/>
+                    </svg>
                 </div>
                 <span class="action-label">Completed<br>Sessions</span>
             </a>
-            <a href="<%= request.getContextPath() %>/app/messaging/list-conversations" class="action-card" id="messagesActionCard">
+
+            <a href="<%= request.getContextPath() %>/app/messaging/list-conversations" class="action-card"
+               id="messagesActionCard">
                 <div class="action-icon" style="position:relative;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
                     <span id="unreadBadge" class="unread-badge hidden">0</span>
                 </div>
                 <span class="action-label">Messages</span>
             </a>
+
+            <a href="<%= request.getContextPath() %>/app/mentor-availability/" class="action-card availability-card">
+                <div class="action-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                        <line x1="16" y1="2" x2="16" y2="6"/>
+                        <line x1="8" y1="2" x2="8" y2="6"/>
+                        <line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                </div>
+                <span class="action-label">Set<br>Availability</span>
+            </a>
+
         </div>
 
-        <!-- STATS -->
+        <!-- ── STATS ── -->
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-icon blue">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#1565c0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#1565c0" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
                 </div>
                 <div>
                     <div class="stat-label">Total mentees</div>
@@ -465,7 +554,10 @@
             </div>
             <div class="stat-card">
                 <div class="stat-icon teal">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#0f6e56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#0f6e56" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"/>
+                    </svg>
                 </div>
                 <div>
                     <div class="stat-label">Sessions completed</div>
@@ -474,7 +566,11 @@
             </div>
             <div class="stat-card">
                 <div class="stat-icon green">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                    </svg>
                 </div>
                 <div>
                     <div class="stat-label">Upcoming sessions</div>
@@ -483,7 +579,10 @@
             </div>
             <div class="stat-card">
                 <div class="stat-icon amber">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9 17 14 19 21 12 17 5 21 7 14 2 9 9 9 12 2"/></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="12 2 15 9 22 9 17 14 19 21 12 17 5 21 7 14 2 9 9 9 12 2"/>
+                    </svg>
                 </div>
                 <div>
                     <div class="stat-label">Average rating</div>
@@ -492,10 +591,9 @@
             </div>
         </div>
 
-        <!-- ROW 1: Profile + Overview -->
+        <!-- ── ROW 1: Profile + Overview ── -->
         <div class="two-col">
 
-            <!-- My Profile -->
             <div class="card">
                 <div class="card-header">
                     <div>
@@ -536,7 +634,6 @@
                 </div>
             </div>
 
-            <!-- Overview panel -->
             <div class="card">
                 <div class="card-header">
                     <div>
@@ -565,10 +662,9 @@
             </div>
         </div>
 
-        <!-- ROW 2: Bio + Expertise -->
+        <!-- ── ROW 2: Bio + Expertise ── -->
         <div class="two-col">
 
-            <!-- Bio -->
             <div class="card">
                 <div class="card-header">
                     <div>
@@ -578,17 +674,18 @@
                 </div>
                 <div class="card-body">
                     <div class="info-box"><%= bio %></div>
-
                     <% if (!qualifications.equals("No qualifications listed.")) { %>
                     <div style="margin-top:18px;">
-                        <div style="font-size:12px; font-weight:600; color:var(--gray-400); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:8px;">Qualifications</div>
+                        <div style="font-size:12px; font-weight:600; color:var(--gray-400);
+                                    text-transform:uppercase; letter-spacing:0.06em; margin-bottom:8px;">
+                            Qualifications
+                        </div>
                         <div class="info-box"><%= qualifications %></div>
                     </div>
                     <% } %>
                 </div>
             </div>
 
-            <!-- Expertise -->
             <div class="card">
                 <div class="card-header">
                     <div>
@@ -612,7 +709,6 @@
                     <p style="font-size:13px; color:var(--gray-400); margin-bottom:20px;">No expertise areas listed yet.</p>
                     <% } %>
 
-                    <!-- Quick stats inside expertise card -->
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px;">
                         <div style="background:var(--blue-25); border-radius:var(--radius-md); padding:12px; text-align:center;">
                             <div style="font-size:22px; font-weight:700; color:var(--blue-800);"><%= menteeCount %></div>
@@ -627,7 +723,7 @@
             </div>
         </div>
 
-        <!-- ROW 3: Mentees Table -->
+        <!-- ── ROW 3: Mentees Table ── -->
         <div class="full-col">
             <div class="card">
                 <div class="card-header">
@@ -635,7 +731,9 @@
                         <h2>My mentees</h2>
                         <p>All mentees currently assigned to you</p>
                     </div>
-                    <span style="background:var(--blue-50); color:var(--blue-800); font-size:12px; font-weight:600; padding:4px 12px; border-radius:20px; border:1px solid var(--blue-100);">
+                    <span style="background:var(--blue-50); color:var(--blue-800); font-size:12px;
+                                 font-weight:600; padding:4px 12px; border-radius:20px;
+                                 border:1px solid var(--blue-100);">
                         <%= menteeCount %> assigned
                     </span>
                 </div>
@@ -671,7 +769,11 @@
                             <tr>
                                 <td colspan="6">
                                     <div class="empty-state">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                             stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                            <circle cx="9" cy="7" r="4"/>
+                                        </svg>
                                         <p>No mentees have been assigned to you yet.</p>
                                     </div>
                                 </td>
@@ -703,10 +805,7 @@
             .catch(err => console.log('Unread count fetch failed:', err));
     }
 
-    // Initial fetch
     updateUnreadCount();
-
-    // Poll every 30 seconds
     setInterval(updateUnreadCount, 30000);
 </script>
 
