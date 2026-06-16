@@ -20,11 +20,6 @@ public class MentorAvailabilityBean {
         return availabilityDAO.findByMentorId(mentorId);
     }
 
-    /**
-     * Replace all availability slots for a mentor.
-     * Called when they submit the availability form.
-     * days is a map of dayOfWeek -> {startTime, endTime, isAvailable}
-     */
     public void saveAvailability(Long mentorId, List<Map<String, String>> slots) {
         // Clear existing
         availabilityDAO.deleteByMentorId(mentorId);
