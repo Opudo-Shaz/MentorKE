@@ -1,12 +1,13 @@
 package app.restapi;
 
 import app.bean.GoalBean;
-import app.model.MenteeGoal;
 import app.model.GoalProgressLog;
+import app.model.MenteeGoal;
 import app.security.jwt.JwtUtil;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.*;
+
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -19,10 +20,15 @@ public class GoalApi {
     @Inject
     private GoalBean goalBean;
 
-    // POST /api/goals — create a goal
+    @Inject
+    private JwtUtil jwtUtil;
+
+    // POST /api/goals
     @POST
     public Response createGoal(Map<String, Object> body, @Context HttpHeaders headers) {
         Long menteeId = extractMenteeId(headers);
+        if (menteeId == null) return unauthorized();
+
         String title       = (String) body.get("title");
         String description = (String) body.get("description");
         String targetDate  = (String) body.get("targetDate");
@@ -38,14 +44,15 @@ public class GoalApi {
         return Response.status(Response.Status.CREATED).entity(goal).build();
     }
 
-    // GET /api/goals — my goals
+    // GET /api/goals
     @GET
     public Response myGoals(@Context HttpHeaders headers) {
         Long menteeId = extractMenteeId(headers);
+        if (menteeId == null) return unauthorized();
         return Response.ok(goalBean.getGoalsForMentee(menteeId)).build();
     }
 
-    // GET /api/goals/{id} — single goal
+    // GET /api/goals/{id}
     @GET
     @Path("/{id}")
     public Response getGoal(@PathParam("id") Long id) {
@@ -54,34 +61,37 @@ public class GoalApi {
         return Response.ok(goal).build();
     }
 
-    // PATCH /api/goals/{id}/progress — manual progress update
+    // PATCH /api/goals/{id}/progress
     @PATCH
     @Path("/{id}/progress")
     public Response updateProgress(@PathParam("id") Long id, Map<String, Object> body) {
-        int progress = (int) body.get("progress");
-        String note  = (String) body.getOrDefault("note", "");
+        int    progress = ((Number) body.get("progress")).intValue();
+        String note     = (String) body.getOrDefault("note", "");
         return Response.ok(goalBean.updateProgress(id, progress, note)).build();
     }
 
     // PATCH /api/goals/{id}/milestones/{mid}/complete
     @PATCH
     @Path("/{id}/milestones/{mid}/complete")
-    public Response completeMilestone(@PathParam("id") Long goalId, @PathParam("mid") Long milestoneId) {
+    public Response completeMilestone(@PathParam("id") Long goalId,
+                                      @PathParam("mid") Long milestoneId) {
         return Response.ok(goalBean.completeMilestone(goalId, milestoneId)).build();
     }
 
     // PATCH /api/goals/{id}/milestones/{mid}/uncomplete
     @PATCH
     @Path("/{id}/milestones/{mid}/uncomplete")
-    public Response uncompleteMilestone(@PathParam("id") Long goalId, @PathParam("mid") Long milestoneId) {
+    public Response uncompleteMilestone(@PathParam("id") Long goalId,
+                                        @PathParam("mid") Long milestoneId) {
         return Response.ok(goalBean.uncompleteMilestone(goalId, milestoneId)).build();
     }
 
-    // GET /api/goals/{id}/logs — progress history
+    // GET /api/goals/{id}/logs
     @GET
     @Path("/{id}/logs")
     public Response progressLogs(@PathParam("id") Long id) {
-        return Response.ok(goalBean.getProgressLogs(id)).build();
+        List<GoalProgressLog> logs = goalBean.getProgressLogs(id);
+        return Response.ok(logs).build();
     }
 
     // DELETE /api/goals/{id}
@@ -92,8 +102,17 @@ public class GoalApi {
         return Response.ok(Map.of("message", "Goal deleted")).build();
     }
 
+    // ── helpers ────────────────────────────────────────────
+
     private Long extractMenteeId(HttpHeaders headers) {
-        String token = headers.getHeaderString("Authorization");
-        return JwtUtil.extractUserId(token);
+        return jwtUtil.extractUserIdFromHeader(
+            headers.getHeaderString("Authorization")
+        );
+    }
+
+    private Response unauthorized() {
+        return Response.status(Response.Status.UNAUTHORIZED)
+                       .entity(Map.of("error", "Invalid or missing token"))
+                       .build();
     }
 }

@@ -175,25 +175,38 @@
 
 <%
     String username = (String) session.getAttribute("username");
-    if (username == null) username = "Mentee";
-    String menteeIdStr = (String) session.getAttribute("userId");
+    if (username == null) {
+        username = "Mentee";
+    }
+
+    Long menteeId = (Long) session.getAttribute("userId");
 
     @SuppressWarnings("unchecked")
-    List<MenteeGoal> goals = (List<MenteeGoal>) request.getAttribute("goals");
+    List<MenteeGoal> goals =
+        (List<MenteeGoal>) request.getAttribute("goals");
 
     String successMsg = (String) request.getAttribute("success");
     String errorMsg   = (String) request.getAttribute("error");
 
-    int totalGoals     = goals != null ? goals.size() : 0;
-    long completedGoals = goals != null ? goals.stream().filter(g -> "COMPLETED".equals(g.getStatus())).count() : 0;
-    long inProgress    = totalGoals - completedGoals;
-    int avgProg = goals != null && !goals.isEmpty()
-        ? goals.stream().mapToInt(MenteeGoal::getOverallProgress).sum() / goals.size()
+    int totalGoals = goals != null ? goals.size() : 0;
+
+    long completedGoals = goals != null
+        ? goals.stream()
+               .filter(g -> "COMPLETED".equals(g.getStatus()))
+               .count()
         : 0;
 
-    DateTimeFormatter dateFmt = DateTimeFormatter.ofPattern("dd MMM yyyy");
-%>
+    long inProgress = totalGoals - completedGoals;
 
+    int avgProg = goals != null && !goals.isEmpty()
+        ? goals.stream()
+               .mapToInt(MenteeGoal::getOverallProgress)
+               .sum() / goals.size()
+        : 0;
+
+    DateTimeFormatter dateFmt =
+        DateTimeFormatter.ofPattern("dd MMM yyyy");
+%>
 <!-- SIDEBAR -->
 <aside class="sidebar">
     <div class="sidebar-brand">

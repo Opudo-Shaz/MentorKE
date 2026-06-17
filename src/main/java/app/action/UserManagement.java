@@ -7,23 +7,26 @@ import app.model.Mentor;
 import app.model.Mentee;
 import app.model.User;
 import app.security.websecurity.MentorKeSecurity;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.inject.Inject;
-import jakarta.annotation.security.RolesAllowed;
-import java.io.IOException;
 import app.utility.logging.AppLogger;
-import org.slf4j.Logger;
-import jakarta.enterprise.context.ApplicationScoped;
 import app.framework.Action;
 import app.framework.ActionPostMethod;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.annotation.security.RolesAllowed;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 @ApplicationScoped
 @Action(value = "user-management", label = "User Management")
-@RolesAllowed({"mentor","mentee","admin"})
+@RolesAllowed({"admin"})
 public class UserManagement extends BaseAction {
 
-    private static final Logger logger = AppLogger.getLogger(UserManagement.class);
+    private static final Logger logger =
+            AppLogger.getLogger(UserManagement.class);
 
     @Inject
     private UserBean userBean;
@@ -37,153 +40,239 @@ public class UserManagement extends BaseAction {
     @Inject
     private MentorKeSecurity security;
 
+    /* =========================
+       ADD USER (MENTOR / MENTEE)
+       ========================= */
+
     @ActionPostMethod("add")
     @RolesAllowed({"admin"})
-    public void add(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        logger.info("=== HTTP POST add user ===");
+    public void add(HttpServletRequest request,
+                    HttpServletResponse response) {
+
         security.requireRole("admin");
 
         try {
-            String redirectParam = handleAddUser(request);
-            redirect(response, "admin?view=users&" + redirectParam);
-        } catch (IllegalArgumentException e) {
-            String errorMsg = e.getMessage().replace("User validation failed: ", "");
-            redirect(response, "admin?view=users&error=" + java.net.URLEncoder.encode(errorMsg, "UTF-8"));
+            String result = handleAdd(request);
+
+            redirect(response,
+                    request.getContextPath()
+                            + "/app/user-management/admin?view=users&"
+                            + result);
+
         } catch (Exception e) {
-            redirect(response, "admin?view=users&error=" + java.net.URLEncoder.encode(e.getMessage(), "UTF-8"));
+            redirectError(request, response, e);
         }
     }
+
+    /* =========================
+       UPDATE USER
+       ========================= */
 
     @ActionPostMethod("update")
-    public void update(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        logger.info("=== HTTP POST update user ===");
-        if (!isLoggedIn(request)) { redirect(response, "login"); return; }
-        if (requireRole(request, response, "admin")) return;
+    @RolesAllowed({"admin"})
+    public void update(HttpServletRequest request,
+                       HttpServletResponse response) {
+
+        security.requireRole("admin");
 
         try {
-            String redirectParam = handleUpdateUser(request);
-            redirect(response, "admin?view=users&" + redirectParam);
-        } catch (IllegalArgumentException e) {
-            String errorMsg = e.getMessage().replace("User validation failed: ", "");
-            redirect(response, "admin?view=users&error=" + java.net.URLEncoder.encode(errorMsg, "UTF-8"));
+            String result = handleUpdate(request);
+
+            redirect(response,
+                    request.getContextPath()
+                            + "/app/user-management/admin?view=users&"
+                            + result);
+
         } catch (Exception e) {
-            redirect(response, "admin?view=users&error=" + java.net.URLEncoder.encode(e.getMessage(), "UTF-8"));
+            redirectError(request, response, e);
         }
     }
+
+    /* =========================
+       DELETE USER
+       ========================= */
 
     @ActionPostMethod("delete")
-    public void delete(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        logger.info("=== HTTP POST delete user ===");
-        if (!isLoggedIn(request)) { redirect(response, "login"); return; }
-        if (requireRole(request, response, "admin")) return;
+    @RolesAllowed({"admin"})
+    public void delete(HttpServletRequest request,
+                       HttpServletResponse response) {
+
+        security.requireRole("admin");
 
         try {
-            String redirectParam = handleDeleteUser(request);
-            redirect(response, "admin?view=users&" + redirectParam);
-        } catch (IllegalArgumentException e) {
-            String errorMsg = e.getMessage().replace("User validation failed: ", "");
-            redirect(response, "admin?view=users&error=" + java.net.URLEncoder.encode(errorMsg, "UTF-8"));
+            String result = handleDelete(request);
+
+            redirect(response,
+                    request.getContextPath()
+                            + "/app/user-management/admin?view=users&"
+                            + result);
+
         } catch (Exception e) {
-            redirect(response, "admin?view=users&error=" + java.net.URLEncoder.encode(e.getMessage(), "UTF-8"));
+            redirectError(request, response, e);
         }
     }
 
-    /**
-     * Handle add user request - only extracts parameters and delegates to bean
-     */
-    private String handleAddUser(HttpServletRequest request) throws Exception {
-        logger.debug("handleAddUser - extracting parameters");
+    /* =========================
+       CORE LOGIC
+       ========================= */
 
-        String username = safe(request.getParameter("username"));
-        String password = safe(request.getParameter("password"));
+    private String handleAdd(HttpServletRequest request) throws Exception {
+
         String role = safe(request.getParameter("role"));
-        String email = safe(request.getParameter("email"));
-        String status = safe(request.getParameter("status"));
 
         if ("mentor".equalsIgnoreCase(role)) {
-            Mentor mentor = new Mentor();
-            mentor.setUsername(username);
-            mentor.setPassword(password);
-            mentor.setRole(role);
-            mentor.setEmail(email);
-            mentor.setStatus(status);
-            mentor.setSpecialization(safe(request.getParameter("specialization")));
-            mentor.setExpertise(safe(request.getParameter("expertise")));
-            String yearsOfExperience = safe(request.getParameter("yearsOfExperience"));
-            if (!yearsOfExperience.isEmpty()) {
-                mentor.setYearsOfExperience(Integer.parseInt(yearsOfExperience));
-            }
-            mentor.setBio(safe(request.getParameter("bio")));
-            mentor.setQualifications(safe(request.getParameter("qualifications")));
-            mentor.setPhoneNumber(safe(request.getParameter("phoneNumber")));
-            mentor.setLocation(safe(request.getParameter("location")));
-            mentor.setAvailability(safe(request.getParameter("availability")));
 
-            mentorBean.addAdmin(mentor);
+            Mentor mentor = buildMentor(request);
+
+            mentorBean.add(mentor, "ADMIN");
+
             return "success=mentor_added";
         }
 
         if ("mentee".equalsIgnoreCase(role)) {
-            Mentee mentee = new Mentee();
-            mentee.setUsername(username);
-            mentee.setPassword(password);
-            mentee.setRole(role);
-            mentee.setEmail(email);
-            mentee.setStatus(status);
-            mentee.setEducationLevel(safe(request.getParameter("educationLevel")));
-            mentee.setFieldOfStudy(safe(request.getParameter("fieldOfStudy")));
-            mentee.setLearningGoals(safe(request.getParameter("learningGoals")));
-            mentee.setPhoneNumber(safe(request.getParameter("phoneNumber")));
-            String mentorId = safe(request.getParameter("mentorId"));
-            if (!mentorId.isEmpty()) {
-                mentee.setMentorId(mentorId);
-            }
 
-            menteeBean.addAdmin(mentee);
+            Mentee mentee = buildMentee(request);
+
+            menteeBean.add(mentee, "ADMIN");
+
             return "success=mentee_added";
         }
 
-        throw new IllegalArgumentException("Please choose Mentor or Mentee for account creation.");
+        throw new IllegalArgumentException(
+                "Invalid role selected. Choose mentor or mentee.");
     }
 
-    /**
-     * Handle update user request - only extracts parameters and delegates to bean
-     */
-    private String handleUpdateUser(HttpServletRequest request) throws Exception {
-        logger.debug("handleUpdateUser - extracting parameters");
+    private String handleUpdate(HttpServletRequest request) throws Exception {
 
-        String userId = safe(request.getParameter("id"));
-        String username = safe(request.getParameter("username"));
-        String password = safe(request.getParameter("password"));
+        String id = safe(request.getParameter("id"));
         String role = safe(request.getParameter("role"));
-        String email = safe(request.getParameter("email"));
+
+        if ("mentor".equalsIgnoreCase(role)) {
+
+            Mentor mentor = buildMentor(request);
+
+            mentorBean.update(id, mentor);
+
+            return "success=mentor_updated";
+        }
+
+        if ("mentee".equalsIgnoreCase(role)) {
+
+            Mentee mentee = buildMentee(request);
+
+            menteeBean.update(id, mentee);
+
+            return "success=mentee_updated";
+        }
+
+        throw new IllegalArgumentException("Invalid role for update");
+    }
+
+    private String handleDelete(HttpServletRequest request) throws Exception {
+
+        String id = safe(request.getParameter("id"));
+        String role = safe(request.getParameter("role"));
+
+        if ("mentor".equalsIgnoreCase(role)) {
+
+            mentorBean.delete(id);
+
+            return "success=mentor_deleted";
+        }
+
+        if ("mentee".equalsIgnoreCase(role)) {
+
+            menteeBean.delete(id);
+
+            return "success=mentee_deleted";
+        }
+
+        throw new IllegalArgumentException("Invalid role for delete");
+    }
+
+    /* =========================
+       BUILDERS
+       ========================= */
+
+    private Mentor buildMentor(HttpServletRequest request) {
+
+        Mentor m = new Mentor();
+
+        m.setUsername(safe(request.getParameter("username")));
+        m.setEmail(safe(request.getParameter("email")));
+        m.setPassword(safe(request.getParameter("password")));
+        m.setRole("mentor");
+
+        m.setSpecialization(safe(request.getParameter("specialization")));
+        m.setExpertise(safe(request.getParameter("expertise")));
+
+        String yoe = safe(request.getParameter("yearsOfExperience"));
+        if (!yoe.isEmpty()) {
+            m.setYearsOfExperience(Integer.parseInt(yoe));
+        }
+
+        m.setBio(safe(request.getParameter("bio")));
+        m.setQualifications(safe(request.getParameter("qualifications")));
+        m.setPhoneNumber(safe(request.getParameter("phoneNumber")));
+        m.setLocation(safe(request.getParameter("location")));
+        m.setAvailability(safe(request.getParameter("availability")));
+
         String status = safe(request.getParameter("status"));
+        m.setStatus(status.isEmpty() ? "Active" : status);
 
-        // Create user object
-        User user = new User(Long.parseLong(userId), username, password, role, email, status);
-
-        // Delegate to bean (validation & business logic)
-        userBean.updateUser(userId, user);
-        return "success=user_updated";
+        return m;
     }
 
-    /**
-     * Handle delete user request - only extracts parameters and delegates to bean
-     */
-    private String handleDeleteUser(HttpServletRequest request) throws Exception {
-        logger.debug("handleDeleteUser - extracting parameters");
+    private Mentee buildMentee(HttpServletRequest request) {
 
-        String userId = safe(request.getParameter("userId"));
+        Mentee m = new Mentee();
 
-        // Delegate to bean (validation & business logic)
-        userBean.deleteUser(userId);
-        return "success=user_deleted";
+        m.setUsername(safe(request.getParameter("username")));
+        m.setEmail(safe(request.getParameter("email")));
+        m.setPassword(safe(request.getParameter("password")));
+        m.setRole("mentee");
+
+        m.setEducationLevel(safe(request.getParameter("educationLevel")));
+        m.setFieldOfStudy(safe(request.getParameter("fieldOfStudy")));
+        m.setLearningGoals(safe(request.getParameter("learningGoals")));
+        m.setPhoneNumber(safe(request.getParameter("phoneNumber")));
+
+        String mentorId = safe(request.getParameter("mentorId"));
+        if (!mentorId.isEmpty()) {
+            m.setMentorId(mentorId);
+        }
+
+        String status = safe(request.getParameter("status"));
+        m.setStatus(status.isEmpty() ? "Active" : status);
+
+        return m;
     }
 
-    /**
-     * Utility to safely extract string parameters
-     */
-    private String safe(String value) {
-        return value == null ? "" : value.trim();
+    /* =========================
+       ERROR HANDLING
+       ========================= */
+
+    private void redirectError(HttpServletRequest request,
+                               HttpServletResponse response,
+                               Exception e) {
+
+        try {
+            String msg = e.getMessage() == null
+                    ? "error"
+                    : e.getMessage();
+
+            response.sendRedirect(
+                    request.getContextPath()
+                            + "/app/user-management/admin?view=users&error="
+                            + URLEncoder.encode(msg, StandardCharsets.UTF_8)
+            );
+
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    private String safe(String v) {
+        return v == null ? "" : v.trim();
     }
 }

@@ -7,7 +7,6 @@ import app.utility.logging.AppLogger;
 import app.framework.Action;
 import app.framework.ActionGetMethod;
 import app.framework.ActionPostMethod;
-import app.framework.ActionResponse;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.annotation.security.RolesAllowed;
@@ -21,10 +20,11 @@ import java.util.List;
 
 @ApplicationScoped
 @Action(value = "mentor-management", label = "Mentor Management")
-@RolesAllowed({"mentor","mentee","admin"})
+@RolesAllowed({"mentor", "mentee", "admin"})
 public class MentorManagement extends BaseAction {
 
-    private static final Logger logger = AppLogger.getLogger(MentorManagement.class);
+    private static final Logger logger =
+            AppLogger.getLogger(MentorManagement.class);
 
     @Inject
     private MentorBean mentorBean;
@@ -32,107 +32,119 @@ public class MentorManagement extends BaseAction {
     @Inject
     private MentorKeSecurity security;
 
+    /* =========================
+       ADMIN VIEW
+       ========================= */
+
     @ActionGetMethod("admin")
     @RolesAllowed({"admin"})
-    public void admin(HttpServletRequest request, HttpServletResponse response) throws Exception {
+    public void admin(HttpServletRequest request,
+                      HttpServletResponse response) throws Exception {
+
         security.requireRole("admin");
-        
+
         try {
             List<Mentor> mentors = mentorBean.findAll();
+
             setAttribute(request, "mentors", mentors);
             setAttribute(request, "view", "mentors");
+
             forward(request, response, "/admin-dashboard.jsp");
+
         } catch (Exception e) {
-            logger.error("Error loading mentors for admin view", e);
-            setAttribute(request, "errorMessage", "Error loading mentors: " + e.getMessage());
+            logger.error("Error loading mentors", e);
+
+            setAttribute(request, "errorMessage",
+                    "Error loading mentors: " + e.getMessage());
+
             forward(request, response, "/admin-dashboard.jsp");
         }
     }
+
+    /* =========================
+       CREATE
+       ========================= */
 
     @ActionPostMethod("add")
     @RolesAllowed({"admin"})
-    public ActionResponse add(HttpServletRequest request, HttpServletResponse response) {
+    public void add(HttpServletRequest request,
+                    HttpServletResponse response) throws Exception {
+
         security.requireRole("admin");
-        return handleMentorMutation(request, response, "add");
+
+        try {
+            Mentor mentor = buildMentor(request);
+
+            // FIXED: matches MentorBean signature
+            mentorBean.add(mentor, "ADMIN");
+
+            redirectSuccess(response, request, "mentor_added");
+
+        } catch (IllegalArgumentException e) {
+            redirectError(response, request, e);
+
+        } catch (Exception e) {
+            redirectError(response, request, e);
+        }
     }
+
+    /* =========================
+       UPDATE
+       ========================= */
 
     @ActionPostMethod("update")
     @RolesAllowed({"admin", "mentor"})
-    public ActionResponse update(HttpServletRequest request, HttpServletResponse response) {
-        return handleMentorMutation(request, response, "update");
+    public void update(HttpServletRequest request,
+                       HttpServletResponse response) throws Exception {
+
+        try {
+            String mentorId = safe(request.getParameter("id"));
+            Mentor mentor = buildMentor(request);
+
+            mentorBean.update(mentorId, mentor);
+
+            redirectSuccess(response, request, "mentor_updated");
+
+        } catch (IllegalArgumentException e) {
+            redirectError(response, request, e);
+
+        } catch (Exception e) {
+            redirectError(response, request, e);
+        }
     }
+
+    /* =========================
+       DELETE
+       ========================= */
 
     @ActionPostMethod("delete")
     @RolesAllowed({"admin"})
-    public ActionResponse delete(HttpServletRequest request, HttpServletResponse response) {
+    public void delete(HttpServletRequest request,
+                       HttpServletResponse response) throws Exception {
+
         security.requireRole("admin");
-        return handleMentorMutation(request, response, "delete");
-    }
 
-    private ActionResponse handleMentorMutation(HttpServletRequest request, HttpServletResponse response, String action) {
         try {
-            String redirectParam;
-            if ("add".equalsIgnoreCase(action)) {
-                redirectParam = handleAddMentor(request);
-            } else if ("update".equalsIgnoreCase(action)) {
-                redirectParam = handleUpdateMentor(request);
-            } else if ("delete".equalsIgnoreCase(action)) {
-                redirectParam = handleDeleteMentor(request);
-            } else {
-                response.sendRedirect(request.getContextPath() + "/app/mentor-management/admin");
-                return null;
-            }
+            String mentorId = safe(request.getParameter("mentorId"));
 
-            response.sendRedirect(request.getContextPath() + "/app/mentor-management/admin?" + redirectParam);
-            return null;
+            mentorBean.delete(mentorId);
+
+            redirectSuccess(response, request, "mentor_deleted");
+
         } catch (IllegalArgumentException e) {
-            logger.error("Validation error: {}", e.getMessage());
-            sendRedirectWithError(response, request, e.getMessage().replace("Mentor validation failed: ", ""));
-            return null;
+            redirectError(response, request, e);
+
         } catch (Exception e) {
-            logger.error("Error: {}", e.getMessage());
-            sendRedirectWithError(response, request, e.getMessage());
-            return null;
+            redirectError(response, request, e);
         }
     }
 
-    private String handleAddMentor(HttpServletRequest request) throws Exception {
-        String username = safe(request.getParameter("username"));
-        String email = safe(request.getParameter("email"));
-        String password = safe(request.getParameter("password"));
-        String specialization = safe(request.getParameter("specialization"));
-        String expertise = safe(request.getParameter("expertise"));
-        String yearsOfExperience = safe(request.getParameter("yearsOfExperience"));
-        String bio = safe(request.getParameter("bio"));
-        String qualifications = safe(request.getParameter("qualifications"));
-        String phoneNumber = safe(request.getParameter("phoneNumber"));
-        String location = safe(request.getParameter("location"));
-        String availability = safe(request.getParameter("availability"));
-        String status = safe(request.getParameter("status"));
+    /* =========================
+       BUILDER
+       ========================= */
 
-        Mentor newMentor = new Mentor();
-        newMentor.setUsername(username);
-        newMentor.setEmail(email);
-        newMentor.setPassword(password);
-        newMentor.setRole("mentor");
-        newMentor.setSpecialization(specialization);
-        newMentor.setExpertise(expertise);
-        if (!yearsOfExperience.isEmpty()) {
-            newMentor.setYearsOfExperience(Integer.parseInt(yearsOfExperience));
-        }
-        newMentor.setBio(bio);
-        newMentor.setQualifications(qualifications);
-        newMentor.setPhoneNumber(phoneNumber);
-        newMentor.setLocation(location);
-        newMentor.setAvailability(availability);
-        newMentor.setStatus(status.isEmpty() ? "Active" : status);
+    private Mentor buildMentor(HttpServletRequest request) {
 
-        mentorBean.addAdmin(newMentor);
-        return "success=mentor_added";
-    }
-
-    private String handleUpdateMentor(HttpServletRequest request) throws Exception {
-        String mentorId = safe(request.getParameter("id"));
         String username = safe(request.getParameter("username"));
         String email = safe(request.getParameter("email"));
         String password = safe(request.getParameter("password"));
@@ -153,9 +165,11 @@ public class MentorManagement extends BaseAction {
         mentor.setRole("mentor");
         mentor.setSpecialization(specialization);
         mentor.setExpertise(expertise);
+
         if (!yearsOfExperience.isEmpty()) {
             mentor.setYearsOfExperience(Integer.parseInt(yearsOfExperience));
         }
+
         mentor.setBio(bio);
         mentor.setQualifications(qualifications);
         mentor.setPhoneNumber(phoneNumber);
@@ -163,22 +177,36 @@ public class MentorManagement extends BaseAction {
         mentor.setAvailability(availability);
         mentor.setStatus(status.isEmpty() ? "Active" : status);
 
-        mentorBean.update(mentorId, mentor);
-        return "success=mentor_updated";
+        return mentor;
     }
 
-    private String handleDeleteMentor(HttpServletRequest request) throws Exception {
-        String mentorId = safe(request.getParameter("mentorId"));
-        mentorBean.delete(mentorId);
-        return "success=mentor_deleted";
+    /* =========================
+       REDIRECT HELPERS
+       ========================= */
+
+    private void redirectSuccess(HttpServletResponse response,
+                                 HttpServletRequest request,
+                                 String msg) throws Exception {
+
+        response.sendRedirect(
+                request.getContextPath()
+                        + "/app/mentor-management/admin?success="
+                        + msg
+        );
     }
 
-    private void sendRedirectWithError(HttpServletResponse response, HttpServletRequest request, String message) {
-        try {
-            response.sendRedirect(request.getContextPath() + "/app/mentor-management/admin?error=" + URLEncoder.encode(message, StandardCharsets.UTF_8));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+    private void redirectError(HttpServletResponse response,
+                               HttpServletRequest request,
+                               Exception e) throws Exception {
+
+        String msg = e.getMessage() == null ? "error"
+                : e.getMessage().replace("Mentor validation failed: ", "");
+
+        response.sendRedirect(
+                request.getContextPath()
+                        + "/app/mentor-management/admin?error="
+                        + URLEncoder.encode(msg, StandardCharsets.UTF_8)
+        );
     }
 
     private String safe(String value) {

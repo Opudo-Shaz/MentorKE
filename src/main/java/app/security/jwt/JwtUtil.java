@@ -15,27 +15,35 @@ public class JwtUtil {
 
     private static final Logger logger = AppLogger.getLogger(JwtUtil.class);
 
-    // Must be at least 32 chars for HS256
-    private static final String SECRET = "MentorKE-Super-Secret-Key-2026!!";
-    private static final long EXPIRY_MS = 24 * 60 * 60 * 1000L; // 24 hours
+    private static final String SECRET    = "MentorKE-Super-Secret-Key-2026!!";
+    private static final long   EXPIRY_MS = 24 * 60 * 60 * 1000L;
 
     private SecretKey getKey() {
         return Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
     }
 
+    // Original — kept for backward compat (subject only, no userId claim)
     public String generateToken(String username, String role) {
-        Date now = new Date();
+        return generateToken(username, role, null);
+    }
+
+    // Preferred — includes userId claim
+    public String generateToken(String username, String role, Long userId) {
+        Date now    = new Date();
         Date expiry = new Date(now.getTime() + EXPIRY_MS);
 
-        String token = Jwts.builder()
+        JwtBuilder builder = Jwts.builder()
                 .subject(username)
                 .claim("role", role)
                 .issuedAt(now)
-                .expiration(expiry)
-                .signWith(getKey())
-                .compact();
+                .expiration(expiry);
 
-        logger.info("[JwtUtil] Token generated for: {} with role: {}", username, role);
+        if (userId != null) {
+            builder.claim("userId", userId.toString());
+        }
+
+        String token = builder.signWith(getKey()).compact();
+        logger.info("[JwtUtil] Token generated for: {} role: {} userId: {}", username, role, userId);
         return token;
     }
 
@@ -63,6 +71,23 @@ public class JwtUtil {
 
     public String getRoleFromToken(String token) {
         return validateToken(token).get("role", String.class);
+    }
+
+    // Extract userId stored as a claim
+    public Long getUserIdFromToken(String token) {
+        try {
+            String userId = validateToken(token).get("userId", String.class);
+            return userId != null ? Long.parseLong(userId) : null;
+        } catch (Exception e) {
+            logger.warn("[JwtUtil] Could not extract userId from token: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    // Convenience — strips "Bearer " prefix automatically
+    public Long extractUserIdFromHeader(String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) return null;
+        return getUserIdFromToken(authHeader.substring(7));
     }
 
     public long getExpiresIn() {
