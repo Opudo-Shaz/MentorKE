@@ -4,7 +4,10 @@ import app.bean.MenteeBean;
 import app.dao.GoalDAO;
 import app.dao.SessionDAO;
 import app.model.Mentee;
+import app.framework.Action;
+import app.framework.ActionGetMethod;
 import app.utility.logging.AppLogger;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,6 +17,8 @@ import org.slf4j.Logger;
 import java.util.Map;
 
 @Named("menteeAnalytics")
+@ApplicationScoped
+@Action(value = "mentee-analytics", label = "Mentee Analytics")
 public class MenteeAnalytics {
 
     private static final Logger logger = AppLogger.getLogger(MenteeAnalytics.class);
@@ -22,8 +27,10 @@ public class MenteeAnalytics {
     @Inject private SessionDAO sessionDAO;
     @Inject private GoalDAO    goalDAO;
 
+    @ActionGetMethod("")
     public void get(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        String menteeId = (String) request.getSession().getAttribute("userId");
+        Object userIdAttr = request.getSession().getAttribute("userId");
+        String menteeId = userIdAttr != null ? String.valueOf(userIdAttr) : null;
         String username = (String) request.getSession().getAttribute("username");
 
         Mentee mentee = menteeBean.findAll().stream()
@@ -55,7 +62,7 @@ public class MenteeAnalytics {
         request.setAttribute("monthlyData",
             monthly.values().stream().map(String::valueOf).reduce((a,b) -> a+","+b).orElse("0"));
 
-        request.getRequestDispatcher("/WEB-INF/views/mentee/mentee-analytics.jsp")
+        request.getRequestDispatcher("/mentee-analytics.jsp")
                .forward(request, response);
     }
 }

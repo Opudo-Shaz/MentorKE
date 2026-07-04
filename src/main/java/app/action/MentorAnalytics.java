@@ -4,7 +4,10 @@ import app.bean.MentorBean;
 import app.dao.MenteeDAO;
 import app.dao.SessionDAO;
 import app.model.Mentor;
+import app.framework.Action;
+import app.framework.ActionGetMethod;
 import app.utility.logging.AppLogger;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,6 +17,8 @@ import org.slf4j.Logger;
 import java.util.Map;
 
 @Named("mentorAnalytics")
+@ApplicationScoped
+@Action(value = "mentor-analytics", label = "Mentor Analytics")
 public class MentorAnalytics {
 
     private static final Logger logger = AppLogger.getLogger(MentorAnalytics.class);
@@ -22,9 +27,11 @@ public class MentorAnalytics {
     @Inject private SessionDAO sessionDAO;
     @Inject private MenteeDAO  menteeDAO;
 
+    @ActionGetMethod("")
     public void get(HttpServletRequest request, HttpServletResponse response) throws Exception {
         String username = (String) request.getSession().getAttribute("username");
-        String mentorId = (String) request.getSession().getAttribute("userId");
+        Object userIdAttr = request.getSession().getAttribute("userId");
+        String mentorId = userIdAttr != null ? String.valueOf(userIdAttr) : null;
 
         Mentor mentor = mentorBean.findAll().stream()
             .filter(m -> m.getUsername().equals(username))
@@ -57,7 +64,7 @@ public class MentorAnalytics {
         request.setAttribute("monthlyData",
             monthly.values().stream().map(String::valueOf).reduce((a,b) -> a+","+b).orElse("0"));
 
-        request.getRequestDispatcher("/WEB-INF/views/mentor/mentor-analytics.jsp")
+        request.getRequestDispatcher("/mentor-analytics.jsp")
                .forward(request, response);
     }
 }

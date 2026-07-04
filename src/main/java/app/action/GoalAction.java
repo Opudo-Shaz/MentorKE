@@ -24,7 +24,6 @@ public class GoalAction extends BaseAction {
     private static final Logger logger = AppLogger.getLogger(GoalAction.class);
 
     @Inject private GoalBean goalService;
-    @Inject private GoalDAO     goalDAO;
     @Inject private MentorKeSecurity security;
 
     @ActionGetMethod("")

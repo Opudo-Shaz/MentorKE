@@ -5,6 +5,7 @@ import app.model.User;
 import app.framework.Action;
 import app.framework.ActionGetMethod;
 import app.framework.ActionPostMethod;
+import app.security.jwt.JwtUtil;
 import app.utility.helper.PasswordUtil;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -21,6 +22,9 @@ public class LoginAction extends BaseAction {
 
     @Inject
     private UserBean userBean;
+
+    @Inject
+    private JwtUtil jwtUtil;
 
     @ActionGetMethod("")
     public void get(HttpServletRequest request, HttpServletResponse response) throws Exception {
@@ -122,6 +126,9 @@ public class LoginAction extends BaseAction {
                 // Continue to set session attributes even if container login fails
             }
 
+            // Generate JWT token for REST API authentication
+            String jwtToken = jwtUtil.generateToken(user.getUsername(), user.getRole(), user.getId());
+
             // Set session attributes for legacy session-based authorization
             HttpSession session = request.getSession(true);
             session.setAttribute("isLoggedIn", true);
@@ -129,6 +136,7 @@ public class LoginAction extends BaseAction {
             session.setAttribute("role",       user.getRole().toLowerCase());
             session.setAttribute("userId",     user.getId());
             session.setAttribute("loginTime",  System.currentTimeMillis());
+            session.setAttribute("jwtToken",   jwtToken);  // Store token in session
 
             Logger logger = Logger.getLogger(LoginAction.class.getName());
             logger.log(Level.INFO, "=== LOGIN SUCCESSFUL ===");
@@ -137,6 +145,7 @@ public class LoginAction extends BaseAction {
             logger.log(Level.INFO, "Role: " + user.getRole().toLowerCase());
             logger.log(Level.INFO, "Session isLoggedIn: " + session.getAttribute("isLoggedIn"));
             logger.log(Level.INFO, "Session role: " + session.getAttribute("role"));
+            logger.log(Level.INFO, "JWT Token generated and stored in session");
             logger.log(Level.INFO, "Redirecting to: " + user.getRole());
 
             redirectToDashboard(request, response, user.getRole());

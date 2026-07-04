@@ -497,6 +497,14 @@
 </div>
 
 <script>
+    /* ── JWT Token initialization ── */
+    (function() {
+        const serverToken = '<%= session.getAttribute("jwtToken") != null ? session.getAttribute("jwtToken") : "" %>';
+        if (serverToken) {
+            localStorage.setItem('token', serverToken);
+        }
+    })();
+
     const CTX = '<%= request.getContextPath() %>';
     const TOKEN = localStorage.getItem('token') || '';
 

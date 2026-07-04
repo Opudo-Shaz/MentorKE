@@ -789,6 +789,15 @@
 </div><!-- /main -->
 
 <script>
+    /* ── JWT Token initialization ── */
+    (function() {
+        const serverToken = '<%= session.getAttribute("jwtToken") != null ? session.getAttribute("jwtToken") : "" %>';
+        if (serverToken) {
+            localStorage.setItem('token', serverToken);
+            console.log('JWT token stored in localStorage from server session');
+        }
+    })();
+
     /* ── Unread message count polling ── */
     function updateUnreadCount() {
         fetch('messaging?action=unread-count', { credentials: 'same-origin' })
