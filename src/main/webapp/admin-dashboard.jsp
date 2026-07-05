@@ -531,6 +531,26 @@
             Mentees
             <span class="nav-badge"><%= menteeCount %></span>
         </a>
+
+        <div class="nav-section-label">My Progress</div>
+
+        <a href="<%= request.getContextPath() %>/app/admin/?view=users" class="nav-link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+            Reports
+        </a>
+
+        <a href="<%= request.getContextPath() %>/app/admin/?view=users#analytics-section" class="nav-link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 3v18h18"/>
+                <path d="M7 15l3-3 3 2 4-5"/>
+            </svg>
+            Analytics
+        </a>
     </nav>
 
     <div class="sidebar-footer">
@@ -605,7 +625,7 @@
         <% } %>
 
         <!-- STATS -->
-        <div class="stats-grid">
+        <div class="stats-grid" id="analytics-section">
             <div class="stat-card">
                 <div class="stat-icon blue">
                     <svg viewBox="0 0 24 24" fill="none" stroke="#1565c0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
